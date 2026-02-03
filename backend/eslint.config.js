@@ -1,7 +1,7 @@
-import globals from 'globals';
-import js from '@eslint/js';
+const globals = require('globals');
+const js = require('@eslint/js');
 
-export default [
+module.exports = [
     js.configs.recommended,
     {
         languageOptions: {
@@ -13,24 +13,18 @@ export default [
             }
         },
         rules: {
-            // Allow unused vars if they start with _ or are named error/err/next/req/res
             'no-unused-vars': ['warn', {
                 varsIgnorePattern: '^_|^error$|^err$',
                 argsIgnorePattern: '^_|^error$|^err$|^next$|^req$|^res$',
                 caughtErrors: 'none'
             }],
+            'no-empty': ['warn', { allowEmptyCatch: true }],
             'no-console': 'off',
             'semi': ['warn', 'always'],
-            'quotes': ['warn', 'single', { avoidEscape: true }],
-            'comma-dangle': ['warn', 'never'],
-            'no-multiple-empty-lines': ['warn', { max: 2 }]
+            'quotes': ['warn', 'single', { avoidEscape: true }]
         }
     },
     {
-        ignores: [
-            'node_modules/**',
-            'coverage/**',
-            '.vercel/**'
-        ]
+        ignores: ['node_modules/**', 'coverage/**', '.vercel/**']
     }
 ];

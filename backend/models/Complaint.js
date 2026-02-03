@@ -84,7 +84,9 @@ complaintSchema.pre('save', async function (next) {
                     createdBy: service.createdBy
                 };
             }
-        } catch (error) { }
+        } catch {
+            // Service may not exist, continue without snapshot
+        }
     }
     next();
 });
