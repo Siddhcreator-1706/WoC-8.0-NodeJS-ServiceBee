@@ -29,6 +29,11 @@ const otpSchema = mongoose.Schema({
         type: Number,
         default: 0
     },
+    role: {
+        type: String,
+        enum: ['user', 'provider'],
+        default: 'user'
+    },
     expiresAt: {
         type: Date,
         required: true,
@@ -44,8 +49,8 @@ otpSchema.pre('save', async function (next) {
         const salt = await bcrypt.genSalt(10);
         this.otp = await bcrypt.hash(this.otp, salt);
     }
-    // Hash password for signup
-    if (this.isModified('password')) {
+    // Hash password for signup - ONLY if it's not already hashed (prevent double hashing)
+    if (this.isModified('password') && !this.password.startsWith('$2a$')) {
         const salt = await bcrypt.genSalt(10);
         this.password = await bcrypt.hash(this.password, salt);
     }
@@ -58,7 +63,7 @@ otpSchema.methods.verifyOTP = async function (enteredOTP) {
 };
 
 // Static to create OTP entry
-otpSchema.statics.createOTP = async function (email, otp, name, password, purpose = 'signup') {
+otpSchema.statics.createOTP = async function (email, otp, name, password, purpose = 'signup', role = 'user') {
     // Remove any existing OTP for this email
     await this.deleteMany({ email: email.toLowerCase().trim() });
 
@@ -71,6 +76,7 @@ otpSchema.statics.createOTP = async function (email, otp, name, password, purpos
         name,
         password,
         purpose,
+        role,
         expiresAt
     });
 };

@@ -34,8 +34,13 @@ const userSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['user', 'admin', 'superuser'],
+        enum: ['user', 'provider', 'admin', 'superuser'],
         default: 'user'
+    },
+    // For service providers - link to their company
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Company'
     },
     isActive: {
         type: Boolean,

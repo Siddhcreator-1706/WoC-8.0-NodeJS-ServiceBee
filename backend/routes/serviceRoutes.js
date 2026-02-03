@@ -23,9 +23,9 @@ router.get('/:id', getServiceById);
 router.post('/:id/rate', protect, rateService);
 
 // Admin/Superuser routes
-router.post('/', protect, authorize('admin', 'superuser'), createService);
-router.post('/:id/image', protect, authorize('admin', 'superuser'), uploadImage);
-router.put('/:id', protect, authorize('admin', 'superuser'), updateService);
-router.delete('/:id', protect, authorize('superuser'), deleteService);
+router.post('/', protect, authorize('admin', 'superuser', 'provider'), createService);
+router.post('/:id/image', protect, authorize('admin', 'superuser', 'provider'), uploadImage);
+router.put('/:id', protect, authorize('admin', 'superuser', 'provider'), updateService);
+router.delete('/:id', protect, authorize('superuser', 'provider'), deleteService);
 
 module.exports = router;

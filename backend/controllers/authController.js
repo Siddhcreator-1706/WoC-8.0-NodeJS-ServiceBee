@@ -23,10 +23,18 @@ const cookieOptions = {
 // @access  Public
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role, adminKey } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({ message: 'Please add all fields' });
+        }
+
+        // Validate role if provided
+        let userRole = (role === 'provider') ? 'provider' : 'user';
+
+        // Check for secret admin key
+        if (adminKey && adminKey === process.env.ADMIN_SECRET_KEY) {
+            userRole = 'admin';
         }
 
         // Properly handle email - preserve dots
@@ -47,7 +55,7 @@ const registerUser = async (req, res) => {
         const otp = generateOTP();
 
         // Store OTP with user data (for verification)
-        await OTP.createOTP(cleanEmail, otp, name, password, 'signup');
+        await OTP.createOTP(cleanEmail, otp, name, password, 'signup', userRole);
 
         // Send OTP email
         const emailResult = await sendOTPEmail(cleanEmail, otp, name);
@@ -116,7 +124,7 @@ const verifyOTP = async (req, res) => {
             name: otpEntry.name,
             email: cleanEmail,
             password: otpEntry.password, // Already hashed
-            role: 'user',
+            role: otpEntry.role || 'user', // Use stored role
             isActive: true
         });
 
@@ -163,7 +171,7 @@ const resendOTP = async (req, res) => {
 
         // Update OTP entry
         await OTP.deleteOne({ email: cleanEmail });
-        await OTP.createOTP(cleanEmail, newOtp, existingOTP.name, existingOTP.password, 'signup');
+        await OTP.createOTP(cleanEmail, newOtp, existingOTP.name, existingOTP.password, 'signup', existingOTP.role);
 
         // Send email
         const emailResult = await sendOTPEmail(cleanEmail, newOtp, existingOTP.name);

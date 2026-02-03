@@ -109,7 +109,23 @@ const getServiceById = async (req, res) => {
 // @access  Private/Admin/Superuser
 const createService = async (req, res) => {
     try {
-        const { name, description, price, priceType, location, category, company, featured, tags, duration } = req.body;
+        let { name, description, price, priceType, location, category, company, featured, tags, duration } = req.body;
+
+        // If provider, ensure they own a company and link it
+        if (req.user.role === 'provider') {
+            const Company = require('../models/Company');
+            const userCompany = await Company.findOne({ owner: req.user._id });
+
+            if (!userCompany) {
+                return res.status(400).json({ message: 'Please create a company profile first' });
+            }
+
+            // Force company ID to be the provider's company
+            company = userCompany._id;
+
+            // Providers cannot set featured status (admin only)
+            featured = false;
+        }
 
         const service = await Service.create({
             name,
@@ -214,6 +230,11 @@ const deleteService = async (req, res) => {
 
         if (!service) {
             return res.status(404).json({ message: 'Service not found' });
+        }
+
+        // Check authorization
+        if (req.user.role !== 'superuser' && service.createdBy.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'Not authorized' });
         }
 
         if (soft === 'true') {

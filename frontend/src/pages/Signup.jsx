@@ -7,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const Signup = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1); // 1 = form, 2 = OTP verification
-    const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+    const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '', role: 'user' });
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -36,7 +36,9 @@ const Signup = () => {
                 body: JSON.stringify({
                     name: formData.name,
                     email: formData.email.trim(), // Preserve dots in email
-                    password: formData.password
+                    password: formData.password,
+                    role: formData.role,
+                    adminKey: formData.adminKey
                 })
             });
 
@@ -129,6 +131,36 @@ const Signup = () => {
 
                 {step === 1 ? (
                     <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Role Selection */}
+                        <div className="grid grid-cols-2 gap-4 mb-2">
+                            <label className={`cursor-pointer p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${formData.role === 'user' ? 'bg-orange-500/20 border-orange-500 text-orange-400' : 'bg-gray-700/50 border-transparent text-gray-400 hover:bg-gray-700'}`}>
+                                <input type="radio" name="role" value="user" checked={formData.role === 'user'} onChange={handleChange} className="hidden" />
+                                <span className="text-2xl">👻</span>
+                                <span className="font-semibold text-sm">Hire Services</span>
+                            </label>
+                            <label className={`cursor-pointer p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${formData.role === 'provider' ? 'bg-purple-500/20 border-purple-500 text-purple-400' : 'bg-gray-700/50 border-transparent text-gray-400 hover:bg-gray-700'}`}>
+                                <input type="radio" name="role" value="provider" checked={formData.role === 'provider'} onChange={handleChange} className="hidden" />
+                                <span className="text-2xl">🧙‍♀️</span>
+                                <span className="font-semibold text-sm">Provide Services</span>
+                            </label>
+                        </div>
+
+                        {/* Secret Admin Code */}
+                        <div className="text-right">
+                            <button type="button" onClick={() => setFormData({ ...formData, showAdmin: !formData.showAdmin })} className="text-xs text-gray-500 hover:text-gray-400">
+                                Have an admin code?
+                            </button>
+                        </div>
+                        {formData.showAdmin && (
+                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                                <input
+                                    type="password" name="adminKey" value={formData.adminKey || ''} onChange={handleChange}
+                                    className="w-full p-3 bg-red-900/20 border border-red-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 placeholder-red-400/50"
+                                    placeholder="Enter Admin Secret Key"
+                                />
+                            </motion.div>
+                        )}
+
                         <div>
                             <label className="block text-gray-300 text-sm mb-1">Name</label>
                             <input

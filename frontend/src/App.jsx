@@ -11,6 +11,7 @@ import Complaints from './pages/Complaints';
 import Favorites from './pages/Favorites';
 import AdminDashboard from './pages/admin/Dashboard';
 import SuperuserDashboard from './pages/superuser/Dashboard';
+import ProviderDashboard from './pages/provider/Dashboard';
 import './App.css';
 
 function App() {
@@ -40,6 +41,13 @@ function App() {
           <Route path="/admin/*" element={
             <ProtectedRoute allowedRoles={['admin', 'superuser']}>
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          {/* Provider Routes */}
+          <Route path="/provider" element={
+            <ProtectedRoute allowedRoles={['provider']}>
+              <ProviderDashboard />
             </ProtectedRoute>
           } />
 
