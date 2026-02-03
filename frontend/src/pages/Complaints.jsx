@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ImageUpload from '../components/ImageUpload';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import API_URL from '../config/api';
 
 const Complaints = () => {
     const { user } = useAuth();
