@@ -6,8 +6,8 @@ const sendEmail = async (options) => {
         port: process.env.SMTP_PORT,
         auth: {
             user: process.env.SMTP_EMAIL,
-            pass: process.env.SMTP_PASSWORD,
-        },
+            pass: process.env.SMTP_PASSWORD
+        }
     });
 
     const message = {
@@ -15,7 +15,7 @@ const sendEmail = async (options) => {
         to: options.email,
         subject: options.subject,
         text: options.message,
-        html: options.html, // Optional for HTML emails
+        html: options.html // Optional for HTML emails
     };
 
     const info = await transporter.sendMail(message);

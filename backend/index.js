@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 5000;
 // Security Middleware
 // Set security HTTP headers
 app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
     contentSecurityPolicy: false // Disable for development
 }));
 
@@ -37,7 +37,7 @@ const limiter = rateLimit({
     max: 100, // Limit each IP to 100 requests per windowMs
     message: { message: 'Too many requests, please try again later.' },
     standardHeaders: true,
-    legacyHeaders: false,
+    legacyHeaders: false
 });
 app.use('/auth', limiter); // Apply stricter rate limiting to auth routes
 
