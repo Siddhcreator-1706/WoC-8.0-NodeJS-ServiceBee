@@ -110,11 +110,10 @@ serviceSchema.virtual('totalReviews').get(function () {
     return this.ratings.length;
 });
 
-// Indexes
+// Indexes (company already indexed via index: true in schema)
 serviceSchema.index({ name: 'text', description: 'text', location: 'text', tags: 'text' });
 serviceSchema.index({ category: 1, location: 1, price: 1 });
 serviceSchema.index({ createdBy: 1 });
-serviceSchema.index({ company: 1 });
 
 // Static methods
 serviceSchema.statics.canDelete = async function (serviceId) {

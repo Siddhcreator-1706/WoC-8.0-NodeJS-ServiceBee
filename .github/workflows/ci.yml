@@ -71,13 +71,6 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend/dist
-          retention-days: 1
-
   backend:
     name: ⚙️ Backend
     needs: security-audit
@@ -107,15 +100,6 @@ jobs:
           echo "Validating index.js syntax..."
           node --check index.js
           echo "✅ Backend entry point is valid"
-
-      - name: Check Environment Variables Template
-        working-directory: backend
-        run: |
-          echo "## Required Environment Variables" >> $GITHUB_STEP_SUMMARY
-          echo "Ensure these are set in Vercel:" >> $GITHUB_STEP_SUMMARY
-          echo "- MONGO_URI" >> $GITHUB_STEP_SUMMARY
-          echo "- JWT_SECRET" >> $GITHUB_STEP_SUMMARY
-          echo "- CLOUDINARY_*" >> $GITHUB_STEP_SUMMARY
 
   # ═══════════════════════════════════════════════════════════════
   # STAGE 3: Deploy to Production
@@ -166,47 +150,3 @@ jobs:
           else
             echo "⚠️ Health check returned: $status"
           fi
-
-  # ═══════════════════════════════════════════════════════════════
-  # STAGE 3 (PR): Deploy Preview
-  # ═══════════════════════════════════════════════════════════════
-  deploy-preview:
-    name: 👀 Deploy Preview
-    needs: [frontend, backend]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
-      - name: Pull Vercel Environment
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build with Vercel
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy Preview
-        id: preview
-        run: |
-          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$url" >> $GITHUB_OUTPUT
-          echo "## � Preview Deployment" >> $GITHUB_STEP_SUMMARY
-          echo "Preview URL: $url" >> $GITHUB_STEP_SUMMARY
-
-      - name: Comment PR with Preview URL
-        uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '🔗 **Preview Deployment Ready!**\n\n${{ steps.preview.outputs.url }}'
-            })
