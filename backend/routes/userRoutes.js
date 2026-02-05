@@ -9,13 +9,13 @@ const {
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Admin and superuser can view users
-router.get('/', protect, authorize('admin', 'superuser'), getUsers);
-router.get('/:id', protect, authorize('admin', 'superuser'), getUserById);
+// Admin can view users
+router.get('/', protect, authorize('admin'), getUsers);
+router.get('/:id', protect, authorize('admin'), getUserById);
 
-// Superuser only for modifications
-router.put('/:id', protect, authorize('superuser'), updateUserRole);
-router.put('/:id/reactivate', protect, authorize('superuser'), reactivateUser);
-router.delete('/:id', protect, authorize('superuser'), deleteUser);
+// Admin only for modifications
+router.put('/:id', protect, authorize('admin'), updateUserRole);
+router.put('/:id/reactivate', protect, authorize('admin'), reactivateUser);
+router.delete('/:id', protect, authorize('admin'), deleteUser);
 
 module.exports = router;

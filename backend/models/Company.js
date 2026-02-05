@@ -11,6 +11,10 @@ const companySchema = mongoose.Schema({
         type: String,
         maxlength: [500, 'Description cannot exceed 500 characters']
     },
+    serviceType: {
+        type: String,
+        trim: true
+    },
     logo: {
         type: String, // Cloudinary URL
         default: null

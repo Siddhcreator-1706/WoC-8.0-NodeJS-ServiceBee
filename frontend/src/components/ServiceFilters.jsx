@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-
 import API_URL from '../config/api';
 
 const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
     const [locations, setLocations] = useState([]);
+    const [companies, setCompanies] = useState([]);
     const [filters, setFilters] = useState({
         location: initialFilters.location || '',
-        category: initialFilters.category || '',
+        company: initialFilters.company || '',
         minPrice: initialFilters.minPrice || '',
         maxPrice: initialFilters.maxPrice || '',
         minRating: initialFilters.minRating || '',
@@ -15,16 +15,28 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
     });
 
     useEffect(() => {
-        const fetchLocations = async () => {
+        const fetchFiltersData = async () => {
             try {
-                const res = await fetch(`${API_URL}/api/services/locations`);
-                const data = await res.json();
-                setLocations(data);
+                // Fetch locations
+                const locRes = await fetch(`${API_URL}/api/services/locations`);
+                const locData = await locRes.json();
+                setLocations(locData);
             } catch (error) {
                 console.error('Failed to fetch locations:', error);
             }
+
+            try {
+                // Fetch companies instead of categories
+                const compRes = await fetch(`${API_URL}/api/companies`);
+                const compData = await compRes.json();
+                if (compData.companies) {
+                    setCompanies(compData.companies);
+                }
+            } catch (error) {
+                console.error('Failed to fetch companies:', error);
+            }
         };
-        fetchLocations();
+        fetchFiltersData();
     }, []);
 
     const handleChange = (e) => {
@@ -39,14 +51,12 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
 
     const handleReset = () => {
         const reset = {
-            location: '', category: '', minPrice: '', maxPrice: '',
+            location: '', company: '', minPrice: '', maxPrice: '',
             minRating: '', sortBy: 'newest', search: ''
         };
         setFilters(reset);
         onFilter(reset);
     };
-
-    const categories = ['cleaning', 'repair', 'beauty', 'tech', 'moving', 'events', 'other'];
 
     return (
         <form onSubmit={handleSubmit} className="bg-gray-800/50 p-6 rounded-xl border border-purple-500/20 mb-8">
@@ -58,7 +68,7 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
                     value={filters.search}
                     onChange={handleChange}
                     placeholder="Search services..."
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600"
                 />
 
                 {/* Location */}
@@ -66,7 +76,7 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
                     name="location"
                     value={filters.location}
                     onChange={handleChange}
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none"
+                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600 cursor-pointer"
                 >
                     <option value="">All Locations</option>
                     {locations.map((loc, i) => (
@@ -74,16 +84,16 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
                     ))}
                 </select>
 
-                {/* Category */}
+                {/* Company Filter (replaced Category) */}
                 <select
-                    name="category"
-                    value={filters.category}
+                    name="company"
+                    value={filters.company}
                     onChange={handleChange}
-                    className="p-3 bg-gray-700 rounded-lg text-white capitalize focus:outline-none"
+                    className="p-3 bg-gray-700 rounded-lg text-white capitalize focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600 cursor-pointer"
                 >
-                    <option value="">All Categories</option>
-                    {categories.map(cat => (
-                        <option key={cat} value={cat} className="capitalize">{cat}</option>
+                    <option value="">All Companies</option>
+                    {companies.map(comp => (
+                        <option key={comp._id} value={comp._id}>{comp.name}</option>
                     ))}
                 </select>
 
@@ -92,9 +102,9 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
                     name="sortBy"
                     value={filters.sortBy}
                     onChange={handleChange}
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none"
+                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600 cursor-pointer"
                 >
-                    <option value="newest">Newest</option>
+                    <option value="newest">Newest First</option>
                     <option value="price-asc">Price: Low to High</option>
                     <option value="price-desc">Price: High to Low</option>
                     <option value="rating">Top Rated</option>
@@ -109,7 +119,7 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
                     value={filters.minPrice}
                     onChange={handleChange}
                     placeholder="Min Price"
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none"
+                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600"
                 />
 
                 {/* Max Price */}
@@ -119,7 +129,7 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
                     value={filters.maxPrice}
                     onChange={handleChange}
                     placeholder="Max Price"
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none"
+                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600"
                 />
 
                 {/* Min Rating */}
@@ -127,20 +137,20 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
                     name="minRating"
                     value={filters.minRating}
                     onChange={handleChange}
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none"
+                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600 cursor-pointer"
                 >
                     <option value="">Any Rating</option>
-                    <option value="4">4+ Stars</option>
-                    <option value="3">3+ Stars</option>
-                    <option value="2">2+ Stars</option>
+                    <option value="4">⭐ 4+ Stars</option>
+                    <option value="3">⭐ 3+ Stars</option>
+                    <option value="2">⭐ 2+ Stars</option>
                 </select>
 
                 {/* Buttons */}
                 <div className="flex gap-2">
-                    <button type="submit" className="flex-1 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium">
-                        Apply
+                    <button type="submit" className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-medium shadow-lg shadow-orange-500/20">
+                        Apply Filters
                     </button>
-                    <button type="button" onClick={handleReset} className="px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors">
+                    <button type="button" onClick={handleReset} className="px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors border border-gray-500">
                         Reset
                     </button>
                 </div>

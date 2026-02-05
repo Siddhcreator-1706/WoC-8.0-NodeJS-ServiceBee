@@ -22,10 +22,10 @@ router.get('/:id', getServiceById);
 // Protected routes
 router.post('/:id/rate', protect, rateService);
 
-// Admin/Superuser routes
-router.post('/', protect, authorize('admin', 'superuser', 'provider'), createService);
-router.post('/:id/image', protect, authorize('admin', 'superuser', 'provider'), uploadImage);
-router.put('/:id', protect, authorize('admin', 'superuser', 'provider'), updateService);
-router.delete('/:id', protect, authorize('superuser', 'provider'), deleteService);
+// Admin routes
+router.post('/', protect, authorize('admin', 'provider'), createService);
+router.post('/:id/image', protect, authorize('admin', 'provider'), uploadImage);
+router.put('/:id', protect, authorize('admin', 'provider'), updateService);
+router.delete('/:id', protect, authorize('admin', 'provider'), deleteService);
 
 module.exports = router;

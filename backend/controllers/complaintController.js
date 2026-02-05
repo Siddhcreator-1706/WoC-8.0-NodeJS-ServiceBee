@@ -17,53 +17,50 @@ const validateComplaintInput = (subject, message) => {
 // @route   POST /api/complaints
 // @access  Private
 const createComplaint = async (req, res) => {
-    uploadComplaintImages(req, res, async (err) => {
-        if (err) {
-            return res.status(400).json({ message: err.message });
+    try {
+        // Run multer middleware (Promise-based for multer v2)
+        await uploadComplaintImages(req, res);
+
+        const { serviceId, subject, message } = req.body;
+
+        const errors = validateComplaintInput(subject, message);
+        if (errors.length > 0) {
+            return res.status(400).json({ message: errors.join(', ') });
         }
 
-        try {
-            const { serviceId, subject, message } = req.body;
-
-            const errors = validateComplaintInput(subject, message);
-            if (errors.length > 0) {
-                return res.status(400).json({ message: errors.join(', ') });
-            }
-
-            const service = await Service.findById(serviceId);
-            if (!service || !service.isActive) {
-                return res.status(404).json({ message: 'Service not found or inactive' });
-            }
-
-            // Check for duplicate pending complaint
-            const existing = await Complaint.findOne({
-                user: req.user._id,
-                service: serviceId,
-                status: 'pending'
-            });
-            if (existing) {
-                return res.status(400).json({ message: 'You already have a pending complaint for this service' });
-            }
-
-            // Process uploaded images
-            const images = req.files ? req.files.map(file => ({
-                url: file.path,
-                publicId: file.filename
-            })) : [];
-
-            const complaint = await Complaint.create({
-                user: req.user._id,
-                service: serviceId,
-                subject: subject.trim(),
-                message: message.trim(),
-                images
-            });
-
-            res.status(201).json(complaint);
-        } catch (error) {
-            res.status(500).json({ message: error.message });
+        const service = await Service.findById(serviceId);
+        if (!service || !service.isActive) {
+            return res.status(404).json({ message: 'Service not found or inactive' });
         }
-    });
+
+        // Check for duplicate pending complaint
+        const existing = await Complaint.findOne({
+            user: req.user._id,
+            service: serviceId,
+            status: 'pending'
+        });
+        if (existing) {
+            return res.status(400).json({ message: 'You already have a pending complaint for this service' });
+        }
+
+        // Process uploaded images
+        const images = req.files ? req.files.map(file => ({
+            url: file.path,
+            publicId: file.filename
+        })) : [];
+
+        const complaint = await Complaint.create({
+            user: req.user._id,
+            service: serviceId,
+            subject: subject.trim(),
+            message: message.trim(),
+            images
+        });
+
+        res.status(201).json(complaint);
+    } catch (error) {
+        res.status(error.code === 'LIMIT_FILE_SIZE' ? 400 : 500).json({ message: error.message });
+    }
 };
 
 // @desc    Get user's complaints
@@ -124,7 +121,7 @@ const serviceProviderRespond = async (req, res) => {
         }
 
         if (complaint.service?.createdBy?.toString() !== req.user._id.toString() &&
-            req.user.role !== 'superuser') {
+            req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Not authorized' });
         }
 

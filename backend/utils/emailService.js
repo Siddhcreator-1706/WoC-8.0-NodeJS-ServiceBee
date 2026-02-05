@@ -15,7 +15,7 @@ const createTransporter = () => {
 
 // Get from address from env
 const getFromAddress = () => {
-    const fromName = process.env.FROM_NAME || 'ServiceBee';
+    const fromName = process.env.FROM_NAME || 'Phantom Agency';
     const fromEmail = process.env.FROM_EMAIL || process.env.SMTP_USER;
     return `"${fromName} 🎃" <${fromEmail}>`;
 };
@@ -39,21 +39,32 @@ const sendOTPEmail = async (email, otp, name = 'User') => {
     const mailOptions = {
         from: getFromAddress(),
         to: cleanEmail,
-        subject: '🎃 ServiceBee - Email Verification OTP',
+        subject: '🎃 Phantom Agency - Email Verification OTP',
         html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 30px; border-radius: 10px;">
-                <h1 style="color: #ff6600; text-align: center; font-size: 28px;">🎃 ServiceBee</h1>
-                <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <p style="color: #fff; font-size: 16px;">Hello <strong>${escapeHtml(name)}</strong>,</p>
-                    <p style="color: #ccc;">Your verification code is:</p>
-                    <div style="background: #ff6600; color: #fff; font-size: 32px; text-align: center; padding: 15px; border-radius: 8px; letter-spacing: 8px; font-weight: bold;">
-                        ${otp}
-                    </div>
-                    <p style="color: #ccc; margin-top: 20px;">This code expires in <strong>10 minutes</strong>.</p>
-                    <p style="color: #888; font-size: 12px;">If you didn't request this, please ignore this email.</p>
-                </div>
-                <p style="color: #666; text-align: center; font-size: 12px;">© 2024 ServiceBee. All rights reserved.</p>
-            </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #0f0f1a;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 10px;">
+                    <tr><td style="padding: 30px 20px;">
+                        <h1 style="color: #ff6600; text-align: center; font-size: 28px; margin: 0 0 20px 0;">🎃 Phantom Agency</h1>
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <tr><td style="padding: 20px;">
+                                <p style="color: #fff; font-size: 16px; margin: 0 0 10px 0;">Hello <strong>${escapeHtml(name)}</strong>,</p>
+                                <p style="color: #ccc; margin: 0 0 15px 0;">Your verification code is:</p>
+                                <div style="background: #ff6600; color: #fff; font-size: 28px; text-align: center; padding: 15px; border-radius: 8px; letter-spacing: 6px; font-weight: bold;">${otp}</div>
+                                <p style="color: #ccc; margin: 15px 0 5px 0;">This code expires in <strong>10 minutes</strong>.</p>
+                                <p style="color: #888; font-size: 12px; margin: 0;">If you didn't request this, please ignore this email.</p>
+                            </td></tr>
+                        </table>
+                        <p style="color: #666; text-align: center; font-size: 12px; margin: 20px 0 0 0;">© ${new Date().getFullYear()} Phantom Agency. All rights reserved.</p>
+                    </td></tr>
+                </table>
+            </body>
+            </html>
         `
     };
 
@@ -76,23 +87,34 @@ const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
     const mailOptions = {
         from: getFromAddress(),
         to: cleanEmail,
-        subject: '🔐 ServiceBee - Password Reset Request',
+        subject: '🔐 Phantom Agency - Password Reset Request',
         html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 30px; border-radius: 10px;">
-                <h1 style="color: #ff6600; text-align: center; font-size: 28px;">🎃 ServiceBee</h1>
-                <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <p style="color: #fff; font-size: 16px;">Hello <strong>${escapeHtml(name)}</strong>,</p>
-                    <p style="color: #ccc;">You requested a password reset. Click the button below:</p>
-                    <div style="text-align: center; margin: 25px 0;">
-                        <a href="${resetUrl}" style="background: #ff6600; color: #fff; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
-                            Reset Password
-                        </a>
-                    </div>
-                    <p style="color: #ccc;">Or copy this link: <a href="${resetUrl}" style="color: #ff6600;">${resetUrl}</a></p>
-                    <p style="color: #ccc;">This link expires in <strong>1 hour</strong>.</p>
-                </div>
-                <p style="color: #666; text-align: center; font-size: 12px;">© 2024 ServiceBee. All rights reserved.</p>
-            </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #0f0f1a;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 10px;">
+                    <tr><td style="padding: 30px 20px;">
+                        <h1 style="color: #ff6600; text-align: center; font-size: 28px; margin: 0 0 20px 0;">🎃 Phantom Agency</h1>
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <tr><td style="padding: 20px;">
+                                <p style="color: #fff; font-size: 16px; margin: 0 0 10px 0;">Hello <strong>${escapeHtml(name)}</strong>,</p>
+                                <p style="color: #ccc; margin: 0 0 20px 0;">You requested a password reset. Click the button below:</p>
+                                <div style="text-align: center; margin: 20px 0;">
+                                    <a href="${resetUrl}" style="background: #ff6600; color: #fff; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Reset Password</a>
+                                </div>
+                                <p style="color: #ccc; word-break: break-all; margin: 0 0 10px 0;">Or copy this link: <a href="${resetUrl}" style="color: #ff6600;">${resetUrl}</a></p>
+                                <p style="color: #ccc; margin: 0;">This link expires in <strong>1 hour</strong>.</p>
+                            </td></tr>
+                        </table>
+                        <p style="color: #666; text-align: center; font-size: 12px; margin: 20px 0 0 0;">© ${new Date().getFullYear()} Phantom Agency. All rights reserved.</p>
+                    </td></tr>
+                </table>
+            </body>
+            </html>
         `
     };
 
@@ -121,27 +143,39 @@ const sendComplaintStatusEmail = async (email, complaint, newStatus, name = 'Use
     const mailOptions = {
         from: getFromAddress(),
         to: cleanEmail,
-        subject: `📢 ServiceBee - Complaint Status Updated: ${newStatus.toUpperCase()}`,
+        subject: `📢 Phantom Agency - Complaint Status Updated: ${newStatus.toUpperCase()}`,
         html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 30px; border-radius: 10px;">
-                <h1 style="color: #ff6600; text-align: center; font-size: 28px;">🎃 ServiceBee</h1>
-                <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <p style="color: #fff; font-size: 16px;">Hello <strong>${escapeHtml(name)}</strong>,</p>
-                    <p style="color: #ccc;">Your complaint status has been updated:</p>
-                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin: 15px 0;">
-                        <p style="color: #fff; margin: 5px 0;"><strong>Subject:</strong> ${escapeHtml(complaint.subject)}</p>
-                        <p style="color: #fff; margin: 5px 0;"><strong>Service:</strong> ${escapeHtml(complaint.serviceSnapshot?.name || 'N/A')}</p>
-                        <p style="margin: 5px 0;">
-                            <strong style="color: #fff;">Status:</strong> 
-                            <span style="background: ${statusColors[newStatus] || '#666'}; color: #fff; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-size: 12px;">${newStatus}</span>
-                        </p>
-                        ${complaint.adminResponse ? `<p style="color: #ccc; margin-top: 10px;"><strong>Response:</strong><br>${escapeHtml(complaint.adminResponse)}</p>` : ''}
-                        ${complaint.serviceProviderResponse ? `<p style="color: #ccc; margin-top: 10px;"><strong>Service Provider Response:</strong><br>${escapeHtml(complaint.serviceProviderResponse)}</p>` : ''}
-                    </div>
-                    <p style="color: #888; font-size: 12px;">You can view your complaints in your account dashboard.</p>
-                </div>
-                <p style="color: #666; text-align: center; font-size: 12px;">© 2024 ServiceBee. All rights reserved.</p>
-            </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #0f0f1a;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 10px;">
+                    <tr><td style="padding: 30px 20px;">
+                        <h1 style="color: #ff6600; text-align: center; font-size: 28px; margin: 0 0 20px 0;">🎃 Phantom Agency</h1>
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <tr><td style="padding: 20px;">
+                                <p style="color: #fff; font-size: 16px; margin: 0 0 10px 0;">Hello <strong>${escapeHtml(name)}</strong>,</p>
+                                <p style="color: #ccc; margin: 0 0 15px 0;">Your complaint status has been updated:</p>
+                                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <tr><td style="padding: 15px;">
+                                        <p style="color: #fff; margin: 0 0 8px 0;"><strong>Subject:</strong> ${escapeHtml(complaint.subject)}</p>
+                                        <p style="color: #fff; margin: 0 0 8px 0;"><strong>Service:</strong> ${escapeHtml(complaint.serviceSnapshot?.name || 'N/A')}</p>
+                                        <p style="margin: 0 0 8px 0;"><strong style="color: #fff;">Status:</strong> <span style="background: ${statusColors[newStatus] || '#666'}; color: #fff; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-size: 12px;">${newStatus}</span></p>
+                                        ${complaint.adminResponse ? `<p style="color: #ccc; margin: 10px 0 0 0;"><strong>Response:</strong><br>${escapeHtml(complaint.adminResponse)}</p>` : ''}
+                                        ${complaint.serviceProviderResponse ? `<p style="color: #ccc; margin: 10px 0 0 0;"><strong>Provider Response:</strong><br>${escapeHtml(complaint.serviceProviderResponse)}</p>` : ''}
+                                    </td></tr>
+                                </table>
+                                <p style="color: #888; font-size: 12px; margin: 15px 0 0 0;">You can view your complaints in your account dashboard.</p>
+                            </td></tr>
+                        </table>
+                        <p style="color: #666; text-align: center; font-size: 12px; margin: 20px 0 0 0;">© ${new Date().getFullYear()} Phantom Agency. All rights reserved.</p>
+                    </td></tr>
+                </table>
+            </body>
+            </html>
         `
     };
 

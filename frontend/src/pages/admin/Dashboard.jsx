@@ -112,7 +112,7 @@ const ServiceManagement = () => {
                                     <td className="p-4">{service.featured ? '✅' : '❌'}</td>
                                     <td className="p-4 flex gap-2">
                                         <button onClick={() => handleEdit(service)} className="text-blue-400 hover:text-blue-300">Edit</button>
-                                        {user?.role === 'superuser' && (
+                                        {user?.role === 'admin' && (
                                             <button onClick={() => handleDelete(service._id)} className="text-red-400 hover:text-red-300">Delete</button>
                                         )}
                                     </td>
@@ -247,28 +247,30 @@ const ComplaintManagement = () => {
 
 // Main Dashboard
 const Dashboard = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, logoutAll } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('services');
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-            <nav className="px-6 py-4 flex justify-between items-center border-b border-purple-500/20">
-                <Link to="/"><h1 className="text-2xl font-bold text-orange-400" style={{ fontFamily: 'Creepster, cursive' }}>🎃 Admin Panel</h1></Link>
-                <div className="flex gap-4 items-center">
-                    {user?.role === 'superuser' && <Link to="/superuser" className="text-green-400 hover:text-green-300">Superuser</Link>}
-                    <span className="text-gray-300">{user?.name}</span>
-                    <button onClick={logout} className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg">Logout</button>
+            <div className="max-w-7xl mx-auto p-6">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Creepster, cursive' }}>Phantom <span className="text-orange-500">Admin Panel</span></h1>
+                    <p className="text-gray-400 text-sm uppercase tracking-wider">System Command Center</p>
                 </div>
-            </nav>
 
-            <div className="p-6">
                 {/* Tabs */}
-                <div className="flex gap-4 mb-8">
-                    <button onClick={() => setActiveTab('services')} className={`px-6 py-2 rounded-lg ${activeTab === 'services' ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-300'}`}>
-                        📦 Services
+                <div className="flex gap-4 mb-8 border-b border-gray-700 pb-4">
+                    <button
+                        onClick={() => setActiveTab('services')}
+                        className={`px-6 py-2 rounded-lg font-medium transition-all ${activeTab === 'services' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                    >
+                        📦 Manage Services
                     </button>
-                    <button onClick={() => setActiveTab('complaints')} className={`px-6 py-2 rounded-lg ${activeTab === 'complaints' ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-300'}`}>
+                    <button
+                        onClick={() => setActiveTab('complaints')}
+                        className={`px-6 py-2 rounded-lg font-medium transition-all ${activeTab === 'complaints' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                    >
                         📢 Complaints
                     </button>
                 </div>

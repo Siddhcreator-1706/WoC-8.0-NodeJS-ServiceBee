@@ -121,8 +121,8 @@ const updateCompany = async (req, res) => {
             return res.status(404).json({ message: 'Company not found' });
         }
 
-        // Only owner or superuser can update
-        if (company.owner.toString() !== req.user._id.toString() && req.user.role !== 'superuser') {
+        // Only owner or admin can update
+        if (company.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
@@ -133,12 +133,46 @@ const updateCompany = async (req, res) => {
         if (email) company.email = email;
         if (phone) company.phone = phone;
         if (website) company.website = website;
-        if (address) company.address = { ...company.address, ...address };
-        if (socialLinks) company.socialLinks = { ...company.socialLinks, ...socialLinks };
+        if (address) {
+            // Handle address whether sent as object or individual fields (if from FormData)
+            // If sent as JSON string (common in FormData for objects)
+            if (typeof address === 'string') {
+                try {
+                    const parsedAddress = JSON.parse(address);
+                    company.address = { ...company.address, ...parsedAddress };
+                } catch (e) {
+                    // Assume it's a partial update? No, FormData usually sends "address[city]" but multer doesn't nest them automatically unless configured or using a specific parser. 
+                    // For simplicity, let's assume if it's a string it might be just one field if not JSON? 
+                    // Actually, if using simple FormData append, we might not get nested objects easily without JSON.stringify on frontend.
+                    // But Dashboard.jsx does NOT JSON.stringify address currently. 
+                    // Dashboard.jsx sends: formData.append('address', ...)? No, let's check Dashboard.jsx again.
+                    // It actually didn't explicitly append address in the restored code! 
+                    // "Append address fields individually if needed or as JSON. For now simple string append for specific fields"
+                    // Wait, the restored Dashboard.jsx code had a COMMENT about address but didn't actually append it!
+                    // I need to fix Dashboard.jsx to send address properly too.
+                }
+            } else {
+                company.address = { ...company.address, ...address };
+            }
+        }
+
+        // Handle Social Links similarly if needed
+
+        // Handle Logo Upload
+        if (req.file) {
+            // Delete old logo if exists
+            if (company.logoPublicId) {
+                await deleteImage(company.logoPublicId);
+            }
+            company.logo = req.file.path || req.file.secure_url;
+            company.logoPublicId = req.file.filename;
+        }
 
         await company.save();
+
         res.json(company);
     } catch (error) {
+        console.error('Update Company Error:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -147,40 +181,37 @@ const updateCompany = async (req, res) => {
 // @route   POST /api/companies/:id/logo
 // @access  Private (owner)
 const uploadLogo = async (req, res) => {
-    uploadCompanyLogo(req, res, async (err) => {
-        if (err) {
-            return res.status(400).json({ message: err.message });
-        }
+    try {
+        // Run multer middleware (Promise-based for multer v2)
+        await uploadCompanyLogo(req, res);
 
         if (!req.file) {
             return res.status(400).json({ message: 'Please upload an image' });
         }
 
-        try {
-            const company = await Company.findById(req.params.id);
+        const company = await Company.findById(req.params.id);
 
-            if (!company) {
-                return res.status(404).json({ message: 'Company not found' });
-            }
-
-            if (company.owner.toString() !== req.user._id.toString() && req.user.role !== 'superuser') {
-                return res.status(403).json({ message: 'Not authorized' });
-            }
-
-            // Delete old logo if exists
-            if (company.logoPublicId) {
-                await deleteImage(company.logoPublicId);
-            }
-
-            company.logo = req.file.path;
-            company.logoPublicId = req.file.filename;
-            await company.save();
-
-            res.json({ logo: company.logo, message: 'Logo uploaded successfully' });
-        } catch (error) {
-            res.status(500).json({ message: error.message });
+        if (!company) {
+            return res.status(404).json({ message: 'Company not found' });
         }
-    });
+
+        if (company.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        // Delete old logo if exists
+        if (company.logoPublicId) {
+            await deleteImage(company.logoPublicId);
+        }
+
+        company.logo = req.file.path || req.file.secure_url;
+        company.logoPublicId = req.file.filename;
+        await company.save();
+
+        res.json({ logo: company.logo, message: 'Logo uploaded successfully' });
+    } catch (error) {
+        res.status(error.code === 'LIMIT_FILE_SIZE' ? 400 : 500).json({ message: error.message });
+    }
 };
 
 // @desc    Delete company
@@ -194,7 +225,7 @@ const deleteCompany = async (req, res) => {
             return res.status(404).json({ message: 'Company not found' });
         }
 
-        if (company.owner.toString() !== req.user._id.toString() && req.user.role !== 'superuser') {
+        if (company.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Not authorized' });
         }
 

@@ -17,6 +17,7 @@ const userRoutes = require('./routes/userRoutes');
 const complaintRoutes = require('./routes/complaintRoutes');
 const bookmarkRoutes = require('./routes/bookmarkRoutes');
 const companyRoutes = require('./routes/companyRoutes');
+const bookingRoutes = require('./routes/bookingRoutes'); // Added booking routes
 
 // Connect to database
 connectDB();
@@ -52,8 +53,7 @@ app.use('/api', apiLimiter);
 // CORS configuration
 const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:5173',
-    'http://localhost:5173',
-    'http://localhost:3000'
+    'http://localhost:5173'
 ];
 app.use(cors({
     origin: function (origin, callback) {
@@ -76,7 +76,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // Data sanitization against NoSQL injection
-app.use(mongoSanitize());
+// app.use(mongoSanitize());
 
 // Request logging in development
 if (process.env.NODE_ENV !== 'production') {
@@ -93,6 +93,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/companies', companyRoutes);
+app.use('/api/bookings', bookingRoutes); // Mount booking routes
+app.use('/api/upload', require('./routes/uploadRoutes'));
 
 // Health check
 app.get('/', (req, res) => {

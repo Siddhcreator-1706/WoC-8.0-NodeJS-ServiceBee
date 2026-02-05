@@ -60,14 +60,7 @@ const Services = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
             {/* Navbar */}
-            <nav className="px-6 py-4 flex justify-between items-center border-b border-purple-500/20 sticky top-0 bg-gray-900/80 backdrop-blur-sm z-50">
-                <Link to="/">
-                    <h1 className="text-2xl font-bold text-orange-400" style={{ fontFamily: 'Creepster, cursive' }}>
-                        🎃 ServiceBee
-                    </h1>
-                </Link>
-                <Link to="/" className="text-gray-300 hover:text-orange-400">← Home</Link>
-            </nav>
+
 
             <div className="px-6 py-8 max-w-7xl mx-auto">
                 <h2 className="text-4xl font-bold text-center text-white mb-8" style={{ fontFamily: 'Creepster, cursive' }}>
@@ -94,7 +87,15 @@ const Services = () => {
                                     </div>
                                     <div className="p-5">
                                         <div className="flex justify-between items-start mb-2">
-                                            <h3 className="text-xl font-bold text-orange-400">{service.name}</h3>
+                                            <div className="flex items-center gap-2">
+                                                {service.company?.logo && (
+                                                    <img src={service.company.logo} alt={service.company.name} className="w-8 h-8 rounded-full border border-gray-600 object-cover" />
+                                                )}
+                                                <div>
+                                                    <h3 className="text-xl font-bold text-orange-400 leading-tight">{service.name}</h3>
+                                                    <span className="text-xs text-gray-500 block">{service.company?.name}</span>
+                                                </div>
+                                            </div>
                                             <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded capitalize">{service.category}</span>
                                         </div>
                                         <p className="text-gray-400 text-sm mb-2">📍 {service.location}</p>

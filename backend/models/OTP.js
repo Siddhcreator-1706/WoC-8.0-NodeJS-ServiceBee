@@ -31,7 +31,7 @@ const otpSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['user', 'provider'],
+        enum: ['user', 'provider', 'admin'],
         default: 'user'
     },
     expiresAt: {
@@ -43,8 +43,8 @@ const otpSchema = mongoose.Schema({
     timestamps: true
 });
 
-// Hash OTP before saving for security
-otpSchema.pre('save', async function (next) {
+// Hash OTP before saving for security (Mongoose 9.x async middleware - no 'next' needed)
+otpSchema.pre('save', async function () {
     if (this.isModified('otp')) {
         const salt = await bcrypt.genSalt(10);
         this.otp = await bcrypt.hash(this.otp, salt);
@@ -54,7 +54,7 @@ otpSchema.pre('save', async function (next) {
         const salt = await bcrypt.genSalt(10);
         this.password = await bcrypt.hash(this.password, salt);
     }
-    next();
+    // Mongoose 9.x: async middleware auto-calls next() when promise resolves
 });
 
 // Verify OTP

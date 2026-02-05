@@ -37,7 +37,7 @@ const updateUserRole = async (req, res) => {
     try {
         const { role } = req.body;
 
-        if (!['user', 'admin', 'superuser'].includes(role)) {
+        if (!['user', 'admin'].includes(role)) {
             return res.status(400).json({ message: 'Invalid role' });
         }
 
@@ -77,7 +77,7 @@ const deleteUser = async (req, res) => {
         const canDeleteCheck = await User.canDelete(req.params.id);
 
         if (!canDeleteCheck.canDelete) {
-            // If force=true and superuser, use soft delete (deactivate)
+            // If force=true and admin, use soft delete (deactivate)
             if (force === 'true') {
                 await User.softDelete(req.params.id, reason || 'Account deactivated by admin');
                 return res.json({

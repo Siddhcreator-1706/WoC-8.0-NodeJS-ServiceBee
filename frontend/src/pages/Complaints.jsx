@@ -106,10 +106,7 @@ const Complaints = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-            <nav className="px-6 py-4 flex justify-between items-center border-b border-purple-500/20">
-                <Link to="/"><h1 className="text-2xl font-bold text-orange-400" style={{ fontFamily: 'Creepster, cursive' }}>🎃 ServiceBee</h1></Link>
-                <Link to="/profile" className="text-gray-300 hover:text-orange-400">← Profile</Link>
-            </nav>
+            {/* Navbar is handled by App.jsx layout */}
 
             <div className="max-w-4xl mx-auto px-6 py-12">
                 <div className="flex justify-between items-center mb-8">

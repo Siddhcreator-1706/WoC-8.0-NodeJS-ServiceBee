@@ -71,8 +71,19 @@ complaintSchema.index({ status: 1, createdAt: -1 });
 complaintSchema.index({ 'serviceSnapshot.createdBy': 1, status: 1 });
 
 // Pre-save: capture service snapshot
-complaintSchema.pre('save', async function (next) {
+complaintSchema.pre('save', async function () {
     if (this.isNew) {
+        // Pre-save to check if user has existing pending complaint for same service
+        const existingComplaint = await this.constructor.findOne({
+            user: this.user,
+            service: this.service,
+            status: 'pending'
+        });
+
+        if (existingComplaint && existingComplaint._id.toString() !== this._id.toString()) {
+            throw new Error('You already have a pending complaint for this service');
+        }
+
         try {
             const Service = mongoose.model('Service');
             const service = await Service.findById(this.service);
@@ -88,7 +99,6 @@ complaintSchema.pre('save', async function (next) {
             // Service may not exist, continue without snapshot
         }
     }
-    next();
 });
 
 // Virtual for service name

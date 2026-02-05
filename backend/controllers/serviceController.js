@@ -151,41 +151,38 @@ const createService = async (req, res) => {
 // @route   POST /api/services/:id/image
 // @access  Private/Admin/Superuser
 const uploadImage = async (req, res) => {
-    uploadServiceImage(req, res, async (err) => {
-        if (err) {
-            return res.status(400).json({ message: err.message });
-        }
+    try {
+        // Run multer middleware (Promise-based for multer v2)
+        await uploadServiceImage(req, res);
 
         if (!req.file) {
             return res.status(400).json({ message: 'Please upload an image' });
         }
 
-        try {
-            const service = await Service.findById(req.params.id);
+        const service = await Service.findById(req.params.id);
 
-            if (!service) {
-                return res.status(404).json({ message: 'Service not found' });
-            }
-
-            // Check authorization
-            if (service.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'superuser') {
-                return res.status(403).json({ message: 'Not authorized' });
-            }
-
-            // Delete old image if exists
-            if (service.imagePublicId) {
-                await deleteImage(service.imagePublicId);
-            }
-
-            service.image = req.file.path;
-            service.imagePublicId = req.file.filename;
-            await service.save();
-
-            res.json({ image: service.image, message: 'Image uploaded successfully' });
-        } catch (error) {
-            res.status(500).json({ message: error.message });
+        if (!service) {
+            return res.status(404).json({ message: 'Service not found' });
         }
-    });
+
+        // Check authorization
+        if (service.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        // Delete old image if exists
+        if (service.imagePublicId) {
+            await deleteImage(service.imagePublicId);
+        }
+
+        service.image = req.file.path;
+        service.imagePublicId = req.file.filename;
+        await service.save();
+
+        res.json({ image: service.image, message: 'Image uploaded successfully' });
+    } catch (error) {
+        res.status(error.code === 'LIMIT_FILE_SIZE' ? 400 : 500).json({ message: error.message });
+    }
 };
 
 // @desc    Update a service
@@ -201,7 +198,7 @@ const updateService = async (req, res) => {
 
         // Check authorization
         if (service.createdBy.toString() !== req.user._id.toString() &&
-            req.user.role !== 'superuser' && req.user.role !== 'admin') {
+            req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
@@ -233,7 +230,7 @@ const deleteService = async (req, res) => {
         }
 
         // Check authorization
-        if (req.user.role !== 'superuser' && service.createdBy.toString() !== req.user._id.toString()) {
+        if (req.user.role !== 'admin' && service.createdBy.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
@@ -292,6 +289,18 @@ const rateService = async (req, res) => {
 
         if (!service || !service.isActive) {
             return res.status(404).json({ message: 'Service not found' });
+        }
+
+        // Check for verified booking
+        const Booking = require('../models/Booking');
+        const hasBooking = await Booking.findOne({
+            user: req.user._id,
+            service: req.params.id,
+            status: 'completed'
+        });
+
+        if (!hasBooking) {
+            return res.status(403).json({ message: 'You can only rate services you have booked and completed' });
         }
 
         const existingIndex = service.ratings.findIndex(

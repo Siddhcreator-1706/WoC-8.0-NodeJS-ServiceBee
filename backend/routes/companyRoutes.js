@@ -11,19 +11,21 @@ const {
     verifyCompany
 } = require('../controllers/companyController');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { uploadCompanyLogoMiddleware } = require('../config/cloudinary');
 
 // Public routes
 router.get('/', getCompanies);
-router.get('/:id', getCompanyById);
 
 // Protected routes
-router.get('/user/me', protect, getMyCompany);
-router.post('/', protect, authorize('admin', 'superuser'), createCompany);
-router.put('/:id', protect, updateCompany);
+router.get('/me', protect, getMyCompany); // Moved up to match /me before /:id
+router.get('/:id', getCompanyById);
+
+router.post('/', protect, authorize('admin', 'provider'), createCompany); // Allow providers to create company
+router.put('/:id', protect, uploadCompanyLogoMiddleware, updateCompany);
 router.post('/:id/logo', protect, uploadLogo);
 router.delete('/:id', protect, deleteCompany);
 
-// Superuser only
-router.put('/:id/verify', protect, authorize('superuser'), verifyCompany);
+// Admin only
+router.put('/:id/verify', protect, authorize('admin'), verifyCompany);
 
 module.exports = router;

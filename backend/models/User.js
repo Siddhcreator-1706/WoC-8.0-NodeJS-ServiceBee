@@ -28,13 +28,17 @@ const userSchema = mongoose.Schema({
         type: String,
         default: 'default-avatar.png'
     },
-    location: {
+    city: {
+        type: String,
+        trim: true
+    },
+    state: {
         type: String,
         trim: true
     },
     role: {
         type: String,
-        enum: ['user', 'provider', 'admin', 'superuser'],
+        enum: ['user', 'provider', 'admin'],
         default: 'user'
     },
     // For service providers - link to their company
@@ -61,13 +65,17 @@ userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 
 // Encrypt password using bcrypt
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
     if (!this.isModified('password')) {
-        return next();
+        // Mongoose 9.x: async middleware auto-calls next() when promise resolves
+        return;
+    }
+    // Prevent double hashing if password is already hashed (from PendingUser transfer)
+    if (this.password.startsWith('$2a$') || this.password.startsWith('$2b$')) {
+        return;
     }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
 });
 
 // Match user entered password to hashed password in database
@@ -133,13 +141,13 @@ userSchema.statics.forceDelete = async function (userId) {
 };
 
 // Pre-delete hook (regular delete - only works if no active complaints)
-userSchema.pre('deleteOne', { document: true, query: false }, async function (next) {
+userSchema.pre('deleteOne', { document: true, query: false }, async function () {
     const userId = this._id;
     const User = mongoose.model('User');
 
     const check = await User.canDelete(userId);
     if (!check.canDelete) {
-        return next(new Error(check.message));
+        throw new Error(check.message);
     }
 
     // Safe delete - clean up
@@ -153,8 +161,6 @@ userSchema.pre('deleteOne', { document: true, query: false }, async function (ne
         { 'ratings.user': userId },
         { $pull: { ratings: { user: userId } } }
     );
-
-    next();
 });
 
 module.exports = mongoose.model('User', userSchema);

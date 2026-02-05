@@ -16,16 +16,16 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 router.post('/', protect, createComplaint);
 router.get('/me', protect, getMyComplaints);
 
-// Service provider routes (admin/superuser who created services)
-router.get('/my-services', protect, authorize('admin', 'superuser'), getServiceProviderComplaints);
-router.put('/:id/respond', protect, authorize('admin', 'superuser'), serviceProviderRespond);
+// Service provider routes (admin who created services)
+router.get('/my-services', protect, authorize('admin'), getServiceProviderComplaints);
+router.put('/:id/respond', protect, authorize('admin'), serviceProviderRespond);
 
 // Admin routes
-router.get('/', protect, authorize('admin', 'superuser'), getAllComplaints);
-router.get('/stats', protect, authorize('admin', 'superuser'), getComplaintStats);
-router.put('/:id', protect, authorize('admin', 'superuser'), updateComplaintStatus);
+router.get('/', protect, authorize('admin'), getAllComplaints);
+router.get('/stats', protect, authorize('admin'), getComplaintStats);
+router.put('/:id', protect, authorize('admin'), updateComplaintStatus);
 
-// Superuser only
-router.delete('/:id', protect, authorize('superuser'), deleteComplaint);
+// Admin only
+router.delete('/:id', protect, authorize('admin'), deleteComplaint);
 
 module.exports = router;

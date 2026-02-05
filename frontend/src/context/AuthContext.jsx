@@ -84,8 +84,16 @@ export function AuthProvider({ children }) {
         setUser(null);
     }, []);
 
+    const logoutAll = useCallback(async () => {
+        await fetch(`${API_URL}/auth/logout-all`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        setUser(null);
+    }, []);
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, signup, logout, logoutAll }}>
             {children}
         </AuthContext.Provider>
     );
