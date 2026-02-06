@@ -51,10 +51,11 @@ const apiLimiter = rateLimit({
 app.use('/api', apiLimiter);
 
 // CORS configuration
-const allowedOrigins = [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
-    'http://localhost:5173'
-];
+const allowedOrigins =
+    process.env.NODE_ENV === "production"
+        ? [process.env.FRONTEND_URL]
+        : ["http://localhost:5173"];
+
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (mobile apps, curl, etc.)
