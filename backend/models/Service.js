@@ -100,14 +100,14 @@ const serviceSchema = mongoose.Schema({
 
 // Virtual for average rating
 serviceSchema.virtual('averageRating').get(function () {
-    if (this.ratings.length === 0) return 0;
+    if (!this.ratings || this.ratings.length === 0) return 0;
     const sum = this.ratings.reduce((acc, r) => acc + r.value, 0);
     return parseFloat((sum / this.ratings.length).toFixed(1));
 });
 
 // Virtual for total reviews
 serviceSchema.virtual('totalReviews').get(function () {
-    return this.ratings.length;
+    return this.ratings ? this.ratings.length : 0;
 });
 
 // Indexes (company already indexed via index: true in schema)
@@ -152,18 +152,18 @@ serviceSchema.statics.forceDelete = async function (serviceId, serviceName) {
 };
 
 // Pre-delete hook
-serviceSchema.pre('deleteOne', { document: true, query: false }, async function (next) {
+// Pre-delete hook
+serviceSchema.pre('deleteOne', { document: true, query: false }, async function () {
     const serviceId = this._id;
     const Service = mongoose.model('Service');
     const check = await Service.canDelete(serviceId);
     if (!check.canDelete) {
-        return next(new Error(check.message));
+        throw new Error(check.message);
     }
     const Bookmark = mongoose.model('Bookmark');
     const Complaint = mongoose.model('Complaint');
     await Bookmark.deleteMany({ service: serviceId });
     await Complaint.deleteMany({ service: serviceId });
-    next();
 });
 
 module.exports = mongoose.model('Service', serviceSchema);

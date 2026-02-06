@@ -8,17 +8,19 @@ const {
     getAllComplaints,
     updateComplaintStatus,
     deleteComplaint,
-    getComplaintStats
+    getComplaintStats,
+    userResolveComplaint
 } = require('../controllers/complaintController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // User routes
 router.post('/', protect, createComplaint);
 router.get('/me', protect, getMyComplaints);
+router.put('/:id/resolve', protect, userResolveComplaint);
 
 // Service provider routes (admin who created services)
-router.get('/my-services', protect, authorize('admin'), getServiceProviderComplaints);
-router.put('/:id/respond', protect, authorize('admin'), serviceProviderRespond);
+router.get('/my-services', protect, authorize('provider', 'admin'), getServiceProviderComplaints);
+router.put('/:id/respond', protect, authorize('provider', 'admin'), serviceProviderRespond);
 
 // Admin routes
 router.get('/', protect, authorize('admin'), getAllComplaints);

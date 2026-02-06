@@ -21,37 +21,50 @@ const createComplaint = async (req, res) => {
         // Run multer middleware (Promise-based for multer v2)
         await uploadComplaintImages(req, res);
 
-        const { serviceId, subject, message } = req.body;
+        const { bookingId, subject, message } = req.body;
 
         const errors = validateComplaintInput(subject, message);
         if (errors.length > 0) {
             return res.status(400).json({ message: errors.join(', ') });
         }
 
-        const service = await Service.findById(serviceId);
-        if (!service || !service.isActive) {
-            return res.status(404).json({ message: 'Service not found or inactive' });
+        const Booking = require('../models/Booking');
+        const booking = await Booking.findById(bookingId).populate('service');
+
+        if (!booking) {
+            return res.status(404).json({ message: 'Booking not found' });
         }
 
-        // Check for duplicate pending complaint
+        // Verify ownership
+        if (booking.user.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized to complain about this booking' });
+        }
+
+        // Check for duplicate pending complaint for this booking
         const existing = await Complaint.findOne({
             user: req.user._id,
-            service: serviceId,
+            booking: bookingId,
             status: 'pending'
         });
         if (existing) {
-            return res.status(400).json({ message: 'You already have a pending complaint for this service' });
+            return res.status(400).json({ message: 'You already have a pending complaint for this booking' });
         }
 
         // Process uploaded images
+        // LOGGING FOR DEBUGGING
+        if (req.files) {
+            console.log('Uploaded files:', req.files.map(f => ({ path: f.path, secure_url: f.secure_url, filename: f.filename })));
+        }
+
         const images = req.files ? req.files.map(file => ({
-            url: file.path,
+            url: file.path || file.secure_url, // Fallback to secure_url if path is missing
             publicId: file.filename
         })) : [];
 
         const complaint = await Complaint.create({
             user: req.user._id,
-            service: serviceId,
+            booking: bookingId,
+            service: booking.service._id, // Keep service ref for easier querying
             subject: subject.trim(),
             message: message.trim(),
             images
@@ -59,6 +72,7 @@ const createComplaint = async (req, res) => {
 
         res.status(201).json(complaint);
     } catch (error) {
+        console.error('Complaint creation error:', error);
         res.status(error.code === 'LIMIT_FILE_SIZE' ? 400 : 500).json({ message: error.message });
     }
 };
@@ -70,6 +84,10 @@ const getMyComplaints = async (req, res) => {
     try {
         const complaints = await Complaint.find({ user: req.user._id })
             .populate('service', 'name location image')
+            .populate({
+                path: 'booking',
+                select: 'date status price' // Populate helpful booking details
+            })
             .sort({ createdAt: -1 });
         res.json(complaints);
     } catch (error) {
@@ -89,10 +107,14 @@ const getServiceProviderComplaints = async (req, res) => {
 
         const complaints = await Complaint.find({
             service: { $in: serviceIds },
-            status: { $in: ['pending', 'in-progress'] }
+            status: { $in: ['pending', 'in-progress', 'awaiting-confirmation', 'resolved', 'rejected'] }
         })
-            .populate('user', 'name email')
+            .populate('user', 'name email phone') // Added phone for contact
             .populate('service', 'name location')
+            .populate({
+                path: 'booking',
+                select: 'date status price'
+            })
             .sort({ createdAt: -1 });
 
         res.json(complaints);
@@ -106,7 +128,7 @@ const getServiceProviderComplaints = async (req, res) => {
 // @access  Private (service owner)
 const serviceProviderRespond = async (req, res) => {
     try {
-        const { response } = req.body;
+        const { response, markResolved } = req.body;
 
         if (!response || response.trim().length < 10) {
             return res.status(400).json({ message: 'Response must be at least 10 characters' });
@@ -127,7 +149,13 @@ const serviceProviderRespond = async (req, res) => {
 
         complaint.serviceProviderResponse = response.trim();
         complaint.serviceProviderRespondedAt = new Date();
-        if (complaint.status === 'pending') complaint.status = 'in-progress';
+
+        // If provider marks as resolved, move to awaiting-confirmation
+        if (markResolved) {
+            complaint.status = 'awaiting-confirmation';
+        } else if (complaint.status === 'pending') {
+            complaint.status = 'in-progress';
+        }
 
         await complaint.save();
 
@@ -135,6 +163,34 @@ const serviceProviderRespond = async (req, res) => {
             await sendComplaintStatusEmail(complaint.user.email, complaint, complaint.status, complaint.user.name);
         }
 
+        res.json(complaint);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    User confirms resolution
+// @route   PUT /api/complaints/:id/resolve
+// @access  Private (complaint owner)
+const userResolveComplaint = async (req, res) => {
+    try {
+        const complaint = await Complaint.findById(req.params.id).populate('service', 'name');
+
+        if (!complaint) return res.status(404).json({ message: 'Complaint not found' });
+
+        if (complaint.user.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+
+        if (complaint.status !== 'awaiting-confirmation') {
+            return res.status(400).json({ message: 'Complaint cannot be resolved until the provider has proposed a resolution.' });
+        }
+
+        complaint.status = 'resolved';
+        complaint.resolvedBy = req.user._id;
+        complaint.resolvedAt = new Date();
+
+        await complaint.save();
         res.json(complaint);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -267,5 +323,6 @@ module.exports = {
     getAllComplaints,
     updateComplaintStatus,
     deleteComplaint,
-    getComplaintStats
+    getComplaintStats,
+    userResolveComplaint
 };

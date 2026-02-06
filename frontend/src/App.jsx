@@ -5,6 +5,7 @@ import AuthPage from './pages/AuthPage';
 import Services from './pages/Services';
 import ServiceDetail from './pages/ServiceDetail';
 import Profile from './pages/Profile';
+import Bookings from './pages/Bookings';
 import Complaints from './pages/Complaints';
 import Favorites from './pages/Favorites';
 import AdminDashboard from './pages/admin/Dashboard';
@@ -24,8 +25,15 @@ function App() {
           <Route path="/signup" element={<AuthPage />} />
 
 
-          {/* Main App Routes with Global Navbar */}
-          <Route element={<><Navbar /><Outlet /></>}>
+          {/* Main App Routes with Global Navbar & Premium Noise Overlay */}
+          <Route element={
+            <>
+              <Navbar />
+              <div className="min-h-screen">
+                <Outlet />
+              </div>
+            </>
+          }>
             {/* Admin Dashboard */}
             <Route path="/admin/*" element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -45,6 +53,7 @@ function App() {
             <Route path="/services/:id" element={<ProtectedRoute><ServiceDetail /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/complaints" element={<ProtectedRoute><Complaints /></ProtectedRoute>} />
+            <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
             <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
           </Route>
 

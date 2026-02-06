@@ -7,6 +7,12 @@ const complaintSchema = mongoose.Schema({
         required: [true, 'User is required'],
         index: true
     },
+    booking: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Booking',
+        required: [true, 'Booking is required'],
+        index: true
+    },
     service: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Service',
@@ -32,7 +38,7 @@ const complaintSchema = mongoose.Schema({
     status: {
         type: String,
         enum: {
-            values: ['pending', 'in-progress', 'resolved', 'rejected', 'service-unavailable'],
+            values: ['pending', 'in-progress', 'awaiting-confirmation', 'resolved', 'rejected', 'service-unavailable'],
             message: '{VALUE} is not a valid status'
         },
         default: 'pending',

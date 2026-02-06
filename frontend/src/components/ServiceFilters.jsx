@@ -7,11 +7,9 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
     const [filters, setFilters] = useState({
         location: initialFilters.location || '',
         company: initialFilters.company || '',
-        minPrice: initialFilters.minPrice || '',
         maxPrice: initialFilters.maxPrice || '',
         minRating: initialFilters.minRating || '',
         sortBy: initialFilters.sortBy || 'newest',
-        search: initialFilters.search || ''
     });
 
     useEffect(() => {
@@ -51,32 +49,25 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
 
     const handleReset = () => {
         const reset = {
-            location: '', company: '', minPrice: '', maxPrice: '',
-            minRating: '', sortBy: 'newest', search: ''
+            location: '', company: '', maxPrice: '',
+            minRating: '', sortBy: 'newest'
         };
         setFilters(reset);
         onFilter(reset);
     };
 
     return (
-        <form onSubmit={handleSubmit} className="bg-gray-800/50 p-6 rounded-xl border border-purple-500/20 mb-8">
-            <div className="grid md:grid-cols-4 gap-4 mb-4">
-                {/* Search */}
-                <input
-                    type="text"
-                    name="search"
-                    value={filters.search}
-                    onChange={handleChange}
-                    placeholder="Search services..."
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600"
-                />
+        <form onSubmit={handleSubmit} className="bg-[#15151e]/80 backdrop-blur-md p-6 rounded-2xl border border-gray-800 mb-8 shadow-xl relative overflow-hidden group">
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIi8+Cjwvc3ZnPg==')] [mask-image:linear-gradient(to_bottom,white,transparent)]" />
 
+            <div className="grid md:grid-cols-3 gap-4 mb-4 relative z-10">
                 {/* Location */}
                 <select
                     name="location"
                     value={filters.location}
                     onChange={handleChange}
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600 cursor-pointer"
+                    className="p-3 bg-[#0a0a0f] rounded-xl text-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500/50 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
                 >
                     <option value="">All Locations</option>
                     {locations.map((loc, i) => (
@@ -84,14 +75,15 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
                     ))}
                 </select>
 
-                {/* Company Filter (replaced Category) */}
+                {/* Company Filter */}
                 <select
                     name="company"
                     value={filters.company}
                     onChange={handleChange}
-                    className="p-3 bg-gray-700 rounded-lg text-white capitalize focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600 cursor-pointer"
+                    className="p-3 bg-[#0a0a0f] rounded-xl text-gray-300 capitalize focus:outline-none focus:ring-2 focus:ring-orange-500/50 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
                 >
-                    <option value="">All Companies</option>
+                    <option value="">All Covens (Companies)</option>
                     {companies.map(comp => (
                         <option key={comp._id} value={comp._id}>{comp.name}</option>
                     ))}
@@ -102,34 +94,25 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
                     name="sortBy"
                     value={filters.sortBy}
                     onChange={handleChange}
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600 cursor-pointer"
+                    className="p-3 bg-[#0a0a0f] rounded-xl text-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500/50 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
                 >
-                    <option value="newest">Newest First</option>
+                    <option value="newest">Newest Arrived</option>
                     <option value="price-asc">Price: Low to High</option>
                     <option value="price-desc">Price: High to Low</option>
                     <option value="rating">Top Rated</option>
                 </select>
             </div>
 
-            <div className="grid md:grid-cols-4 gap-4 mb-4">
-                {/* Min Price */}
-                <input
-                    type="number"
-                    name="minPrice"
-                    value={filters.minPrice}
-                    onChange={handleChange}
-                    placeholder="Min Price"
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600"
-                />
-
+            <div className="grid md:grid-cols-3 gap-4 mb-4 relative z-10">
                 {/* Max Price */}
                 <input
                     type="number"
                     name="maxPrice"
                     value={filters.maxPrice}
                     onChange={handleChange}
-                    placeholder="Max Price"
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600"
+                    placeholder="Max Price (₹)"
+                    className="p-3 bg-[#0a0a0f] rounded-xl text-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500/50 border border-gray-700 hover:border-gray-600 transition-colors placeholder-gray-600"
                 />
 
                 {/* Min Rating */}
@@ -137,7 +120,8 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
                     name="minRating"
                     value={filters.minRating}
                     onChange={handleChange}
-                    className="p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 border border-gray-600 cursor-pointer"
+                    className="p-3 bg-[#0a0a0f] rounded-xl text-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500/50 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
                 >
                     <option value="">Any Rating</option>
                     <option value="4">⭐ 4+ Stars</option>
@@ -147,10 +131,10 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
 
                 {/* Buttons */}
                 <div className="flex gap-2">
-                    <button type="submit" className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-medium shadow-lg shadow-orange-500/20">
-                        Apply Filters
+                    <button type="submit" className="flex-1 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl hover:from-orange-500 hover:to-red-500 transition-all font-bold shadow-lg shadow-orange-900/40 transform hover:-translate-y-0.5">
+                        Summon
                     </button>
-                    <button type="button" onClick={handleReset} className="px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors border border-gray-500">
+                    <button type="button" onClick={handleReset} className="px-6 py-3 bg-gray-800 text-gray-300 rounded-xl hover:bg-gray-700 transition-colors border border-gray-700 hover:text-white font-medium">
                         Reset
                     </button>
                 </div>

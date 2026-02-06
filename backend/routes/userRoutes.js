@@ -5,9 +5,15 @@ const {
     getUserById,
     updateUserRole,
     deleteUser,
-    reactivateUser
+    reactivateUser,
+    updateUserProfile,
+    updateUserPassword
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/authMiddleware');
+
+// User Profile Routes (Self-serve) - MUST BE BEFORE /:id
+router.put('/profile', protect, updateUserProfile);
+router.put('/password', protect, updateUserPassword);
 
 // Admin can view users
 router.get('/', protect, authorize('admin'), getUsers);

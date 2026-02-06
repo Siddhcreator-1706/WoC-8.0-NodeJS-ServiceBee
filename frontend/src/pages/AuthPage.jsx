@@ -32,17 +32,31 @@ const AuthPage = () => {
         name: '', email: '', password: '', confirmPassword: '', role: 'user',
         phone: '', city: '', state: '',
         companyName: '', description: '', secretKey: '',
-        logo: '' // Add logo field
+        logo: '', // Add logo field
+        terms: false // Add terms field
     });
     const [logoPreview, setLogoPreview] = useState(null); // Preview state
     const [uploadingLogo, setUploadingLogo] = useState(false); // Upload state
     const [showOTP, setShowOTP] = useState(false);
     const [otp, setOtp] = useState('');
 
-    // Persist auth mode to localStorage
+    // Persist auth mode to localStorage and clear messages on switch
     useEffect(() => {
         localStorage.setItem('auth_mode', isFlipped ? 'signup' : 'login');
+        setError('');
+        setSuccess('');
     }, [isFlipped]);
+
+    // Auto-dismiss messages
+    useEffect(() => {
+        if (error || success) {
+            const timer = setTimeout(() => {
+                setError('');
+                setSuccess('');
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [error, success]);
 
     // Validation helpers
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -58,6 +72,7 @@ const AuthPage = () => {
         if (signupData.role === 'provider') {
             if (!signupData.companyName.trim()) return 'Company name is required';
             if (!signupData.logo) return 'Company logo is required for verification';
+            if (!signupData.terms) return 'You must agree to the Terms & Conditions';
         }
         if (signupData.role === 'admin' && !signupData.secretKey.trim()) return 'Admin key is required';
         return null;
@@ -589,6 +604,21 @@ const AuthPage = () => {
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                <div className="flex items-center gap-2 pt-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="terms"
+                                                        id="signup-terms"
+                                                        checked={signupData.terms}
+                                                        onChange={(e) => setSignupData({ ...signupData, terms: e.target.checked })}
+                                                        required
+                                                        className="accent-purple-500 w-4 h-4 cursor-pointer"
+                                                    />
+                                                    <label htmlFor="signup-terms" className="text-xs text-zinc-400 cursor-pointer">
+                                                        I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 transition-colors">Terms & Conditions</a>
+                                                    </label>
+                                                </div>
                                             </motion.div>
                                         )}
                                         {signupData.role === 'admin' && (
@@ -696,8 +726,8 @@ const AuthPage = () => {
 
             <style>{`
                 html, body { overflow: hidden; }
-                /* Custom Scrollbar Styling */
-                .custom-scrollbar::-webkit-scrollbar { width: 4px; display: block; }
+                /* Custom Scrollbar Styling - Hidden */
+                .custom-scrollbar::-webkit-scrollbar { width: 0px; display: none; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(167, 139, 250, 0.3); border-radius: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(167, 139, 250, 0.5); }

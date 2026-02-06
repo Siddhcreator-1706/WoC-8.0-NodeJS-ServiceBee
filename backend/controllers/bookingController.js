@@ -49,22 +49,45 @@ const getMyBookings = async (req, res) => {
 // @desc    Get bookings for a company (provider)
 // @route   GET /api/bookings/company-bookings
 // @access  Private (Provider)
+// @desc    Get bookings for a company (provider)
+// @route   GET /api/bookings/company-bookings
+// @access  Private (Provider)
 const getCompanyBookings = async (req, res) => {
     try {
+        console.log('getCompanyBookings called for user:', req.user._id);
+
         // Find company owned by user
         const company = await Company.findOne({ owner: req.user.id });
+
         if (!company) {
+            console.log('Company not found for user:', req.user._id);
             return res.status(404).json({ message: 'Company not found' });
         }
+
+        console.log('Company found:', company._id);
 
         const bookings = await Booking.find({ company: company._id })
             .populate('user', 'name phone email city')
             .populate('service', 'name price')
             .sort({ date: 1 }); // Sort by service date
 
-        res.json(bookings);
+        // Privacy: Redact user contact info if booking is pending
+        const sanitizedBookings = bookings.map(b => {
+            const bookingObj = b.toObject();
+            if (bookingObj.status === 'pending' && bookingObj.user) {
+                bookingObj.user.phone = '🔒 Hidden (Accept to view)';
+                bookingObj.user.email = '🔒 Hidden (Accept to view)';
+                bookingObj.address = '🔒 Hidden (Accept to view)';
+            }
+            return bookingObj;
+        });
+
+        console.log(`Found ${bookings.length} company bookings`);
+
+        res.json(sanitizedBookings);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error in getCompanyBookings:', error);
+        res.status(500).json({ message: error.message, stack: error.stack });
     }
 };
 

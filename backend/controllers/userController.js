@@ -131,10 +131,68 @@ const reactivateUser = async (req, res) => {
     }
 };
 
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (user) {
+            user.name = req.body.name || user.name;
+            user.email = req.body.email || user.email;
+            user.phone = req.body.phone || user.phone;
+            user.city = req.body.city || user.city;
+            user.state = req.body.state || user.state;
+
+            const updatedUser = await user.save();
+
+            res.json({
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                phone: updatedUser.phone,
+                city: updatedUser.city,
+                state: updatedUser.state,
+                role: updatedUser.role
+            });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update user password
+// @route   PUT /api/users/password
+// @access  Private
+const updateUserPassword = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (user) {
+            if (await user.matchPassword(req.body.currentPassword)) {
+                user.password = req.body.newPassword;
+                await user.save();
+                res.json({ message: 'Password updated successfully' });
+            } else {
+                res.status(401).json({ message: 'Invalid current password' });
+            }
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getUsers,
     getUserById,
     updateUserRole,
     deleteUser,
-    reactivateUser
+    reactivateUser,
+    updateUserProfile,
+    updateUserPassword
 };

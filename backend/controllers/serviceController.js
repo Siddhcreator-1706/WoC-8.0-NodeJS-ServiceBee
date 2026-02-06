@@ -1,4 +1,6 @@
 const Service = require('../models/Service');
+const Complaint = require('../models/Complaint');
+const Bookmark = require('../models/Bookmark');
 const { uploadServiceImage, deleteImage, getPublicIdFromUrl } = require('../config/cloudinary');
 
 // @desc    Get all services with filters
@@ -175,7 +177,8 @@ const uploadImage = async (req, res) => {
             await deleteImage(service.imagePublicId);
         }
 
-        service.image = req.file.path;
+        // Use secure_url if available (standard for Cloudinary), fallback to path
+        service.image = req.file.secure_url || req.file.path;
         service.imagePublicId = req.file.filename;
         await service.save();
 
@@ -306,7 +309,6 @@ const rateService = async (req, res) => {
         const existingIndex = service.ratings.findIndex(
             r => r.user.toString() === req.user._id.toString()
         );
-
         if (existingIndex !== -1) {
             service.ratings[existingIndex].value = value;
             if (review) service.ratings[existingIndex].review = review;
@@ -321,6 +323,35 @@ const rateService = async (req, res) => {
     }
 };
 
+// @desc    Get user's own reviews
+// @route   GET /api/services/my-reviews
+// @access  Private
+const getMyReviews = async (req, res) => {
+    try {
+        const services = await Service.find({
+            'ratings.user': req.user._id
+        }).populate('company', 'name logo');
+
+        const reviews = services.map(service => {
+            const rating = service.ratings.find(r => r.user.toString() === req.user._id.toString());
+            // Defensive check: if for some reason rating is not found (shouldn't happen with query), skip it
+            if (!rating) return null;
+            return {
+                serviceId: service._id,
+                serviceName: service.name,
+                company: service.company,
+                value: rating.value,
+                review: rating.review,
+                createdAt: rating.createdAt
+            };
+        }).filter(r => r !== null);
+
+        res.json(reviews);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getServices,
     getFeaturedServices,
@@ -330,5 +361,6 @@ module.exports = {
     uploadImage,
     updateService,
     deleteService,
-    rateService
+    rateService,
+    getMyReviews
 };

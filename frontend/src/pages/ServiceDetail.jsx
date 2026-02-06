@@ -20,11 +20,31 @@ const ServiceDetail = () => {
     const [bookingDate, setBookingDate] = useState('');
     const [bookingNotes, setBookingNotes] = useState('');
     const [bookingAddress, setBookingAddress] = useState('');
+    const [canRate, setCanRate] = useState(false);
+    const [isEditingReview, setIsEditingReview] = useState(false);
 
     useEffect(() => {
         fetchService();
-        if (user) checkBookmark();
+        if (user) {
+            checkBookmark();
+            checkBookingStatus();
+        }
     }, [id, user]);
+
+    const checkBookingStatus = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/bookings/my-bookings`, { credentials: 'include' });
+            if (res.ok) {
+                const bookings = await res.json();
+                const hasCompletedBooking = bookings.some(
+                    b => (b.service._id === id || b.service === id) && b.status === 'completed'
+                );
+                setCanRate(hasCompletedBooking);
+            }
+        } catch (error) {
+            console.error('Error checking booking status:', error);
+        }
+    };
 
     const fetchService = async () => {
         try {
@@ -32,7 +52,7 @@ const ServiceDetail = () => {
             const data = await res.json();
             setService(data);
             if (user && data.ratings) {
-                const userRating = data.ratings.find(r => r.user === user._id);
+                const userRating = data.ratings.find(r => (r.user?._id || r.user) === user._id);
                 if (userRating) {
                     setRating(userRating.value);
                     setReview(userRating.review || '');
@@ -95,11 +115,25 @@ const ServiceDetail = () => {
             });
             if (res.ok) {
                 const data = await res.json();
-                setService(data);
+
+                // Manually populate the new rating with current user details for immediate display
+                // The backend returns the service with unpopulated user IDs in ratings
+                const updatedRatings = data.ratings.map(r => {
+                    if (r.user === user._id || r.user?._id === user._id) {
+                        return { ...r, user: user, date: new Date() }; // Inject current user and date
+                    }
+                    // For other ratings, preserve existing populated data if available in current state
+                    const existing = service.ratings.find(old => old._id === r._id);
+                    return existing || r;
+                });
+
+                setService({ ...data, ratings: updatedRatings });
+                setService({ ...data, ratings: updatedRatings });
                 setRating(value);
+                setIsEditingReview(false);
                 setMessage('Rating submitted!');
             } else {
-                setMessage('Failed to submit rating');
+                setMessage(data.message || 'Failed to submit rating');
             }
         } catch (error) {
             setMessage('Error submitting rating');
@@ -118,14 +152,16 @@ const ServiceDetail = () => {
         }
 
         try {
+            const formattedDate = new Date(bookingDate).toISOString();
+
             const res = await fetch(`${API_URL}/api/bookings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
                     serviceId: id,
-                    companyId: service.company._id, // Ensure service has company populated
-                    date: bookingDate,
+                    companyId: service.company._id,
+                    date: formattedDate,
                     notes: bookingNotes,
                     address: bookingAddress || user.city
                 })
@@ -137,10 +173,12 @@ const ServiceDetail = () => {
                 setShowBookingModal(false);
                 setBookingDate('');
                 setBookingNotes('');
+                setBookingAddress(''); // Reset address as requested
             } else {
                 setMessage(data.message || 'Booking failed');
             }
         } catch (error) {
+            console.error('Booking error:', error);
             setMessage('Error processing booking');
         }
     };
@@ -162,223 +200,384 @@ const ServiceDetail = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 relative">
+        <div className="min-h-screen bg-[#0f0f13] relative overflow-hidden pt-24 pb-12">
+            <div className="noise-overlay" />
+
+            {/* Background Ambience */}
+            <div className="fixed top-20 left-[10%] w-96 h-96 bg-purple-900/20 rounded-full blur-[128px] pointer-events-none" />
+            <div className="fixed bottom-20 right-[10%] w-96 h-96 bg-orange-900/10 rounded-full blur-[128px] pointer-events-none" />
 
             {/* Booking Modal */}
             <AnimatePresence>
                 {showBookingModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-                    >
+                    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6">
                         <motion.div
-                            initial={{ scale: 0.9, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.9, y: 20 }}
-                            className="bg-gray-800 border border-purple-500/30 rounded-2xl p-6 w-full max-w-md shadow-2xl"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowBookingModal(false)}
+                            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+                        />
+
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-md bg-[#15151e]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-10"
+                            style={{ boxShadow: '0 0 50px rgba(0,0,0,0.5)' }}
                         >
-                            <h3 className="text-2xl font-bold text-orange-400 mb-4" style={{ fontFamily: 'Creepster, cursive' }}>Book Service</h3>
+                            <div className="p-8">
+                                <h3 className="text-3xl font-bold text-center mb-2 font-creepster tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-purple-500">
+                                    Summon Service
+                                </h3>
+                                <p className="text-center text-gray-400 text-sm mb-6">Complete the ritual to secure your booking</p>
 
-                            <form onSubmit={handleBookService} className="space-y-4">
-                                <div>
-                                    <label className="block text-gray-400 text-sm mb-1">Preferred Date</label>
-                                    <input
-                                        type="datetime-local"
-                                        required
-                                        value={bookingDate}
-                                        onChange={(e) => setBookingDate(e.target.value)}
-                                        className="w-full p-3 bg-gray-700/50 rounded-xl text-white border border-gray-600 focus:border-purple-500 outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-400 text-sm mb-1">Address</label>
-                                    <input
-                                        type="text"
-                                        placeholder={user?.city || "Enter address"}
-                                        value={bookingAddress}
-                                        onChange={(e) => setBookingAddress(e.target.value)}
-                                        className="w-full p-3 bg-gray-700/50 rounded-xl text-white border border-gray-600 focus:border-purple-500 outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-400 text-sm mb-1">Notes (Optional)</label>
-                                    <textarea
-                                        value={bookingNotes}
-                                        onChange={(e) => setBookingNotes(e.target.value)}
-                                        placeholder="Any special instructions..."
-                                        className="w-full p-3 bg-gray-700/50 rounded-xl text-white border border-gray-600 focus:border-purple-500 outline-none h-24 resize-none"
-                                    />
-                                </div>
+                                <form onSubmit={handleBookService} className="space-y-5 relative z-10">
+                                    <div>
+                                        <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Preferred Date</label>
+                                        <input
+                                            type="datetime-local"
+                                            required
+                                            value={bookingDate}
+                                            onChange={(e) => setBookingDate(e.target.value)}
+                                            className="w-full p-3.5 bg-black/40 rounded-xl text-gray-200 border border-white/10 focus:border-purple-500 outline-none transition-colors"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Address</label>
+                                        <input
+                                            type="text"
+                                            placeholder={user?.city || "Enter address"}
+                                            value={bookingAddress}
+                                            onChange={(e) => setBookingAddress(e.target.value)}
+                                            className="w-full p-3.5 bg-black/40 rounded-xl text-gray-200 border border-white/10 focus:border-purple-500 outline-none transition-colors"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Notes (Optional)</label>
+                                        <textarea
+                                            value={bookingNotes}
+                                            onChange={(e) => setBookingNotes(e.target.value)}
+                                            placeholder="Any special instructions for the spirits..."
+                                            className="w-full p-3.5 bg-black/40 rounded-xl text-gray-200 border border-white/10 focus:border-purple-500 outline-none h-24 resize-none transition-colors"
+                                        />
+                                    </div>
 
-                                <div className="flex gap-3 mt-6">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowBookingModal(false)}
-                                        className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-purple-900/50"
-                                    >
-                                        Confirm Booking
-                                    </button>
-                                </div>
-                            </form>
+                                    <div className="flex gap-4 mt-8 pt-4 border-t border-white/5">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowBookingModal(false)}
+                                            className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl transition-colors font-medium border border-white/5"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="flex-1 py-3.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/20 transition-all border border-orange-500/20"
+                                        >
+                                            Confirm Ritual
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </motion.div>
-                    </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
 
-            <div className="max-w-4xl mx-auto px-6 py-12">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-gray-800/50 border border-purple-500/20 rounded-2xl overflow-hidden">
-                    <div className="h-56 bg-gradient-to-br from-purple-800/30 to-orange-500/20 flex items-center justify-center relative">
-                        <span className="text-8xl">🎃</span>
-                        <button
-                            onClick={toggleBookmark}
-                            className={`absolute top-4 right-4 text-3xl ${isBookmarked ? 'text-yellow-400' : 'text-gray-400'} hover:scale-110 transition-transform`}
-                        >
-                            {isBookmarked ? '🔖' : '📑'}
-                        </button>
-                    </div>
+            <div className="max-w-5xl mx-auto px-6">
+                {/* Back Button */}
+                <Link to="/services" className="inline-flex items-center gap-2 text-gray-400 hover:text-orange-400 mb-8 transition-colors group">
+                    <svg className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    Back to Services
+                </Link>
 
-                    <div className="p-8">
-                        <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-                            <div>
-                                <h2 className="text-4xl font-bold text-orange-400 mb-2" style={{ fontFamily: 'Creepster, cursive' }}>{service.name}</h2>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full capitalize">{service.category}</span>
-                                    {service.company && (
-                                        <span className="text-sm text-gray-400">by {service.company.name}</span>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column: Image & Quick Stats */}
+                    <div className="lg:col-span-2 space-y-8">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="premium-card rounded-2xl overflow-hidden group"
+                        >
+                            <div className="h-64 sm:h-96 relative overflow-hidden">
+                                {service.image ? (
+                                    <img
+                                        src={service.image}
+                                        alt={service.name}
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                    />
+                                ) : service.company?.logo ? (
+                                    <div className="w-full h-full bg-[#1a1a20] flex items-center justify-center p-12">
+                                        <img
+                                            src={service.company.logo}
+                                            alt={service.company.name}
+                                            className="max-h-full max-w-full opacity-60 filter grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-purple-900/20 to-orange-900/20 flex items-center justify-center">
+                                        <span className="text-8xl opacity-30 group-hover:scale-110 transition-transform duration-500">🎃</span>
+                                    </div>
+                                )}
+
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f13] via-[#0f0f13]/60 to-transparent opacity-90" />
+
+                                <div className="absolute top-4 right-4 z-20">
+                                    <button
+                                        onClick={toggleBookmark}
+                                        className={`p-3 rounded-xl backdrop-blur-md border transition-all ${isBookmarked
+                                            ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)]'
+                                            : 'bg-black/40 border-white/10 text-gray-400 hover:text-white hover:bg-black/60'}`}
+                                    >
+                                        <svg className="w-6 h-6" fill={isBookmarked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div className="absolute bottom-0 left-0 w-full p-8 z-10">
+                                    <div className="flex flex-wrap items-center gap-3 mb-3">
+                                        <span className="px-3 py-1 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-300 text-xs font-semibold uppercase tracking-wider backdrop-blur-md">
+                                            {service.category}
+                                        </span>
+                                        {service.company && (
+                                            <span className="px-3 py-1 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-semibold uppercase tracking-wider backdrop-blur-md">
+                                                By {service.company.name}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h1 className="text-4xl sm:text-5xl font-bold text-white mb-2 font-creepster tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                        {service.name}
+                                    </h1>
+                                    <div className="flex items-center text-gray-300 gap-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                                        <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                        <span className="font-medium tracking-wide">{service.location}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Description & Features */}
+                        <div className="grid gap-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                className="premium-card rounded-2xl p-8"
+                            >
+                                <h3 className="text-xl font-bold text-white mb-4 font-creepster tracking-wider">About the Service</h3>
+                                <p className="text-gray-400 leading-relaxed text-lg">{service.description}</p>
+
+                                {service.tags && service.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-6">
+                                        {service.tags.map((tag, index) => (
+                                            <span key={index} className="px-3 py-1 bg-white/5 text-gray-300 text-sm rounded-lg border border-white/5">
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </motion.div>
+
+                            {/* service.tags && service.tags.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                    className="premium-card rounded-2xl p-8"
+                                >
+                                    <h3 className="text-xl font-bold text-gray-200 mb-6 flex items-center gap-2">
+                                        <span className="text-purple-400">✨</span> Experience Highlights
+                                    </h3>
+                                    <div className="flex flex-wrap gap-3">
+                                        {service.tags.map((tag, index) => (
+                                            <span key={index} className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:border-purple-500/50 hover:text-purple-300 transition-colors cursor-default">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            ) */}
+                        </div>
+
+                        {/* Reviews Section */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="premium-card rounded-2xl p-8"
+                        >
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="text-2xl font-bold text-white font-creepster tracking-wider">
+                                    Customer Reviews <span className="text-gray-500 text-lg font-sans">({service.ratings?.length || 0})</span>
+                                </h3>
+                                {canRate && (
+                                    <span className="hidden"></span>
+                                )}
+                            </div>
+
+                            {/* Rating Form */}
+                            {canRate && (
+                                <div className="mb-10 p-6 bg-white/5 rounded-xl border border-white/5">
+                                    {service.ratings?.some(r => (r.user?._id || r.user) === user?._id) && !isEditingReview ? (
+                                        // Read-Only View
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h4 className="text-lg font-bold text-white mb-1">Your Review</h4>
+                                                    <div className="flex text-yellow-500 text-lg">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <span key={i} className={i < rating ? 'opacity-100' : 'opacity-30'}>★</span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => setIsEditingReview(true)}
+                                                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold transition-colors border border-white/10"
+                                                >
+                                                    Update Review
+                                                </button>
+                                            </div>
+                                            <p className="text-gray-300 italic pl-4 border-l-2 border-purple-500/50">
+                                                "{review}"
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        // Edit Form
+                                        <>
+                                            <h4 className="text-lg font-bold text-gray-200 mb-4">
+                                                {service.ratings?.some(r => (r.user?._id || r.user) === user?._id) ? 'Update Your Review' : 'Rate this Experience'}
+                                            </h4>
+                                            <div className="flex gap-2 mb-6">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <button
+                                                        key={star}
+                                                        onClick={() => setRating(star)}
+                                                        disabled={submitting}
+                                                        className={`text-3xl transition-all hover:scale-110 focus:outline-none ${star <= rating ? 'text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.3)]' : 'text-gray-700 hover:text-gray-500'}`}
+                                                    >
+                                                        ★
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <textarea
+                                                value={review}
+                                                onChange={(e) => setReview(e.target.value)}
+                                                placeholder="Share your haunted experience..."
+                                                className="w-full p-4 bg-black/40 rounded-xl text-gray-200 border border-white/10 focus:border-purple-500 outline-none h-32 resize-none mb-4 transition-colors"
+                                            />
+                                            <div className="flex gap-3">
+                                                <button
+                                                    onClick={() => handleRate(rating)}
+                                                    disabled={submitting || rating === 0}
+                                                    className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-900/20"
+                                                >
+                                                    {submitting ? 'Saving...' : 'Save Review'}
+                                                </button>
+                                                {isEditingReview && (
+                                                    <button
+                                                        onClick={() => {
+                                                            setIsEditingReview(false);
+                                                            // Reset to saved state
+                                                            const userRating = service.ratings.find(r => (r.user?._id || r.user) === user?._id);
+                                                            if (userRating) {
+                                                                setRating(userRating.value);
+                                                                setReview(userRating.review);
+                                                            }
+                                                        }}
+                                                        disabled={submitting}
+                                                        className="px-6 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg font-medium transition-colors border border-white/5"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </>
                                     )}
                                 </div>
-                            </div>
-
-                            {user && user.role === 'user' && (
-                                <button
-                                    onClick={() => setShowBookingModal(true)}
-                                    className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-green-900/30 transition-all transform hover:scale-105"
-                                >
-                                    Book Now
-                                </button>
                             )}
-                        </div>
 
-                        <p className="text-purple-400 mb-2 flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                            {service.location}
-                        </p>
-
-                        <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-700 mb-8">
-                            <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-2">Description</h3>
-                            <p className="text-gray-300 text-lg leading-relaxed">{service.description}</p>
-                        </div>
-
-                        <div className="flex items-center gap-6 mb-8">
-                            <div className="bg-green-500/10 input-bordered border border-green-500/30 px-6 py-3 rounded-xl">
-                                <span className="block text-xs text-green-400 uppercase tracking-wider">Price</span>
-                                <span className="text-3xl text-green-400 font-bold">${service.price}</span>
-                            </div>
-                            <div className="bg-yellow-500/10 border border-yellow-500/30 px-6 py-3 rounded-xl">
-                                <span className="block text-xs text-yellow-400 uppercase tracking-wider">Rating</span>
-                                <span className="text-2xl text-yellow-400 font-bold">⭐ {service.averageRating || 'N/A'}</span>
-                            </div>
-                        </div>
-
-                        {message && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className={`p-4 rounded-xl mb-6 text-center font-medium ${message.includes('success') ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}
-                            >
-                                {message}
-                            </motion.div>
-                        )}
-
-                        {/* Rating Section */}
-                        {canRate ? (
-                            <div className="border-t border-purple-500/20 pt-8">
-                                <h3 className="text-2xl text-white mb-6 font-bold">Rate this Service</h3>
-                                <div className="flex gap-2 mb-4">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <button
-                                            key={star}
-                                            onClick={() => setRating(star)}
-                                            disabled={submitting}
-                                            className={`text-3xl transition-transform hover:scale-110 ${star <= rating ? 'text-yellow-400' : 'text-gray-600'}`}
-                                        >
-                                            ★
-                                        </button>
-                                    ))}
-                                </div>
-                                <textarea
-                                    value={review}
-                                    onChange={(e) => setReview(e.target.value)}
-                                    placeholder="Share your experience with this service..."
-                                    className="w-full p-4 bg-gray-900/50 rounded-xl text-white border border-gray-700 focus:border-purple-500 outline-none h-32 resize-none mb-4 transition-all"
-                                />
-                                <button
-                                    onClick={() => handleRate(rating)}
-                                    disabled={submitting || rating === 0}
-                                    className="px-8 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
-                                >
-                                    {submitting ? 'Submitting...' : 'Submit Review'}
-                                </button>
-                            </div>
-                        ) : (
-                            user && user.role === 'user' && (
-                                <div className="border-t border-purple-500/20 pt-8 text-center text-gray-500 italic">
-                                    <p>You can rate this service after you satisfy a completed booking.</p>
-                                </div>
-                            )
-                        )}
-
-                        {/* Past Reviews List */}
-                        <div className="mt-12 border-t border-purple-500/20 pt-8">
-                            <h3 className="text-2xl text-white mb-6 font-bold">Past Reviews ({service.ratings?.length || 0})</h3>
-                            {service.ratings && service.ratings.length > 0 ? (
-                                <div className="space-y-6">
-                                    {service.ratings.map((rate, index) => (
-                                        <div key={index} className="bg-gray-900/40 p-6 rounded-xl border border-gray-700/50">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-purple-500 flex items-center justify-center text-white font-bold">
+                            {/* Reviews List */}
+                            <div className="space-y-6">
+                                {service.ratings && service.ratings.length > 0 ? (
+                                    service.ratings.map((rate, index) => (
+                                        <div key={index} className="pb-6 border-b border-white/5 last:border-0 last:pb-0">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center text-orange-400 font-bold shadow-inner">
                                                         {rate.user?.name?.charAt(0) || 'U'}
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-bold text-white">{rate.user?.name || 'Anonymous User'}</h4>
-                                                        <span className="text-xs text-gray-500">{new Date(rate.date).toLocaleDateString()}</span>
+                                                        <h4 className="font-bold text-gray-200">{rate.user?.name || 'Anonymous'}</h4>
+                                                        <span className="text-xs text-gray-500">{new Date(rate.date || rate.createdAt || Date.now()).toLocaleDateString()}</span>
                                                     </div>
                                                 </div>
-                                                <div className="flex text-yellow-400">
+                                                <div className="flex text-yellow-400 text-sm gap-0.5">
                                                     {[...Array(5)].map((_, i) => (
-                                                        <span key={i} className={i < rate.value ? 'opacity-100' : 'opacity-30'}>★</span>
+                                                        <span key={i} className={i < rate.value ? 'opacity-100' : 'opacity-20'}>★</span>
                                                     ))}
                                                 </div>
                                             </div>
-                                            {rate.review && <p className="text-gray-300 mt-2 italic">"{rate.review}"</p>}
+                                            {rate.review && <p className="text-gray-400 pl-14 italic leading-relaxed">"{rate.review}"</p>}
                                         </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-gray-500 italic">No reviews yet. Be the first to rate!</p>
-                            )}
-                        </div>
-
-                        {/* Complaint Link */}
-                        {user && (
-                            <div className="mt-8 pt-6 border-t border-gray-800 text-center">
-                                <Link to="/complaints" className="inline-flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors text-sm hover:underline">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                    Report an issue with this service
-                                </Link>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-12 text-gray-500">
+                                        <span className="text-4xl block mb-2 opacity-30">🕸️</span>
+                                        No reviews yet. Be the first to haunt this service!
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        </motion.div>
                     </div>
-                </motion.div>
+
+                    {/* Right Column: Pricing & Actions */}
+                    <div className="lg:col-span-1">
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="premium-card rounded-2xl p-6 sticky top-24 space-y-6"
+                        >
+                            <div className="text-center pb-6 border-b border-white/5">
+                                <span className="block text-gray-400 text-sm uppercase tracking-widest mb-1">Price per Service</span>
+                                <div className="flex justify-center items-baseline gap-1">
+                                    <span className="text-lg text-orange-500 font-bold">₹</span>
+                                    <span className="text-5xl font-bold text-white tracking-tight">{service.price}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between items-center py-2 px-4 bg-white/5 rounded-lg">
+                                <span className="text-gray-400">Rating</span>
+                                <span className="text-yellow-400 font-bold flex items-center gap-1">
+                                    {service.averageRating ? service.averageRating.toFixed(1) : 'N/A'} <span className="text-sm">★</span>
+                                </span>
+                            </div>
+
+                            {user && user.role === 'user' ? (
+                                <button
+                                    onClick={() => setShowBookingModal(true)}
+                                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/30 transition-all transform hover:scale-[1.02] active:scale-[0.98] border border-orange-500/20"
+                                >
+                                    Book Now
+                                </button>
+                            ) : (
+                                <div className="text-center p-4 bg-white/5 rounded-xl border border-white/5">
+                                    <p className="text-gray-400 text-sm">
+                                        {!user ? (
+                                            <>
+                                                <Link to="/login" className="text-orange-400 hover:underline">Login</Link> to book this service.
+                                            </>
+                                        ) : (
+                                            "Providers cannot book services."
+                                        )}
+                                    </p>
+                                </div>
+                            )}
+                        </motion.div>
+                    </div>
+                </div>
             </div>
         </div>
     );

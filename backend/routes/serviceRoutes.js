@@ -9,7 +9,8 @@ const {
     uploadImage,
     updateService,
     deleteService,
-    rateService
+    rateService,
+    getMyReviews
 } = require('../controllers/serviceController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -17,6 +18,7 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 router.get('/', getServices);
 router.get('/featured', getFeaturedServices);
 router.get('/locations', getLocations);
+router.get('/my-reviews', protect, getMyReviews);
 router.get('/:id', getServiceById);
 
 // Protected routes
