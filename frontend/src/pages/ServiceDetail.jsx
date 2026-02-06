@@ -113,9 +113,8 @@ const ServiceDetail = () => {
                 credentials: 'include',
                 body: JSON.stringify({ value, review })
             });
+            const data = await res.json();
             if (res.ok) {
-                const data = await res.json();
-
                 // Manually populate the new rating with current user details for immediate display
                 // The backend returns the service with unpopulated user IDs in ratings
                 const updatedRatings = data.ratings.map(r => {
