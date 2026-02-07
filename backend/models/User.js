@@ -61,7 +61,6 @@ const userSchema = mongoose.Schema({
 });
 
 // Indexes (email already indexed via unique: true)
-userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 
 // Encrypt password using bcrypt

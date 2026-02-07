@@ -24,6 +24,9 @@ function App() {
           <Route path="/login" element={<AuthPage />} />
           <Route path="/signup" element={<AuthPage />} />
 
+          {/* Admin Login Portal (Hidden from Navbar) */}
+          {/* Admin Login Portal (Hidden from Navbar) - REMOVED */}
+
 
           {/* Main App Routes with Global Navbar & Premium Noise Overlay */}
           <Route element={

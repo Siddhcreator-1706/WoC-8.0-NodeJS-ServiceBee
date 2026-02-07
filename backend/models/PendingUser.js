@@ -27,6 +27,7 @@ const pendingUserSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    avatar: String, // Temporary storage for user avatar
     // Extended fields for profile/company handling
     phone: String,
     city: String,

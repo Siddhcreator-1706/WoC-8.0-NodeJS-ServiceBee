@@ -345,6 +345,12 @@ const ServiceDetail = () => {
                                                 By {service.company.name}
                                             </span>
                                         )}
+                                        {service.company?.website && (
+                                            <a href={service.company.website} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-300 text-xs font-semibold uppercase tracking-wider backdrop-blur-md hover:bg-blue-500/30 transition-colors flex items-center gap-1">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                                Visit Website
+                                            </a>
+                                        )}
                                     </div>
                                     <h1 className="text-4xl sm:text-5xl font-bold text-white mb-2 font-creepster tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                                         {service.name}
@@ -367,16 +373,6 @@ const ServiceDetail = () => {
                             >
                                 <h3 className="text-xl font-bold text-white mb-4 font-creepster tracking-wider">About the Service</h3>
                                 <p className="text-gray-400 leading-relaxed text-lg">{service.description}</p>
-
-                                {service.tags && service.tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mt-6">
-                                        {service.tags.map((tag, index) => (
-                                            <span key={index} className="px-3 py-1 bg-white/5 text-gray-300 text-sm rounded-lg border border-white/5">
-                                                #{tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
                             </motion.div>
 
                             {/* service.tags && service.tags.length > 0 && (

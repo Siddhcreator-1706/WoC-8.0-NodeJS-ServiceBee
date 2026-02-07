@@ -64,10 +64,6 @@ const serviceSchema = mongoose.Schema({
     imagePublicId: {
         type: String // For Cloudinary deletion
     },
-    featured: {
-        type: Boolean,
-        default: false
-    },
     isActive: {
         type: Boolean,
         default: true
@@ -79,10 +75,6 @@ const serviceSchema = mongoose.Schema({
         index: true
     },
     ratings: [ratingSchema],
-    tags: [{
-        type: String,
-        trim: true
-    }],
     duration: {
         type: String, // e.g., "1-2 hours", "Same day"
         trim: true
@@ -111,7 +103,7 @@ serviceSchema.virtual('totalReviews').get(function () {
 });
 
 // Indexes (company already indexed via index: true in schema)
-serviceSchema.index({ name: 'text', description: 'text', location: 'text', tags: 'text' });
+serviceSchema.index({ name: 'text', description: 'text', location: 'text' });
 serviceSchema.index({ category: 1, location: 1, price: 1 });
 serviceSchema.index({ createdBy: 1 });
 

@@ -26,7 +26,7 @@ const cookieOptions = {
 // @access  Public
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, role, adminKey, phone, city, state, companyName, serviceType, description, logo } = req.body;
+        const { name, email, password, role, phone, city, state, companyName, serviceType, description, logo, avatar } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({ message: 'Please add all fields' });
@@ -34,11 +34,6 @@ const registerUser = async (req, res) => {
 
         // Validate role if provided
         let userRole = (role === 'provider') ? 'provider' : 'user';
-
-        // Check for secret admin key
-        if (adminKey && adminKey === process.env.ADMIN_SECRET_KEY) {
-            userRole = 'admin';
-        }
 
         // Properly handle email - preserve dots
         const cleanEmail = email.trim().toLowerCase();
@@ -71,6 +66,7 @@ const registerUser = async (req, res) => {
             phone,
             city,
             state,
+            avatar, // Store avatar URL
             company: (userRole === 'provider' && companyName) ? {
                 name: companyName,
                 description,
@@ -134,6 +130,7 @@ const verifyOTP = async (req, res) => {
             phone: pendingUser.phone,
             city: pendingUser.city,
             state: pendingUser.state,
+            avatar: pendingUser.avatar || 'default-avatar.png', // Transfer avatar
             isActive: true
         });
 
@@ -184,7 +181,8 @@ const verifyOTP = async (req, res) => {
             role: user.role,
             phone: user.phone,
             city: user.city,
-            state: user.state
+            state: user.state,
+            avatar: user.avatar
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -261,7 +259,8 @@ const loginUser = async (req, res) => {
                 _id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                avatar: user.avatar
             });
         } else {
             res.status(401).json({ message: 'Invalid credentials' });
@@ -324,7 +323,7 @@ const getMe = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
     try {
-        const { name, email, phone, location, currentPassword, newPassword } = req.body;
+        const { name, email, phone, city, state, currentPassword, newPassword } = req.body;
 
         const user = await User.findById(req.user._id);
 
@@ -336,9 +335,11 @@ const updateProfile = async (req, res) => {
         if (name) user.name = name;
         if (email) user.email = email.trim().toLowerCase();
         if (phone) user.phone = phone;
-        if (location) user.location = location;
+        if (city) user.city = city;
+        if (state) user.state = state;
 
         // Update password if provided
+
         if (currentPassword && newPassword) {
             const isMatch = await user.matchPassword(currentPassword);
             if (!isMatch) {

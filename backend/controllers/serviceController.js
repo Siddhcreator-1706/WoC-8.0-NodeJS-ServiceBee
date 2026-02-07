@@ -2,6 +2,7 @@ const Service = require('../models/Service');
 const Complaint = require('../models/Complaint');
 const Bookmark = require('../models/Bookmark');
 const { uploadServiceImage, deleteImage, getPublicIdFromUrl } = require('../config/cloudinary');
+const { escapeRegex } = require('../utils/security');
 
 // @desc    Get all services with filters
 // @route   GET /api/services
@@ -10,12 +11,12 @@ const getServices = async (req, res) => {
     try {
         const {
             location, category, minPrice, maxPrice, minRating,
-            featured, search, sortBy, company, page = 1, limit = 12
+            search, sortBy, company, page = 1, limit = 12
         } = req.query;
 
         const filter = { isActive: true };
 
-        if (location) filter.location = { $regex: location, $options: 'i' };
+        if (location) filter.location = { $regex: escapeRegex(location), $options: 'i' };
         if (category) filter.category = category;
         if (company) filter.company = company;
         if (minPrice || maxPrice) {
@@ -23,7 +24,7 @@ const getServices = async (req, res) => {
             if (minPrice) filter.price.$gte = Number(minPrice);
             if (maxPrice) filter.price.$lte = Number(maxPrice);
         }
-        if (featured === 'true') filter.featured = true;
+
         if (search) filter.$text = { $search: search };
 
         let sort = { createdAt: -1 };
@@ -60,19 +61,7 @@ const getServices = async (req, res) => {
     }
 };
 
-// @desc    Get featured services
-// @route   GET /api/services/featured
-// @access  Public
-const getFeaturedServices = async (req, res) => {
-    try {
-        const services = await Service.find({ featured: true, isActive: true })
-            .populate('company', 'name logo')
-            .limit(6);
-        res.json(services);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+
 
 // @desc    Get all locations
 // @route   GET /api/services/locations
@@ -93,7 +82,7 @@ const getServiceById = async (req, res) => {
     try {
         const service = await Service.findById(req.params.id)
             .populate('createdBy', 'name')
-            .populate('company', 'name logo email phone')
+            .populate('company', 'name logo email phone website socialLinks')
             .populate('ratings.user', 'name');
 
         if (service && service.isActive) {
@@ -111,7 +100,7 @@ const getServiceById = async (req, res) => {
 // @access  Private/Admin/Superuser
 const createService = async (req, res) => {
     try {
-        let { name, description, price, priceType, location, category, company, featured, tags, duration } = req.body;
+        let { name, description, price, priceType, location, category, company, duration } = req.body;
 
         // If provider, ensure they own a company and link it
         if (req.user.role === 'provider') {
@@ -137,8 +126,6 @@ const createService = async (req, res) => {
             location,
             category,
             company,
-            featured,
-            tags: tags ? tags.split(',').map(t => t.trim()) : [],
             duration,
             createdBy: req.user._id
         });
@@ -205,8 +192,7 @@ const updateService = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
-        const { tags, ...updateData } = req.body;
-        if (tags) updateData.tags = tags.split(',').map(t => t.trim());
+        const updateData = req.body;
 
         const updatedService = await Service.findByIdAndUpdate(
             req.params.id,
@@ -354,7 +340,6 @@ const getMyReviews = async (req, res) => {
 
 module.exports = {
     getServices,
-    getFeaturedServices,
     getLocations,
     getServiceById,
     createService,

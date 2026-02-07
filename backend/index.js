@@ -77,7 +77,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // Data sanitization against NoSQL injection
-// app.use(mongoSanitize());
+app.use(mongoSanitize({ allowDots: true }));
 
 // Request logging in development
 if (process.env.NODE_ENV !== 'production') {

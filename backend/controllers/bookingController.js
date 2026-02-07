@@ -17,7 +17,7 @@ const createBooking = async (req, res) => {
 
         const booking = await Booking.create({
             user: req.user.id,
-            company: companyId, // Passed from frontend or derived from service
+            company: service.company, // Securely derived from service
             service: serviceId,
             date,
             notes,

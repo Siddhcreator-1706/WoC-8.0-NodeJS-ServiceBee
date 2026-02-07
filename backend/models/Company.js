@@ -86,7 +86,6 @@ companySchema.virtual('serviceCount', {
 });
 
 // Indexes (owner already indexed via index: true in schema)
-companySchema.index({ name: 'text', description: 'text' });
 companySchema.index({ isActive: 1 });
 
 // Cascade delete: when company deleted, deactivate all services

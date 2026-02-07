@@ -43,6 +43,10 @@ const otpSchema = mongoose.Schema({
     timestamps: true
 });
 
+// Indexes
+otpSchema.index({ email: 1 });
+otpSchema.index({ otp: 1 });
+
 // Hash OTP before saving for security (Mongoose 9.x async middleware - no 'next' needed)
 otpSchema.pre('save', async function () {
     if (this.isModified('otp')) {
