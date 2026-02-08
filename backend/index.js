@@ -71,13 +71,25 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
- // Body parser
+// Body parser
 app.use(express.json({ limit: '10kb' })); // Limit body size
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
+const { csrfProtection } = require('./middleware/csrfMiddleware');
+
 // Data sanitization against NoSQL injection
 app.use(mongoSanitize());
+
+// CSRF Protection
+// Must be used after cookie-parser
+app.use(csrfProtection);
+
+// CSRF Token Endpoint
+// Frontend calls this to get the token and include it in subsequent mutation requests
+app.get('/api/csrf-token', (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+});
 
 
 

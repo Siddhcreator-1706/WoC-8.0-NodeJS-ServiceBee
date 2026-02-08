@@ -20,7 +20,7 @@
 *   **Framework:** [Express.js](https://expressjs.com/)
 *   **Database:** [MongoDB](https://www.mongodb.com/) (with Mongoose ODM)
 *   **Authentication:** JWT (JSON Web Tokens) & Cookies
-*   **Security:** Helmet, CORS, Rate Limiting, MongoSanitize, Double CSRF protection
+*   **Security:** Helmet, CORS, Rate Limiting, MongoSanitize, CSRF Protection (csurf)
 *   **File Storage:** Cloudinary (via Multer)
 *   **Email Service:** Nodemailer
 
