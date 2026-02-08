@@ -154,18 +154,8 @@ const verifyOTP = async (req, res) => {
         // Auto-login: Generate token
         const token = generateToken(user._id);
 
-        // Create session
-        const userAgent = req.headers['user-agent'] || 'Unknown';
-        const ip = req.ip || req.connection.remoteAddress;
-
-        // Create session in DB
-        const session = await Session.create({
-            user: user._id,
-            token,
-            userAgent,
-            ipAddress: ip,
-            lastActive: new Date()
-        });
+        // Create Session
+        await Session.createSession(user._id, token, req);
 
         // Set cookies
         res.cookie('jwt', token, cookieOptions);
@@ -363,7 +353,7 @@ const updateProfile = async (req, res) => {
     }
 };
 
-// @desc    Request password reset
+// @desc    Request password reset (OTP)
 // @route   POST /auth/forgot-password
 // @access  Public
 const forgotPassword = async (req, res) => {
@@ -374,66 +364,116 @@ const forgotPassword = async (req, res) => {
         const user = await User.findOne({ email: cleanEmail });
 
         if (!user) {
-            // Don't reveal if email exists
-            return res.json({ message: 'If the email exists, a reset link has been sent.' });
+            return res.status(404).json({ message: 'No account found with this email address.' });
         }
 
-        // Generate reset token
-        const resetToken = crypto.randomBytes(32).toString('hex');
-        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        // Generate 6-digit OTP
+        const otp = generateOTP();
 
-        // Store in OTP collection (reusing for reset tokens)
+        // Store in OTP collection
+        // Delete any existing OTPs for password reset for this email
         await OTP.deleteMany({ email: cleanEmail, purpose: 'password-reset' });
+
         await OTP.create({
             email: cleanEmail,
-            otp: hashedToken,
+            otp: otp, // Store plain OTP (or hash it if you prefer security over convenience, but plain for now matching signup)
             name: user.name,
-            password: 'N/A', // Not needed for reset
+            password: 'N/A',
             purpose: 'password-reset',
-            expiresAt: new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+            expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
         });
 
-        // Send email
-        await sendPasswordResetEmail(cleanEmail, resetToken, user.name);
+        // Send OTP email
+        await sendOTPEmail(cleanEmail, otp, user.name);
 
-        res.json({ message: 'If the email exists, a reset link has been sent.' });
+        res.json({ message: 'If the email exists, a verification code has been sent.' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Verify Reset OTP
+// @route   POST /auth/verify-reset-otp
+// @access  Public
+const verifyResetOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        const cleanEmail = email.trim().toLowerCase();
+
+        // Find OTP entry by email and purpose (expiresAt check included)
+        const otpEntry = await OTP.findOne({
+            email: cleanEmail,
+            purpose: 'password-reset',
+            expiresAt: { $gt: new Date() }
+        });
+
+        if (!otpEntry) {
+            return res.status(400).json({ message: 'Invalid or expired verification code' });
+        }
+
+        // Verify OTP hash
+        const isMatch = await otpEntry.verifyOTP(otp);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid verification code' });
+        }
+
+        const user = await User.findOne({ email: cleanEmail });
+        if (!user) {
+            return res.status(400).json({ message: 'User not found' });
+        }
+
+        // Generate a temporary reset token (valid for 15 mins)
+        // We use a different secret or add a type to the payload to distinguish from login tokens
+        const resetToken = jwt.sign(
+            { id: user._id, type: 'password-reset' },
+            process.env.JWT_SECRET,
+            { expiresIn: '15m' }
+        );
+
+        // Delete the used OTP
+        await OTP.deleteOne({ _id: otpEntry._id });
+
+        res.json({
+            message: 'OTP verified successfully',
+            resetToken
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
 // @desc    Reset password
-// @route   POST /auth/reset-password/:token
-// @access  Public
+// @route   POST /auth/reset-password
+// @access  Public (Protected by Reset Token)
 const resetPassword = async (req, res) => {
     try {
-        const { token } = req.params;
-        const { password } = req.body;
+        const { resetToken, newPassword } = req.body;
 
-        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
-        const otpEntry = await OTP.findOne({
-            otp: hashedToken,
-            purpose: 'password-reset',
-            expiresAt: { $gt: new Date() }
-        });
-
-        if (!otpEntry) {
-            return res.status(400).json({ message: 'Invalid or expired reset token' });
+        if (!resetToken || !newPassword) {
+            return res.status(400).json({ message: 'Token and new password are required' });
         }
 
-        const user = await User.findOne({ email: otpEntry.email });
+        // Verify token
+        let decoded;
+        try {
+            decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+        } catch (err) {
+            return res.status(401).json({ message: 'Invalid or expired reset token' });
+        }
+
+        if (decoded.type !== 'password-reset') {
+            return res.status(401).json({ message: 'Invalid token type' });
+        }
+
+        const user = await User.findById(decoded.id);
         if (!user) {
-            return res.status(400).json({ message: 'User not found' });
+            return res.status(404).json({ message: 'User not found' });
         }
 
-        user.password = password;
+        user.password = newPassword;
         await user.save();
 
-        // Delete reset token
-        await OTP.deleteOne({ _id: otpEntry._id });
-
-        res.json({ message: 'Password reset successful. Please login.' });
+        res.json({ message: 'Password reset successful. Please login with your new password.' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -449,5 +489,6 @@ module.exports = {
     getMe,
     updateProfile,
     forgotPassword,
+    verifyResetOTP,
     resetPassword
 };

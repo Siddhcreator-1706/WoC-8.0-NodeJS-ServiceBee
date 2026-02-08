@@ -77,7 +77,10 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // Data sanitization against NoSQL injection
-app.use(mongoSanitize({ allowDots: true }));
+// const mongoSanitize = require('./middleware/mongoSanitize');
+
+// Data sanitization against NoSQL injection
+// app.use(mongoSanitize());
 
 // Request logging in development
 if (process.env.NODE_ENV !== 'production') {
@@ -135,8 +138,10 @@ app.use((err, req, res, next) => {
     }
 
     // Default error
+    // Default error with Spooky Touch
     res.status(err.statusCode || 500).json({
-        message: err.message || 'Server Error'
+        message: err.message || 'Server Error',
+        spookyMessage: 'The spirits are confused... something went wrong in the shadows.'
     });
 });
 

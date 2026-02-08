@@ -1,215 +1,170 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import API_URL from '../config/api';
+import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import PageTransition from '../components/PageTransition';
 import ServiceFilters from '../components/ServiceFilters';
 
-import API_URL from '../config/api';
+gsap.registerPlugin(ScrollTrigger);
 
 const Services = () => {
     const [services, setServices] = useState([]);
+    const [filteredServices, setFilteredServices] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [page, setPage] = useState(1);
-    const [pages, setPages] = useState(1);
-    const [filters, setFilters] = useState({});
-    const cardsRef = useRef(null);
-
-    const fetchServices = async (filterParams = {}, pageNum = 1) => {
-        setLoading(true);
-        try {
-            const params = new URLSearchParams({ page: pageNum, ...filterParams });
-            // Remove empty params
-            for (let [key, value] of params.entries()) {
-                if (!value) params.delete(key);
-            }
-
-            const res = await fetch(`${API_URL}/api/services?${params}`);
-            const data = await res.json();
-            setServices(data.services || []);
-            setPages(data.pages || 1);
-            setPage(data.page || 1);
-        } catch (error) {
-            console.error('Failed to fetch services:', error);
-            setServices([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const containerRef = useRef(null);
 
     useEffect(() => {
-        fetchServices(filters, 1);
+        const fetchServices = async () => {
+            try {
+                // Fetch all services without pagination for now to simplify filtering/animation demo
+                // In production with pagination, this needs adjustment
+                const res = await fetch(`${API_URL}/api/services?limit=100`, { credentials: 'include' });
+                const data = await res.json();
+
+                // Handle both paginated and non-paginated responses
+                const serviceList = data.services || data;
+
+                if (res.ok) {
+                    setServices(Array.isArray(serviceList) ? serviceList : []);
+                    setFilteredServices(Array.isArray(serviceList) ? serviceList : []);
+                }
+            } catch (err) {
+                console.error("Failed to fetch services", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchServices();
     }, []);
 
-    useEffect(() => {
-        if (!loading && cardsRef.current) {
-            gsap.fromTo(cardsRef.current.querySelectorAll('.service-card'),
-                { opacity: 0, y: 30, scale: 0.95 },
-                { opacity: 1, y: 0, scale: 1, duration: 0.4, stagger: 0.08, ease: 'power2.out' }
+    const handleFilterChange = (filters) => {
+        let result = services;
+        if (filters.search) {
+            result = result.filter(s => s.name.toLowerCase().includes(filters.search.toLowerCase()));
+        }
+        if (filters.category) {
+            result = result.filter(s => s.category === filters.category);
+        }
+        if (filters.priceRange) {
+            const [min, max] = filters.priceRange.split('-').map(Number);
+            if (max) result = result.filter(s => s.price >= min && s.price <= max);
+            else result = result.filter(s => s.price >= min);
+        }
+        setFilteredServices(result);
+
+        // Re-run animation on filter change
+        if (containerRef.current) {
+            gsap.fromTo('.service-card',
+                { y: 50, opacity: 0 },
+                { y: 0, opacity: 1, duration: 0.5, stagger: 0.05, ease: 'power2.out', clearProps: 'all' }
             );
         }
-    }, [loading, services]);
-
-    const handleFilter = (newFilters) => {
-        setFilters(newFilters);
-        fetchServices(newFilters, 1);
     };
 
-    const handlePageChange = (newPage) => {
-        fetchServices(filters, newPage);
-    };
+    useGSAP(() => {
+        if (loading || filteredServices.length === 0) return;
 
-    return (
-        <div className="min-h-screen bg-[#0f0f13] text-gray-100 font-sans relative overflow-hidden">
-            {/* Ambient Background */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/20 via-[#0f0f13] to-[#0f0f13]" />
-                <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-purple-900/10 rounded-full blur-[100px]" />
-                <div className="absolute top-[20%] -right-[10%] w-[40%] h-[60%] bg-orange-900/10 rounded-full blur-[100px]" />
-            </div>
+        const cards = gsap.utils.toArray('.service-card');
 
-            <div className="pt-24 px-6 py-8 max-w-7xl mx-auto relative z-10">
-                <h2 className="text-5xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600 mb-8 font-creepster tracking-wide drop-shadow-[0_2px_4px_rgba(255,165,0,0.3)]">
-                    Our Spooky Services
-                </h2>
+        gsap.fromTo(cards,
+            { y: 100, opacity: 0 },
+            {
+                y: 0,
+                opacity: 1,
+                duration: 0.8,
+                stagger: 0.1,
+                ease: 'power3.out',
+                scrollTrigger: {
+                    trigger: '.services-grid',
+                    start: 'top 80%',
+                }
+            }
+        );
 
-                {/* Filters */}
-                <ServiceFilters onFilter={handleFilter} initialFilters={filters} />
+    }, { scope: containerRef, dependencies: [loading] }); // Run only when loading finishes
 
-                {/* Services Grid */}
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(255,165,0,0.5)]"></div>
-                        <p className="text-gray-400 animate-pulse font-creepster tracking-wider">Summoning rituals...</p>
-                    </div>
-                ) : services.length === 0 ? (
-                    <div className="text-center text-gray-400 text-lg py-12 bg-[#15151e]/30 rounded-2xl border border-dashed border-gray-800">
-                        <div className="text-6xl mb-4 grayscale opacity-50">🕸️</div>
-                        No services found. Try adjusting your seance parameters! 👻
-                    </div>
-                ) : (
-                    <>
-                        <div ref={cardsRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 perspective-1000">
-                            {services.map((service) => (
-                                <TiltCard key={service._id} service={service} />
-                            ))}
-                        </div>
-
-                        {/* Pagination */}
-                        {pages > 1 && (
-                            <div className="flex justify-center gap-2 mt-8">
-                                {[...Array(pages)].map((_, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => handlePageChange(i + 1)}
-                                        className={`px-4 py-2 rounded-lg transition-all font-bold ${page === i + 1
-                                            ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-lg'
-                                            : 'bg-[#15151e] text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800'}`}
-                                    >
-                                        {i + 1}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </>
-                )}
+    if (loading) return (
+        <div className="min-h-screen bg-[#0f0f13] flex items-center justify-center text-white relative">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/20 to-[#0f0f13]"></div>
+            <div className="z-10 flex flex-col items-center">
+                <div className="w-16 h-16 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <span className="font-creepster tracking-widest text-2xl animate-pulse text-orange-500">Summoning Rituals...</span>
             </div>
         </div>
     );
-};
-
-// 3D Tilt Card Component
-const TiltCard = ({ service }) => {
-    const x = useMotionValue(0);
-    const y = useMotionValue(0);
-
-    const mouseXSpring = useSpring(x);
-    const mouseYSpring = useSpring(y);
-
-    const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ['7deg', '-7deg']);
-    const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ['-7deg', '7deg']);
-
-    const handleMouseMove = (e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const width = rect.width;
-        const height = rect.height;
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        const xPct = mouseX / width - 0.5;
-        const yPct = mouseY / height - 0.5;
-        x.set(xPct);
-        y.set(yPct);
-    };
-
-    const handleMouseLeave = () => {
-        x.set(0);
-        y.set(0);
-    };
 
     return (
-        <motion.div
-            style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            className="service-card premium-card bg-[#15151e]/80 backdrop-blur-md rounded-2xl overflow-hidden relative group border border-gray-800 hover:border-orange-500/50 transition-colors shadow-xl"
-        >
-            {/* Spooky Texture Overlay */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIi8+Cjwvc3ZnPg==')] [mask-image:linear-gradient(to_bottom,white,transparent)]" />
+        <PageTransition>
+            <div ref={containerRef} className="min-h-screen bg-[#0f0f13] text-gray-100 font-sans pt-24 pb-12 relative overflow-hidden">
+                {/* Background Ambience */}
+                <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] bg-purple-900/10 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '10s' }} />
+                    <div className="absolute top-[40%] -right-[10%] w-[60%] h-[60%] bg-orange-900/10 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+                </div>
 
-            <div className="h-44 bg-[#0a0a0f] flex items-center justify-center relative overflow-hidden group-hover:shadow-[inset_0_0_20px_rgba(255,165,0,0.1)] transition-all">
-                {service.image ? (
-                    <img src={service.image} alt={service.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                ) : service.company?.logo ? (
-                    <>
-                        <img src={service.company.logo} alt={service.company.name} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity blur-sm scale-110" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#15151e] to-transparent" />
-                        <div className="relative z-10 p-6 bg-black/30 rounded-full backdrop-blur-sm border border-white/10 group-hover:scale-110 transition-transform duration-500">
-                            <span className="text-5xl drop-shadow-[0_0_15px_rgba(255,165,0,0.6)]">🎃</span>
-                        </div>
-                    </>
-                ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-orange-900/20 flex items-center justify-center">
-                        <div className="relative z-10 p-6 bg-black/30 rounded-full backdrop-blur-sm border border-white/10 group-hover:scale-110 transition-transform duration-500">
-                            <span className="text-5xl drop-shadow-[0_0_15px_rgba(255,165,0,0.6)]">🎃</span>
-                        </div>
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                    <div className="text-center mb-16 hero-section">
+                        <h1 className="text-6xl md:text-8xl font-bold font-creepster text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 mb-6 drop-shadow-[0_2px_10px_rgba(255,69,0,0.5)]">
+                            Mystic Bazaar
+                        </h1>
+                        <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                            Discover comprehensive supernatural services for your haunting needs.
+                        </p>
                     </div>
-                )}
+
+                    <ServiceFilters onFilter={handleFilterChange} initialFilters={{}} />
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 services-grid perspective-1000 mt-8">
+                        {filteredServices.map(service => (
+                            <Link to={`/services/${service._id}`} key={service._id} className="service-card block group h-full">
+                                <div className="bg-[#15151e]/80 backdrop-blur-md border border-white/5 rounded-2xl overflow-hidden hover:border-orange-500/50 hover:shadow-[0_0_30px_rgba(255,69,0,0.15)] transition-all duration-500 h-full flex flex-col transform-gpu hover:-translate-y-2">
+                                    <div className="h-56 bg-zinc-950 relative overflow-hidden">
+                                        {service.image ? (
+                                            <img src={service.image} alt={service.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" />
+                                        ) : (
+                                            <div className="w-full h-full bg-zinc-900 flex items-center justify-center text-6xl opacity-30 grayscale group-hover:grayscale-0 transition-all duration-500">🔮</div>
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#15151e] via-transparent to-transparent" />
+                                        <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+                                            <span className="bg-orange-600/90 text-white text-xs font-bold px-2 py-1 rounded uppercase tracking-wider backdrop-blur-sm shadow-lg">
+                                                {service.category}
+                                            </span>
+                                            <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
+                                                <span className="text-yellow-500">★</span>
+                                                <span className="text-white font-bold">{service.averageRating?.toFixed(1) || 'New'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 flex-1 flex flex-col">
+                                        <h2 className="text-2xl font-bold text-white mb-2 group-hover:text-orange-400 transition-colors">{service.name}</h2>
+                                        <p className="text-gray-400 text-sm line-clamp-2 mb-4 flex-1">{service.description}</p>
+
+                                        <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-auto">
+                                            <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">
+                                                ₹{service.price}
+                                            </span>
+                                            <span className="text-sm text-gray-500 group-hover:text-white transition-colors flex items-center gap-1 font-bold uppercase tracking-wider">
+                                                View <span className="group-hover:translate-x-1 transition-transform">→</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+
+                    {filteredServices.length === 0 && (
+                        <div className="text-center py-20 animate-pulse">
+                            <div className="text-6xl mb-4 grayscale opacity-50">👻</div>
+                            <h3 className="text-2xl font-bold text-gray-500">No rituals found in this realm.</h3>
+                        </div>
+                    )}
+                </div>
             </div>
-
-            <div className="p-6 relative z-10 h-full">
-                <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                        {service.company?.logo ? (
-                            <img src={service.company.logo} alt={service.company.name} className="w-10 h-10 rounded-full border border-gray-700 object-cover shadow-lg" />
-                        ) : (
-                            <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-lg border border-gray-700">🏢</div>
-                        )}
-                        <div>
-                            <h3 className="text-xl font-bold text-white group-hover:text-orange-400 transition-colors leading-tight">{service.name}</h3>
-                            <span className="text-xs text-gray-500 font-medium tracking-wide">{service.company?.name || "Independent"}</span>
-                        </div>
-                    </div>
-                    <span className="text-[10px] bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider font-bold shadow-[0_0_10px_rgba(168,85,247,0.1)]">{service.category}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-gray-400 text-sm mb-4 bg-[#0a0a0f]/50 p-2 rounded-lg border border-gray-800/50">
-                    <svg className="w-4 h-4 text-orange-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    {service.location}
-                </div>
-
-                <p className="text-gray-400 text-sm mb-6 line-clamp-2 leading-relaxed opacity-80">{service.description}</p>
-
-                <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-800/50">
-                    <div className="flex flex-col">
-                        <span className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">Price</span>
-                        <span className="text-2xl font-bold text-white group-hover:text-green-400 transition-colors">₹{service.price}</span>
-                    </div>
-                    <Link to={`/services/${service._id}`} className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold rounded-lg shadow-lg shadow-orange-900/30 hover:shadow-orange-500/50 hover:from-orange-500 hover:to-red-500 transform hover:-translate-y-0.5 transition-all text-sm flex items-center gap-2">
-                        <span>View Ritual</span>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                    </Link>
-                </div>
-            </div>
-        </motion.div>
+        </PageTransition>
     );
 };
 

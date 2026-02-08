@@ -27,13 +27,13 @@ const Navbar = () => {
                     {/* Hamburger Button (Always Visible) */}
                     <button
                         onClick={() => setIsOpen(!isOpen)}
-                        className="text-orange-400 hover:text-orange-300 transition-colors p-2 rounded-lg hover:bg-orange-500/10 z-50 relative"
+                        className="text-pumpkin hover:text-blood transition-colors p-2 rounded-lg hover:bg-pumpkin/10 z-50 relative group"
                     >
                         {/* Animated Hamburger Icon */}
                         <div className="w-6 h-6 flex flex-col justify-center items-center">
-                            <span className={`block w-6 h-0.5 bg-current transition-all duration-300 ${isOpen ? 'rotate-45 translate-y-1.5' : '-translate-y-1'}`} />
+                            <span className={`block w-6 h-0.5 bg-current transition-all duration-300 ${isOpen ? 'rotate-45 translate-y-1.5 bg-blood' : '-translate-y-1'}`} />
                             <span className={`block w-6 h-0.5 bg-current transition-all duration-300 ${isOpen ? 'opacity-0' : 'opacity-100'}`} />
-                            <span className={`block w-6 h-0.5 bg-current transition-all duration-300 ${isOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-1'}`} />
+                            <span className={`block w-6 h-0.5 bg-current transition-all duration-300 ${isOpen ? '-rotate-45 -translate-y-1.5 bg-blood' : 'translate-y-1'}`} />
                         </div>
                     </button>
                 </div>
@@ -59,7 +59,7 @@ const Navbar = () => {
                             exit={{ x: '100%' }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="absolute right-0 top-0 bottom-0 w-64 bg-[#0f0f13] border-l border-gray-800 shadow-2xl pt-24 px-6 overflow-y-auto"
+                            className="absolute right-0 top-0 bottom-0 w-64 bg-night border-l border-white/10 shadow-[0_0_50px_rgba(192,57,43,0.2)] pt-24 px-6 overflow-y-auto"
                         >
                             <div className="flex flex-col gap-4">
                                 {user ? (
@@ -67,41 +67,41 @@ const Navbar = () => {
                                         {/* Role Specific Links */}
                                         {user.role === 'user' && (
                                             <>
-                                                <Link to="/services" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-gray-800 text-orange-400 hover:text-orange-300 font-medium transition-colors text-lg border-l-2 border-transparent hover:border-orange-500">Find Services</Link>
-                                                <Link to="/profile?tab=profile" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-gray-800 text-orange-400 hover:text-orange-300 font-medium transition-colors text-lg border-l-2 border-transparent hover:border-orange-500">My Profile</Link>
-                                                <Link to="/bookings" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-gray-800 text-orange-400 hover:text-orange-300 font-medium transition-colors text-lg border-l-2 border-transparent hover:border-orange-500">My Bookings</Link>
-                                                <Link to="/complaints" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-gray-800 text-orange-400 hover:text-orange-300 font-medium transition-colors text-lg border-l-2 border-transparent hover:border-orange-500">My Complaints</Link>
-                                                <Link to="/favorites" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-gray-800 text-orange-400 hover:text-orange-300 font-medium transition-colors text-lg border-l-2 border-transparent hover:border-orange-500">Favorites</Link>
+                                                <Link to="/services" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-pumpkin hover:text-blood font-creepster tracking-wider transition-colors text-xl border-l-2 border-transparent hover:border-blood">Find Services</Link>
+                                                <Link to="/profile?tab=profile" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">My Profile</Link>
+                                                <Link to="/bookings" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">My Bookings</Link>
+                                                <Link to="/complaints" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-blood font-medium transition-colors text-lg border-l-2 border-transparent hover:border-blood">My Complaints</Link>
+                                                <Link to="/favorites" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Favorites</Link>
                                             </>
                                         )}
 
                                         {user.role === 'provider' && (
                                             <>
-                                                <Link to="/provider?tab=profile" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-gray-800 text-orange-400 hover:text-orange-300 font-medium transition-colors text-lg border-l-2 border-transparent hover:border-orange-500">Profile Page</Link>
-                                                <Link to="/provider?tab=services" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-gray-800 text-orange-400 hover:text-orange-300 font-medium transition-colors text-lg border-l-2 border-transparent hover:border-orange-500">My Services</Link>
-                                                <Link to="/provider?tab=bookings" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-gray-800 text-orange-400 hover:text-orange-300 font-medium transition-colors text-lg border-l-2 border-transparent hover:border-orange-500">Bookings</Link>
-                                                <Link to="/provider?tab=complaints" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-gray-800 text-orange-400 hover:text-orange-300 font-medium transition-colors text-lg border-l-2 border-transparent hover:border-orange-500">Complaints</Link>
+                                                <Link to="/provider?tab=profile" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-pumpkin hover:text-blood font-creepster tracking-wider transition-colors text-xl border-l-2 border-transparent hover:border-blood">Profile Page</Link>
+                                                <Link to="/provider?tab=services" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">My Services</Link>
+                                                <Link to="/provider?tab=bookings" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Bookings</Link>
+                                                <Link to="/provider?tab=complaints" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-blood font-medium transition-colors text-lg border-l-2 border-transparent hover:border-blood">Complaints</Link>
                                             </>
                                         )}
 
                                         {user.role === 'admin' && (
-                                            <Link to="/admin" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-gray-800 text-purple-400 font-medium hover:text-purple-300 transition-colors text-lg">Admin Panel</Link>
+                                            <Link to="/admin" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-purple-400 font-creepster tracking-widest hover:text-purple-300 transition-colors text-xl">Admin Panel</Link>
                                         )}
 
-                                        <div className="border-t border-gray-800 my-4 pt-4">
+                                        <div className="border-t border-white/10 my-4 pt-4">
                                             <button
                                                 onClick={() => { handleLogout(); setIsOpen(false); }}
-                                                className="w-full text-left px-4 py-3 rounded-lg hover:bg-red-500/10 text-red-400 hover:text-red-300 font-medium transition-colors flex items-center gap-2 text-lg"
+                                                className="w-full text-left px-4 py-3 rounded-lg hover:bg-blood/20 text-blood hover:text-red-400 font-medium transition-colors flex items-center gap-2 text-lg group"
                                             >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                                <svg className="w-5 h-5 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                                                 <span>Logout</span>
                                             </button>
                                         </div>
                                     </>
                                 ) : (
                                     <div className="grid grid-cols-1 gap-4 mt-2">
-                                        <Link to="/login" onClick={() => setIsOpen(false)} className="text-center bg-gray-800 hover:bg-gray-700 text-orange-400 py-3 rounded-lg font-bold transition-colors">Login</Link>
-                                        <Link to="/signup" onClick={() => setIsOpen(false)} className="text-center bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-lg font-bold transition-colors">Sign Up</Link>
+                                        <Link to="/login" onClick={() => setIsOpen(false)} className="text-center bg-white/5 hover:bg-white/10 text-pumpkin py-3 rounded-lg font-bold transition-colors font-creepster tracking-wider text-xl">Login</Link>
+                                        <Link to="/signup" onClick={() => setIsOpen(false)} className="text-center bg-gradient-to-r from-pumpkin to-blood hover:from-blood hover:to-pumpkin text-white py-3 rounded-lg font-bold transition-all shadow-[0_0_15px_rgba(255,102,0,0.3)]">Sign Up</Link>
                                     </div>
                                 )}
                             </div>

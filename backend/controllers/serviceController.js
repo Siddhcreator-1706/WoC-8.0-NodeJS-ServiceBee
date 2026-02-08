@@ -338,8 +338,24 @@ const getMyReviews = async (req, res) => {
     }
 };
 
+// @desc    Get featured services (highest rated)
+// @route   GET /api/services/featured
+// @access  Public
+const getFeaturedServices = async (req, res) => {
+    try {
+        const services = await Service.find({ isActive: true })
+            .sort({ averageRating: -1 })
+            .limit(6)
+            .populate('company', 'name logo');
+        res.json(services);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getServices,
+    getFeaturedServices,
     getLocations,
     getServiceById,
     createService,

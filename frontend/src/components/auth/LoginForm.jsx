@@ -1,114 +1,106 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const LoginForm = ({ loginData, handleLoginChange, handleLogin, loading, setIsFlipped, setError }) => {
+const LoginForm = ({ loginData, handleLoginChange, handleLogin, loading, setIsFlipped, setError, onForgotPassword }) => {
+
     return (
         <div
-            className={`w-full bg-gradient-to-br from-zinc-900/95 via-zinc-900/90 to-zinc-950/95 backdrop-blur-2xl p-8 rounded-3xl border border-white/5 shadow-[0_0_80px_rgba(168,85,247,0.15)]`}
+            className="w-full h-auto max-h-[85vh] bg-[#12121a]/80 backdrop-blur-xl px-4 py-6 md:px-6 md:py-8 rounded-3xl justify-center items-center border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden"
             style={{ backfaceVisibility: 'hidden' }}
         >
-            {/* Logo Section */}
-            <div className="flex flex-col items-center mb-8">
+            {/* Ambient Background Glow */}
+            <div className="absolute top-0 right-0 w-48 h-48 md:w-64 md:h-64 bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 md:w-64 md:h-64 bg-orange-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+
+            {/* Header */}
+            <div className="text-center mb-6 relative z-10 flex-shrink-0">
                 <motion.div
-                    className="relative"
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+                    className="inline-block mb-3"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                 >
-                    <div className="absolute -inset-4 bg-gradient-to-r from-orange-500/20 via-violet-500/20 to-orange-500/20 rounded-full blur-2xl"></div>
-                    <img
-                        src="/logo.png"
-                        alt="Phantom Agency"
-                        className="w-20 h-20 relative z-10 drop-shadow-[0_0_30px_rgba(251,146,60,0.4)]"
-                    />
+                    <img src="/logo.png" alt="Logo" className="w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_20px_rgba(255,102,0,0.6)]" />
                 </motion.div>
-                <h1
-                    className="text-4xl md:text-5xl font-bold mt-6 bg-gradient-to-r from-orange-400 via-amber-300 to-orange-500 bg-clip-text text-transparent pb-1"
-                    style={{ fontFamily: 'Creepster, cursive', lineHeight: '1.2' }}
-                >
+                <h1 className="text-2xl md:text-3xl font-bold font-creepster text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 tracking-wider drop-shadow-sm">
                     Phantom Agency
                 </h1>
-                <p className="text-zinc-500 mt-2 text-xs tracking-[0.3em] uppercase">Premium Services Portal</p>
+                <p className="text-zinc-500 text-[9px] md:text-[10px] uppercase tracking-[0.3em] mt-1 font-medium">
+                    Enter the Realm
+                </p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-5">
+            {/* Login Form */}
+            <form onSubmit={handleLogin} className="space-y-5 relative z-10 w-full">
                 {/* Email Field */}
-                <div className="relative group">
-                    <label className="text-xs text-zinc-400 mb-2 block font-medium tracking-wide">
-                        Email Address
-                    </label>
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-violet-500/20 rounded-xl blur opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
-                        <input
-                            type="email" name="email" value={loginData.email} onChange={handleLoginChange} required
-                            className="relative w-full p-4 pl-12 bg-zinc-800/60 rounded-xl text-white border border-zinc-700/50 focus:border-orange-500/50 focus:bg-zinc-800/80 transition-all outline-none placeholder-zinc-600"
-                            placeholder="spirit@phantom.realm"
-                        />
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-orange-400 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-400 ml-1 uppercase tracking-wider">Email Address</label>
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <svg className="w-4 h-4 text-zinc-500 group-focus-within:text-orange-500 transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                             </svg>
-                        </span>
+                        </div>
+                        <input
+                            type="email" name="email" value={loginData.email} onChange={handleLoginChange} required
+                            className="w-full bg-[#0a0a0f]/80 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-orange-500/50 focus:border-orange-500 block w-full pl-10 p-3.5 transition-all duration-300 placeholder-zinc-600 shadow-inner"
+                            placeholder="spirit@phantom.realm"
+                        />
                     </div>
                 </div>
 
                 {/* Password Field */}
-                <div className="relative group">
-                    <label className="text-xs text-zinc-400 mb-2 block font-medium tracking-wide">
-                        Password
-                    </label>
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-violet-500/20 rounded-xl blur opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
-                        <input
-                            type="password" name="password" value={loginData.password} onChange={handleLoginChange} required
-                            className="relative w-full p-4 pl-12 bg-zinc-800/60 rounded-xl text-white border border-zinc-700/50 focus:border-orange-500/50 focus:bg-zinc-800/80 transition-all outline-none placeholder-zinc-600"
-                            placeholder="••••••••"
-                        />
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-orange-400 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                        <label className="text-xs font-bold text-zinc-400 ml-1 uppercase tracking-wider">Password</label>
+                        <button type="button" onClick={onForgotPassword} className="text-[10px] text-orange-400 hover:text-orange-300 transition-colors font-medium">
+                            Forgot Spell?
+                        </button>
+                    </div>
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <svg className="w-4 h-4 text-zinc-500 group-focus-within:text-orange-500 transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
-                        </span>
+                        </div>
+                        <input
+                            type="password" name="password" value={loginData.password} onChange={handleLoginChange} required
+                            className="w-full bg-[#0a0a0f]/80 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-orange-500/50 focus:border-orange-500 block w-full pl-10 p-3.5 transition-all duration-300 placeholder-zinc-600 shadow-inner"
+                            placeholder="••••••••"
+                        />
                     </div>
                 </div>
 
+                {/* Submit Button */}
                 <motion.button
                     type="submit" disabled={loading}
-                    className="w-full py-4 bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 text-white font-bold rounded-xl relative overflow-hidden group disabled:opacity-50 shadow-[0_4px_30px_rgba(251,146,60,0.35)] mt-3"
-                    whileHover={{ scale: 1.02, boxShadow: '0 8px 40px rgba(251,146,60,0.5)' }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    className="w-full py-3.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/20 text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all uppercase tracking-wide mt-2"
                 >
-                    <span className="relative z-10 flex items-center justify-center gap-3 text-lg">
-                        {loading ? (
-                            <motion.div
-                                className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                            />
-                        ) : (
-                            <>
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                </svg>
-                                Sign In
-                            </>
-                        )}
-                    </span>
+                    {loading ? (
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    ) : (
+                        'Sign In'
+                    )}
                 </motion.button>
+
+                {/* Switch Mode */}
+                <div className="text-center pt-2">
+                    <p className="text-zinc-500 text-xs">
+                        Don't have an account?{' '}
+                        <button
+                            type="button"
+                            onClick={() => { setIsFlipped(true); setError(''); }}
+                            className="text-orange-400 hover:text-orange-300 font-bold ml-1 transition-colors"
+                        >
+                            Sign up
+                        </button>
+                    </p>
+                </div>
             </form>
 
-            <div className="mt-8 text-center border-t border-zinc-800/50 pt-6">
-                <p className="text-zinc-500 text-sm">New to the Party?</p>
-                <motion.button
-                    onClick={() => { setIsFlipped(true); setError(''); }}
-                    className="text-orange-400 font-semibold mt-3 inline-flex items-center gap-2 text-base group relative"
-                    whileHover={{ scale: 1.05, textShadow: "0 0 8px rgba(251, 146, 60, 0.6)" }}
-                >
-                    Get Registered
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                </motion.button>
-            </div>
         </div>
     );
 };

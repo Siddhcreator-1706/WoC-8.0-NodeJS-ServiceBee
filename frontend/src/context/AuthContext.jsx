@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 
 const AuthContext = createContext(null);
 
@@ -20,18 +21,13 @@ export function AuthProvider({ children }) {
             }
 
             try {
-                const res = await fetch(`${API_URL}/auth/me`, {
-                    credentials: 'include'
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    setUser(data);
-                } else {
-                    setUser(null);
-                }
-            } catch {
+                // Axios uses withCredentials=true from global config
+                const res = await axios.get(`${API_URL}/auth/me`);
+                setUser(res.data);
+            } catch (error) {
                 setUser(null);
+                // Clear marker cookie if session invalid
+                document.cookie = "logged_in=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
             } finally {
                 setLoading(false);
             }
@@ -41,54 +37,40 @@ export function AuthProvider({ children }) {
     }, []);
 
     const login = useCallback(async (email, password) => {
-        const res = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ email, password })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-            throw new Error(data.message || 'Login failed');
+        try {
+            const res = await axios.post(`${API_URL}/auth/login`, { email, password });
+            setUser(res.data);
+            return res.data;
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Login failed');
         }
-
-        setUser(data);
-        return data;
     }, []);
 
     const signup = useCallback(async (name, email, password) => {
-        const res = await fetch(`${API_URL}/auth/signup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ name, email, password })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-            throw new Error(data.message || 'Signup failed');
+        try {
+            const res = await axios.post(`${API_URL}/auth/signup`, { name, email, password });
+            setUser(res.data);
+            return res.data;
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Signup failed');
         }
-
-        setUser(data);
-        return data;
     }, []);
 
     const logout = useCallback(async () => {
-        await fetch(`${API_URL}/auth/logout`, {
-            method: 'POST',
-            credentials: 'include'
-        });
+        try {
+            await axios.post(`${API_URL}/auth/logout`);
+        } catch (error) {
+            console.error(error);
+        }
         setUser(null);
     }, []);
 
     const logoutAll = useCallback(async () => {
-        await fetch(`${API_URL}/auth/logout-all`, {
-            method: 'POST',
-            credentials: 'include'
-        });
+        try {
+            await axios.post(`${API_URL}/auth/logout-all`);
+        } catch (error) {
+            console.error(error);
+        }
         setUser(null);
     }, []);
 

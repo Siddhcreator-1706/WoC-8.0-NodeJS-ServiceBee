@@ -107,9 +107,12 @@ const ProviderProfile = ({ company, onUpdate }) => {
                 </div>
             )}
 
-            <div className="bg-[#15151e]/80 backdrop-blur-md rounded-2xl border border-gray-800 overflow-hidden mb-8 shadow-xl">
-                <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0f]/50">
-                    <h2 className="text-xl font-bold text-white">Company Details</h2>
+            <div className="bg-night/80 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden mb-8 shadow-xl relative group">
+                {/* Glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-pumpkin/5 to-blood/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                    <h2 className="text-xl font-bold text-pumpkin font-creepster tracking-wider">Company Details</h2>
                     <button
                         type="button"
                         onClick={() => setIsEditing(!isEditing)}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Import axios for upload
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,7 @@ import API_URL from '../config/api';
 import ParticleBackground from '../components/ParticleBackground';
 import LoginForm from '../components/auth/LoginForm';
 import SignupForm from '../components/auth/SignupForm';
+import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
 
 const AuthPage = () => {
     const { login, user } = useAuth();
@@ -26,6 +27,7 @@ const AuthPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
 
     const [loginData, setLoginData] = useState({ email: '', password: '' });
     const [signupData, setSignupData] = useState({
@@ -36,7 +38,10 @@ const AuthPage = () => {
         terms: false
     });
     const [logoPreview, setLogoPreview] = useState(null); // Preview state
-    const [uploadingLogo, setUploadingLogo] = useState(false); // Upload state
+    const [logoFile, setLogoFile] = useState(null); // File to upload
+    const [avatarFile, setAvatarFile] = useState(null); // File to upload
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [showOTP, setShowOTP] = useState(false);
     const [otp, setOtp] = useState('');
 
@@ -58,73 +63,44 @@ const AuthPage = () => {
         }
     }, [error, success]);
 
-    // Validation helpers
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
-    const validateSignup = () => {
-        if (!signupData.name.trim()) return 'Name is required';
-        if (!emailRegex.test(signupData.email)) return 'Invalid email format';
-        if (!strongPasswordRegex.test(signupData.password)) {
-            return 'Password must be 8+ chars with uppercase, lowercase, number & special character';
-        }
-        if (signupData.password !== signupData.confirmPassword) return 'Passwords do not match';
-        if (signupData.role === 'provider') {
-            if (!signupData.companyName.trim()) return 'Company name is required';
-            if (!signupData.logo) return 'Company logo is required for verification';
-            if (!signupData.terms) return 'You must agree to the Terms & Conditions';
-        }
-
-        return null;
+    const handleLoginChange = (e) => {
+        setLoginData({ ...loginData, [e.target.name]: e.target.value });
     };
 
-    const handleLogoUpload = async (e, type = 'logo') => {
+    const handleSignupChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setSignupData({
+            ...signupData,
+            [name]: type === 'checkbox' ? checked : value
+        });
+    };
+
+    // Handle Logo Change (Preview Only)
+    const handleLogoChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (file.size > 2 * 1024 * 1024) {
-            setError(`${type === 'logo' ? 'Logo' : 'Avatar'} size must be less than 2MB`);
-            return;
-        }
-
-        setUploadingLogo(true);
-        setError('');
-
-        const formData = new FormData();
-        formData.append(type === 'logo' ? 'logo' : 'avatar', file); // Field name matches middleware
-
-        try {
-            const endpoint = type === 'logo' ? `${API_URL}/api/upload/logo` : `${API_URL}/api/upload/avatar`;
-            const res = await axios.post(endpoint, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-
-            if (type === 'logo') {
-                setSignupData(prev => ({ ...prev, logo: res.data.url }));
-            } else {
-                setSignupData(prev => ({ ...prev, avatar: res.data.url }));
-            }
-            setLogoPreview(URL.createObjectURL(file));
-        } catch (err) {
-            setError(`Failed to upload ${type}. Please try again.`);
-            console.error(err);
-        } finally {
-            setUploadingLogo(false);
-        }
+        setLogoFile(file);
+        const objectUrl = URL.createObjectURL(file);
+        setLogoPreview(objectUrl);
     };
 
-    const handleLoginChange = (e) => setLoginData({ ...loginData, [e.target.name]: e.target.value });
-    const handleSignupChange = (e) => setSignupData({ ...signupData, [e.target.name]: e.target.value });
+    // Handle Avatar Change (Preview Only)
+    const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setAvatarFile(file);
+        const objectUrl = URL.createObjectURL(file);
+        setSignupData(prev => ({ ...prev, avatar: objectUrl }));
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        setError('');
         setLoading(true);
         try {
-            const userData = await login(loginData.email.trim(), loginData.password);
-            if (userData.role === 'admin') navigate('/admin');
-            else if (userData.role === 'provider') navigate('/provider');
-            else navigate('/services');
+            await login(loginData.email, loginData.password);
+            setSuccess('Welcome back!');
         } catch (err) {
             setError(err.message || 'Login failed');
         } finally {
@@ -134,59 +110,88 @@ const AuthPage = () => {
 
     const handleSignup = async (e) => {
         e.preventDefault();
-        setError('');
-        setSuccess('');
-
-        // Frontend validation
-        const validationError = validateSignup();
-        if (validationError) {
-            setError(validationError);
-            return;
+        if (signupData.password !== signupData.confirmPassword) {
+            return setError('Passwords do not match');
+        }
+        if (signupData.role === 'provider' && !signupData.companyName) {
+            return setError('Company Name is required for providers');
+        }
+        if (!signupData.terms) {
+            return setError('Please accept the terms');
         }
 
         setLoading(true);
-        try {
-            const endpoint = `${API_URL}/auth/signup`;
 
-            const body = {
-                name: signupData.name,
-                email: signupData.email,
-                password: signupData.password,
-                role: signupData.role,
-                phone: signupData.phone,
-                city: signupData.city,
-                state: signupData.state,
-                ...(signupData.role === 'provider' && {
-                    companyName: signupData.companyName,
-                    description: signupData.description,
-                    logo: signupData.logo // Include logo URL
-                }),
-                ...(signupData.role === 'user' && {
-                    avatar: signupData.avatar
-                }),
+        let finalAvatarUrl = '';
+        let finalLogoUrl = '';
+
+        try {
+            // Upload Avatar if exists
+            if (avatarFile) {
+                setUploadingAvatar(true);
+                const formData = new FormData();
+                formData.append('avatar', avatarFile);
+                try {
+                    const res = await axios.post(`${API_URL}/api/upload/avatar`, formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                        withCredentials: true
+                    });
+                    finalAvatarUrl = res.data.url;
+                } catch (uploadErr) {
+                    console.error("Avatar upload failed", uploadErr);
+                    setLoading(false);
+                    setUploadingAvatar(false);
+                    return setError("Failed to upload avatar");
+                }
+                setUploadingAvatar(false);
+            }
+
+            // Upload Logo if exists
+            if (logoFile) {
+                setUploadingLogo(true);
+                const formData = new FormData();
+                formData.append('logo', logoFile);
+                try {
+                    const res = await axios.post(`${API_URL}/api/upload/logo`, formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                        withCredentials: true
+                    });
+                    finalLogoUrl = res.data.url;
+                } catch (uploadErr) {
+                    console.error("Logo upload failed", uploadErr);
+                    setLoading(false);
+                    setUploadingLogo(false);
+                    return setError("Failed to upload company logo");
+                }
+                setUploadingLogo(false);
+            }
+
+            // Prepare signup payload with real URLs
+            const payload = {
+                ...signupData,
+                avatar: finalAvatarUrl || signupData.avatar, // Use new URL or existing if no new file (unlikely in this flow but safe)
+                logo: finalLogoUrl || signupData.logo
             };
 
-            const res = await fetch(endpoint, {
+            // If it was a blob URL (preview) and we failed/didn't upload, we shouldn't send the blob URL to backend.
+            // But here we successfully uploaded, so `finalAvatarUrl` is set.
+            // If user didn't select file, `avatarFile` is null, `finalAvatarUrl` is empty. `signupData.avatar` is empty. Correct.
+
+            const res = await fetch(`${API_URL}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                body: JSON.stringify(signupData)
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message);
 
-            if (data.requiresVerification) {
-                setSuccess('Verification code sent! Check your email.');
-                setTimeout(() => setSuccess(''), 3000);
+            if (res.ok) {
+                setSuccess('Verification code sent to your email!');
                 setShowOTP(true);
             } else {
-                setSuccess('Registration successful! Redirecting...');
-                setTimeout(() => {
-                    setIsFlipped(false);
-                    setSuccess('');
-                }, 2000);
+                setError(data.message || 'Signup failed');
             }
         } catch (err) {
-            setError(err.message || 'Registration failed');
+            setError(err.message || 'Signup failed');
         } finally {
             setLoading(false);
         }
@@ -194,10 +199,7 @@ const AuthPage = () => {
 
     const handleVerifyOTP = async (e) => {
         e.preventDefault();
-        setError('');
-        setSuccess('');
         setLoading(true);
-
         try {
             const res = await fetch(`${API_URL}/auth/verify-otp`, {
                 method: 'POST',
@@ -207,16 +209,13 @@ const AuthPage = () => {
             const data = await res.json();
 
             if (res.ok) {
-                setSuccess('Verification successful! Logging in...');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                setSuccess('Account verified! Logging you in...');
+                window.location.href = data.role === 'provider' ? '/provider' : '/services';
             } else {
-                throw new Error(data.message);
+                setError(data.message || 'Verification failed');
             }
-
         } catch (err) {
-            setError(err.message || 'Verification failed');
+            setError('Verification failed');
         } finally {
             setLoading(false);
         }
@@ -224,92 +223,104 @@ const AuthPage = () => {
 
     const handleResendOTP = async () => {
         setLoading(true);
-        setError('');
-        setSuccess('');
         try {
             const res = await fetch(`${API_URL}/auth/resend-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: signupData.email })
             });
+            const data = await res.json();
 
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.message);
+            if (res.ok) {
+                setSuccess('Verification code resent!');
+            } else {
+                setError(data.message || 'Failed to resend OTP');
             }
-
-            setSuccess('New code sent!');
-            setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError(err.message || 'Failed to resend code');
+            setError('Failed to resend OTP');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#0a0a0f]">
-            {/* Particle Field Background */}
+        <div className="min-h-screen w-full bg-[#0f0f13] flex items-center justify-center p-4 relative font-sans">
             <ParticleBackground />
 
-            {/* Gradient Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-[#0a0a0f]/80 z-[1]"></div>
-            <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-violet-950/30 to-transparent z-[1]"></div>
+            {/* Error/Success Messages */}
+            <div className="fixed top-10 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 space-y-2 pointer-events-none">
+                {error && (
+                    <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-red-500/10 backdrop-blur-md border border-red-500/50 text-red-500 px-6 py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.2)] text-center font-medium">
+                        {error}
+                    </motion.div>
+                )}
+                {success && (
+                    <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-green-500/10 backdrop-blur-md border border-green-500/50 text-green-500 px-6 py-4 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.2)] text-center font-medium">
+                        {success}
+                    </motion.div>
+                )}
+            </div>
 
-            {/* Main Container */}
-            <motion.div
-                className="relative z-10 w-full max-w-md mx-4"
-                style={{ perspective: '1500px' }}
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            >
-                <motion.div
-                    className="relative w-full"
-                    animate={{ rotateY: isFlipped ? 180 : 0 }}
-                    transition={{ duration: 0.7, type: 'spring', stiffness: 50, damping: 12 }}
-                    style={{ transformStyle: 'preserve-3d' }}
-                >
-                    <LoginForm
-                        loginData={loginData}
-                        handleLoginChange={handleLoginChange}
-                        handleLogin={handleLogin}
-                        loading={loading}
-                        setIsFlipped={setIsFlipped}
-                        setError={setError}
-                    />
+            <div className="relative z-10 w-full max-w-md md:max-w-lg perspective-1000">
+                <AnimatePresence mode="wait">
+                    {showForgotPassword ? (
+                        <ForgotPasswordForm key="forgot-password" onBack={() => setShowForgotPassword(false)} />
+                    ) : (
+                        <motion.div
+                            key="auth-forms"
+                            className="relative w-full transform-style-3d"
+                            initial={false}
+                            animate={{ rotateY: isFlipped ? 180 : 0 }}
+                            transition={{ duration: 0.6, ease: "easeInOut" }}
+                        >
+                            {/* Front Side: Login */}
+                            <div
+                                className={`w-full backface-hidden flex flex-col items-center justify-center ${isFlipped ? 'absolute inset-0 pointer-events-none' : 'relative z-20 pointer-events-auto'}`}
+                                style={{ transform: 'rotateY(0deg)', transformStyle: 'preserve-3d' }}
+                            >
+                                <LoginForm
+                                    loginData={loginData}
+                                    handleLoginChange={handleLoginChange}
+                                    handleLogin={handleLogin}
+                                    loading={loading}
+                                    setIsFlipped={setIsFlipped}
+                                    setError={setError}
+                                    onForgotPassword={() => setShowForgotPassword(true)}
+                                />
+                            </div>
 
-                    <SignupForm
-                        signupData={signupData}
-                        handleSignupChange={handleSignupChange}
-                        handleSignup={handleSignup}
-                        handleVerifyOTP={handleVerifyOTP}
-                        handleResendOTP={handleResendOTP}
-                        showOTP={showOTP}
-                        otp={otp}
-                        setOtp={setOtp}
-                        loading={loading}
-                        setIsFlipped={setIsFlipped}
-                        setError={setError}
-                        setSuccess={setSuccess}
-                        handleLogoUpload={handleLogoUpload}
-                        uploadingLogo={uploadingLogo}
-                        logoPreview={logoPreview}
-                        setSignupData={setSignupData}
-                    />
-                </motion.div>
-            </motion.div>
-
-            <style>{`
-                html, body { overflow: hidden; }
-                /* Custom Scrollbar Styling - Hidden */
-                .custom-scrollbar::-webkit-scrollbar { width: 0px; display: none; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 4px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(167, 139, 250, 0.3); border-radius: 4px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(167, 139, 250, 0.5); }
-                .custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(167, 139, 250, 0.3) rgba(255, 255, 255, 0.05); }
-            `}</style>
-        </div >
+                            {/* Back Side: Signup */}
+                            <div
+                                className={`w-full backface-hidden flex flex-col items-center justify-center ${isFlipped ? 'relative z-20 pointer-events-auto' : 'absolute inset-0 pointer-events-none'}`}
+                                style={{ transform: 'rotateY(180deg)', transformStyle: 'preserve-3d' }}
+                            >
+                                <SignupForm
+                                    signupData={signupData}
+                                    handleSignupChange={handleSignupChange}
+                                    handleSignup={handleSignup}
+                                    handleVerifyOTP={handleVerifyOTP}
+                                    handleResendOTP={handleResendOTP}
+                                    handleLogoChange={handleLogoChange}
+                                    handleLogoUpload={handleLogoChange}
+                                    logoPreview={logoPreview}
+                                    uploadingLogo={uploadingLogo}
+                                    loading={loading}
+                                    setIsFlipped={setIsFlipped}
+                                    showOTP={showOTP}
+                                    otp={otp}
+                                    setOtp={setOtp}
+                                    handleAvatarChange={handleAvatarChange}
+                                    uploadingAvatar={uploadingAvatar}
+                                    setError={setError}
+                                    setSuccess={setSuccess}
+                                    setSignupData={setSignupData}
+                                />
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </div>
     );
 };
 

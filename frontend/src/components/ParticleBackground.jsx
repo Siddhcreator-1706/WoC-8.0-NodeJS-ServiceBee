@@ -15,12 +15,23 @@ const ParticleBackground = () => {
         let height = window.innerHeight;
 
         const resize = () => {
+            const dpr = window.devicePixelRatio || 1;
             const oldWidth = width;
             const oldHeight = height;
+
             width = window.innerWidth;
             height = window.innerHeight;
-            canvas.width = width;
-            canvas.height = height;
+
+            // Set display size (css pixels)
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+
+            // Set actual size (retina/high-dpi support)
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+
+            // Scale and clear context
+            ctx.scale(dpr, dpr);
 
             // Scale existing particle positions proportionally
             if (particlesRef.current.length > 0 && oldWidth > 0 && oldHeight > 0) {
@@ -33,8 +44,8 @@ const ParticleBackground = () => {
             }
         };
 
-        resize();
         window.addEventListener('resize', resize);
+        resize(); // Initial call after event listener to ensure correct sizing
 
         // Create more particles with unique wave properties for dense effect
         const particleCount = Math.min(300, Math.floor((width * height) / 4000));
@@ -246,7 +257,7 @@ const ParticleBackground = () => {
     return (
         <canvas
             ref={canvasRef}
-            className="absolute inset-0 z-0"
+            className="fixed inset-0 z-0"
             style={{ pointerEvents: 'none' }}
         />
     );
