@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import API_URL from '../config/api';
 import ImageUpload from './ImageUpload';
 
@@ -31,22 +32,14 @@ const ComplaintModal = ({ isOpen, onClose, bookingId, booking, onSuccess }) => {
             formPayload.append('message', formData.message);
             images.forEach(img => formPayload.append('images', img));
 
-            const res = await fetch(`${API_URL}/api/complaints`, {
-                method: 'POST',
-                credentials: 'include',
-                body: formPayload
-            });
+            // Axios automatically sets Content-Type to multipart/form-data for FormData
+            const res = await axios.post(`${API_URL}/api/complaints`, formPayload);
 
-            const data = await res.json();
-            if (res.ok) {
-                if (onSuccess) onSuccess(data);
-                onClose();
-                navigate('/complaints?success=true');
-            } else {
-                setError(data.message || 'Failed to submit');
-            }
+            if (onSuccess) onSuccess(res.data);
+            onClose();
+            navigate('/complaints?success=true');
         } catch (error) {
-            setError('Failed to submit complaint');
+            setError(error.response?.data?.message || 'Failed to submit complaint');
         } finally {
             setSubmitting(false);
         }

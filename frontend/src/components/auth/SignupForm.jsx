@@ -48,25 +48,64 @@ const SignupForm = ({
             </div>
 
             {/* Scrollable Form Area */}
-            {!showOTP ? (
+            {showOTP ? (
+                // OTP View
+                <div className="flex-1 flex flex-col justify-center relative z-10">
+                    <div className="text-center mb-4">
+                        <div className="w-14 h-14 bg-violet-500/10 rounded-full flex items-center justify-center mx-auto mb-3 border border-violet-500/30 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
+                            <svg className="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-lg font-bold text-white">Check your Email</h3>
+                        <p className="text-zinc-500 text-[10px] mt-1">Code sent to <span className="text-violet-400">{signupData.email}</span></p>
+                    </div>
+
+                    <div className="space-y-3">
+                        <input
+                            type="text" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            className="w-full text-center text-2xl tracking-[0.5em] font-bold bg-[#0a0a0f]/60 p-3 rounded-xl border border-violet-500/30 focus:border-violet-500 outline-none text-white transition-all placeholder-zinc-700"
+                            placeholder="000000" autoFocus
+                        />
+                        <p className="text-center text-[10px] text-zinc-500">Enter the 6-digit phantom code</p>
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                        <motion.button
+                            onClick={handleVerifyOTP} disabled={loading || otp.length !== 6}
+                            whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                            className="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-xl shadow-lg disabled:opacity-50"
+                        >
+                            {loading ? 'Verifying...' : 'Verify Identity'}
+                        </motion.button>
+                        <button onClick={handleResendOTP} disabled={loading} className="w-full text-[10px] text-zinc-500 hover:text-violet-400 transition-colors">
+                            Didn't receive it? Resend
+                        </button>
+                    </div>
+                </div>
+            ) : (
                 <form onSubmit={handleSignup} className="flex-1 flex flex-col min-h-0 relative z-10 w-full overflow-hidden">
                     <div className="flex-1 overflow-y-auto custom-scrollbar px-1 py-1 relative z-20" data-lenis-prevent>
                         <div className="space-y-4 pb-2">
                             {/* Name & Role Row */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Full Name</label>
+                                    <label htmlFor="signup-name" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Full Name</label>
                                     <input
+                                        id="signup-name"
                                         type="text" name="name" value={signupData.name} onChange={handleSignupChange} required
+                                        autoComplete="name"
                                         className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
                                         placeholder="John Doe"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Role</label>
+                                    <label htmlFor="signup-role" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Role</label>
                                     <div className="relative">
                                         <select
+                                            id="signup-role"
                                             name="role" value={signupData.role} onChange={handleSignupChange}
+                                            autoComplete="organization-title"
                                             className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all cursor-pointer appearance-none"
                                         >
                                             <option value="user" className="bg-[#0a0a0f] text-white">Customer</option>
@@ -83,9 +122,11 @@ const SignupForm = ({
 
                             {/* Email */}
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Email</label>
+                                <label htmlFor="signup-email" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Email</label>
                                 <input
+                                    id="signup-email"
                                     type="email" name="email" value={signupData.email} onChange={handleSignupChange} required
+                                    autoComplete="email"
                                     className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
                                     placeholder="ghost@example.com"
                                 />
@@ -94,17 +135,21 @@ const SignupForm = ({
                             {/* Password & Confirm */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Password</label>
+                                    <label htmlFor="signup-password" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Password</label>
                                     <input
+                                        id="signup-password"
                                         type="password" name="password" value={signupData.password} onChange={handleSignupChange} required
+                                        autoComplete="new-password"
                                         className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
                                         placeholder="••••••"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Confirm</label>
+                                    <label htmlFor="signup-confirm-password" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Confirm</label>
                                     <input
+                                        id="signup-confirm-password"
                                         type="password" name="confirmPassword" value={signupData.confirmPassword} onChange={handleSignupChange} required
+                                        autoComplete="new-password"
                                         className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
                                         placeholder="••••••"
                                     />
@@ -114,25 +159,31 @@ const SignupForm = ({
                             {/* Phone & Location */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Phone</label>
+                                    <label htmlFor="signup-phone" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Phone</label>
                                     <input
+                                        id="signup-phone"
                                         type="tel" name="phone" value={signupData.phone} onChange={handleSignupChange}
+                                        autoComplete="tel"
                                         className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
                                         placeholder="123..."
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">City</label>
+                                    <label htmlFor="signup-city" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">City</label>
                                     <input
+                                        id="signup-city"
                                         type="text" name="city" value={signupData.city} onChange={handleSignupChange}
+                                        autoComplete="address-level2"
                                         className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
                                         placeholder="City"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">State</label>
+                                    <label htmlFor="signup-state" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">State</label>
                                     <input
+                                        id="signup-state"
                                         type="text" name="state" value={signupData.state} onChange={handleSignupChange}
+                                        autoComplete="address-level1"
                                         className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
                                         placeholder="State"
                                     />
@@ -144,20 +195,22 @@ const SignupForm = ({
                                 {signupData.role === 'user' && (
                                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2 pt-2 border-t border-white/5">
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Profile Avatar</label>
+                                            <label htmlFor="signup-avatar" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Profile Avatar</label>
                                             <div className="flex items-center gap-3 bg-[#0a0a0f]/40 p-2 rounded-xl border border-zinc-800/50">
                                                 <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-700">
                                                     {uploadingAvatar ? <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" /> : signupData.avatar ? <img src={signupData.avatar} alt="Avatar" className="w-full h-full object-cover" /> : <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
                                                 </div>
                                                 <input
+                                                    id="signup-avatar"
                                                     type="file" accept="image/*" onChange={handleAvatarChange}
                                                     className="text-xs text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:bg-violet-500/10 file:text-violet-400 hover:file:bg-violet-500/20 cursor-pointer"
                                                 />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Bio</label>
+                                            <label htmlFor="signup-user-bio" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Bio</label>
                                             <textarea
+                                                id="signup-user-bio"
                                                 name="description" value={signupData.description} onChange={handleSignupChange}
                                                 className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600 resize-none h-16"
                                                 placeholder="Tell us about your phantom self..."
@@ -172,28 +225,32 @@ const SignupForm = ({
                                 {signupData.role === 'provider' && (
                                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2 pt-2 border-t border-white/5">
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Company Name</label>
+                                            <label htmlFor="signup-company-name" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Company Name</label>
                                             <input
+                                                id="signup-company-name"
                                                 type="text" name="companyName" value={signupData.companyName} onChange={handleSignupChange} required
+                                                autoComplete="organization"
                                                 className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
                                                 placeholder="Phantom Services Ltd."
                                             />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Company Logo</label>
+                                            <label htmlFor="signup-logo" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Company Logo</label>
                                             <div className="flex items-center gap-3 bg-[#0a0a0f]/40 p-2 rounded-xl border border-zinc-800/50">
                                                 <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-700">
                                                     {uploadingLogo ? <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" /> : logoPreview ? <img src={logoPreview} alt="Preview" className="w-full h-full object-cover" /> : <span className="text-zinc-600 text-xs">IMG</span>}
                                                 </div>
                                                 <input
+                                                    id="signup-logo"
                                                     type="file" accept="image/*" onChange={handleLogoUpload}
                                                     className="text-xs text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:bg-violet-500/10 file:text-violet-400 hover:file:bg-violet-500/20 cursor-pointer"
                                                 />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">About Company</label>
+                                            <label htmlFor="signup-company-desc" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">About Company</label>
                                             <textarea
+                                                id="signup-company-desc"
                                                 name="description" value={signupData.description} onChange={handleSignupChange}
                                                 className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600 resize-none h-16"
                                                 placeholder="Describe your spectral services..."
@@ -239,41 +296,6 @@ const SignupForm = ({
                         </div>
                     </div>
                 </form>
-            ) : (
-                // OTP View
-                <div className="flex-1 flex flex-col justify-center relative z-10">
-                    <div className="text-center mb-4">
-                        <div className="w-14 h-14 bg-violet-500/10 rounded-full flex items-center justify-center mx-auto mb-3 border border-violet-500/30 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
-                            <svg className="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <h3 className="text-lg font-bold text-white">Check your Email</h3>
-                        <p className="text-zinc-500 text-[10px] mt-1">Code sent to <span className="text-violet-400">{signupData.email}</span></p>
-                    </div>
-
-                    <div className="space-y-3">
-                        <input
-                            type="text" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                            className="w-full text-center text-2xl tracking-[0.5em] font-bold bg-[#0a0a0f]/60 p-3 rounded-xl border border-violet-500/30 focus:border-violet-500 outline-none text-white transition-all placeholder-zinc-700"
-                            placeholder="000000" autoFocus
-                        />
-                        <p className="text-center text-[10px] text-zinc-500">Enter the 6-digit phantom code</p>
-                    </div>
-
-                    <div className="mt-4 space-y-2">
-                        <motion.button
-                            onClick={handleVerifyOTP} disabled={loading || otp.length !== 6}
-                            whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-                            className="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-xl shadow-lg disabled:opacity-50"
-                        >
-                            {loading ? 'Verifying...' : 'Verify Identity'}
-                        </motion.button>
-                        <button onClick={handleResendOTP} disabled={loading} className="w-full text-[10px] text-zinc-500 hover:text-violet-400 transition-colors">
-                            Didn't receive it? Resend
-                        </button>
-                    </div>
-                </div>
             )}
         </div>
     );

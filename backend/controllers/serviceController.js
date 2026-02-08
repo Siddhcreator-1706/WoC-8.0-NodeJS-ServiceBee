@@ -30,7 +30,7 @@ const getServices = async (req, res) => {
         let sort = { createdAt: -1 };
         if (sortBy === 'price-asc') sort = { price: 1 };
         if (sortBy === 'price-desc') sort = { price: -1 };
-        if (sortBy === 'rating') sort = { 'ratings.length': -1 };
+        if (sortBy === 'rating') sort = { averageRating: -1 };
         if (sortBy === 'newest') sort = { createdAt: -1 };
 
         const skip = (Number(page) - 1) * Number(limit);
@@ -113,9 +113,6 @@ const createService = async (req, res) => {
 
             // Force company ID to be the provider's company
             company = userCompany._id;
-
-            // Providers cannot set featured status (admin only)
-            featured = false;
         }
 
         const service = await Service.create({
@@ -242,6 +239,7 @@ const deleteService = async (req, res) => {
                     affectedComplaints: canDeleteCheck.activeComplaintsCount
                 });
             }
+
             return res.status(400).json({
                 message: canDeleteCheck.message,
                 options: {

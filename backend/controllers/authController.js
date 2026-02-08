@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
 const User = require('../models/User');
 const Company = require('../models/Company');
 const OTP = require('../models/OTP'); // Keep for password reset
@@ -26,14 +25,27 @@ const cookieOptions = {
 // @access  Public
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, role, phone, city, state, companyName, serviceType, description, logo, avatar } = req.body;
+        const {
+            name,
+            email,
+            password,
+            role,
+            phone,
+            city,
+            state,
+            companyName,
+            serviceType,
+            description,
+            logo,
+            avatar
+        } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({ message: 'Please add all fields' });
         }
 
         // Validate role if provided
-        let userRole = (role === 'provider') ? 'provider' : 'user';
+        const userRole = (role === 'provider') ? 'provider' : 'user';
 
         // Properly handle email - preserve dots
         const cleanEmail = email.trim().toLowerCase();
@@ -267,10 +279,8 @@ const loginUser = async (req, res) => {
 const logoutUser = async (req, res) => {
     try {
         // Get token from cookie or header
-        let token;
-        if (req.cookies.jwt) {
-            token = req.cookies.jwt;
-        } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        let token = req.cookies.jwt;
+        if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
             token = req.headers.authorization.split(' ')[1];
         }
 
@@ -449,8 +459,8 @@ const resetPassword = async (req, res) => {
     try {
         const { resetToken, newPassword } = req.body;
 
-        if (!resetToken || !newPassword) {
-            return res.status(400).json({ message: 'Token and new password are required' });
+        if (!resetToken || typeof newPassword !== 'string' || newPassword.length < 6) {
+            return res.status(400).json({ message: 'Token and a valid new password (min 6 chars) are required' });
         }
 
         // Verify token

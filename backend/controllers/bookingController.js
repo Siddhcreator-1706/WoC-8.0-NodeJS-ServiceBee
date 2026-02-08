@@ -9,17 +9,31 @@ const createBooking = async (req, res) => {
     try {
         const { serviceId, companyId, date, notes, address } = req.body;
 
-        // Verify service exists
+        if (!serviceId || !date) {
+            return res.status(400).json({ message: 'Service and date are required' });
+        }
+
+        // Verify service exists and is active
         const service = await Service.findById(serviceId);
-        if (!service) {
+        if (!service || service.isActive === false) {
             return res.status(404).json({ message: 'Service not found' });
+        }
+
+        // Validate provided companyId (if any) matches the service's company
+        if (companyId && companyId.toString() !== service.company?.toString()) {
+            return res.status(400).json({ message: 'Invalid company for this service' });
+        }
+
+        const bookingDate = new Date(date);
+        if (Number.isNaN(bookingDate.getTime())) {
+            return res.status(400).json({ message: 'Please select a valid date for the service' });
         }
 
         const booking = await Booking.create({
             user: req.user.id,
             company: service.company, // Securely derived from service
             service: serviceId,
-            date,
+            date: bookingDate,
             notes,
             address: address || req.user.city // Default to user city if not provided
         });
@@ -54,17 +68,12 @@ const getMyBookings = async (req, res) => {
 // @access  Private (Provider)
 const getCompanyBookings = async (req, res) => {
     try {
-        console.log('getCompanyBookings called for user:', req.user._id);
-
         // Find company owned by user
         const company = await Company.findOne({ owner: req.user.id });
 
         if (!company) {
-            console.log('Company not found for user:', req.user._id);
             return res.status(404).json({ message: 'Company not found' });
         }
-
-        console.log('Company found:', company._id);
 
         const bookings = await Booking.find({ company: company._id })
             .populate('user', 'name phone email city')
@@ -82,12 +91,10 @@ const getCompanyBookings = async (req, res) => {
             return bookingObj;
         });
 
-        console.log(`Found ${bookings.length} company bookings`);
-
         res.json(sanitizedBookings);
     } catch (error) {
         console.error('Error in getCompanyBookings:', error);
-        res.status(500).json({ message: error.message, stack: error.stack });
+        res.status(500).json({ message: error.message });
     }
 };
 

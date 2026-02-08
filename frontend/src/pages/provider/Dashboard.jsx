@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import API_URL from '../../config/api';
 import ImageUpload from '../../components/ImageUpload';
@@ -47,22 +48,10 @@ const Dashboard = () => {
 
     const fetchCompany = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/companies/me`, { credentials: 'include' });
-            if (res.ok) {
-                const data = await res.json();
-                setCompany(data);
-                if (!company) {
-                    // Pre-fill form if data exists but state was null (obscure case) or just for consistency
-                    setCompanyForm({
-                        name: data.name,
-                        description: data.description,
-                        email: data.email,
-                        phone: data.phone,
-                        website: data.website || '',
-                        address: data.address || { street: '', city: '', state: '', zipCode: '' }
-                    });
-                }
-            }
+            const res = await axios.get(`${API_URL}/api/companies/me`);
+            setCompany(res.data);
+            // Pre-fill form if data exists but state was null (obscure case) or just for consistency
+            // Note: res.data is the company object
         } catch (err) {
             console.error('No company found:', err);
         } finally {
@@ -90,23 +79,13 @@ const Dashboard = () => {
                 }
             }
 
-            const res = await fetch(`${API_URL}/api/companies`, {
-                method: 'POST',
-                credentials: 'include',
-                body: formData
-            });
+            const res = await axios.post(`${API_URL}/api/companies`, formData);
 
-            if (res.ok) {
-                const data = await res.json();
-                setCompany(data);
-                setMessage('Company registered successfully!');
-                fetchCompany();
-            } else {
-                const data = await res.json();
-                setError(data.message || 'Registration failed');
-            }
+            setCompany(res.data);
+            setMessage('Company registered successfully!');
+            fetchCompany();
         } catch (err) {
-            setError('Something went wrong during registration');
+            setError(err.response?.data?.message || 'Registration failed');
         } finally {
             setSubmitting(false);
         }

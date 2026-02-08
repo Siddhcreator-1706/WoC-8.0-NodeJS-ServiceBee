@@ -169,29 +169,16 @@ const AuthPage = () => {
             // Prepare signup payload with real URLs
             const payload = {
                 ...signupData,
-                avatar: finalAvatarUrl || signupData.avatar, // Use new URL or existing if no new file (unlikely in this flow but safe)
+                avatar: finalAvatarUrl || signupData.avatar,
                 logo: finalLogoUrl || signupData.logo
             };
 
-            // If it was a blob URL (preview) and we failed/didn't upload, we shouldn't send the blob URL to backend.
-            // But here we successfully uploaded, so `finalAvatarUrl` is set.
-            // If user didn't select file, `avatarFile` is null, `finalAvatarUrl` is empty. `signupData.avatar` is empty. Correct.
+            const res = await axios.post(`${API_URL}/auth/signup`, payload);
 
-            const res = await fetch(`${API_URL}/auth/signup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(signupData)
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-                setSuccess('Verification code sent to your email!');
-                setShowOTP(true);
-            } else {
-                setError(data.message || 'Signup failed');
-            }
+            setSuccess('Verification code sent to your email!');
+            setShowOTP(true);
         } catch (err) {
-            setError(err.message || 'Signup failed');
+            setError(err.response?.data?.message || err.message || 'Signup failed');
         } finally {
             setLoading(false);
         }
@@ -201,21 +188,33 @@ const AuthPage = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await fetch(`${API_URL}/auth/verify-otp`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: signupData.email, otp })
+            const res = await axios.post(`${API_URL}/auth/verify-otp`, {
+                email: signupData.email,
+                otp
             });
-            const data = await res.json();
 
-            if (res.ok) {
-                setSuccess('Account verified! Logging you in...');
-                window.location.href = data.role === 'provider' ? '/provider' : '/services';
-            } else {
-                setError(data.message || 'Verification failed');
-            }
+            const {data} = res;
+
+            // Auto-login logic handled by backend setting cookies, but we might need to update context user
+            // The backend returns user data on success
+            // We can manually set user in context if we had a method, but context strictly updates on /me or login.
+            // Actually, context.login calls API.
+            // Here we just verified. We should probably force a user reload or redirect.
+            // The backend verifyOTP also logs the user in (sets cookies).
+            // So we can just reload the window or let the AuthContext checkAuth re-run?
+            // AuthContext runs checkAuth on mount.
+            // We should use window.location.reload() or a context method to refresh.
+            // But standard SPA way: update user state.
+            // Check if AuthContext exposes 'setUser' or 'checkAuth'?
+            // It exposes 'updateUser' but that merges state.
+            // It exposes 'user'.
+            // Simple fix: reload page to trigger checkAuth, OR rely on navigate triggering re-render if we had a way to signal.
+            // But since we are inside the page, we can simply:
+            window.location.href = data.role === 'admin' ? '/admin' :
+                data.role === 'provider' ? '/provider' : '/services';
+
         } catch (err) {
-            setError('Verification failed');
+            setError(err.response?.data?.message || 'Verification failed');
         } finally {
             setLoading(false);
         }
@@ -224,20 +223,12 @@ const AuthPage = () => {
     const handleResendOTP = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API_URL}/auth/resend-otp`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: signupData.email })
+            await axios.post(`${API_URL}/auth/resend-otp`, {
+                email: signupData.email
             });
-            const data = await res.json();
-
-            if (res.ok) {
-                setSuccess('Verification code resent!');
-            } else {
-                setError(data.message || 'Failed to resend OTP');
-            }
+            setSuccess('Verification code resent!');
         } catch (err) {
-            setError('Failed to resend OTP');
+            setError(err.response?.data?.message || 'Failed to resend OTP');
         } finally {
             setLoading(false);
         }

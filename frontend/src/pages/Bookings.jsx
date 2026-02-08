@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config/api';
 import ComplaintModal from '../components/ComplaintModal';
@@ -24,11 +25,8 @@ const Bookings = () => {
     const fetchMyBookings = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API_URL}/api/bookings/my-bookings`, { credentials: 'include' });
-            if (res.ok) {
-                const data = await res.json();
-                setBookings(data);
-            }
+            const res = await axios.get(`${API_URL}/api/bookings/my-bookings`);
+            setBookings(res.data);
         } catch (error) {
             console.error('Failed to fetch bookings:', error);
         } finally {

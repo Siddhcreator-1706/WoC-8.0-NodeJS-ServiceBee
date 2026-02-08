@@ -4,7 +4,7 @@ const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const mongoSanitize = require('express-mongo-sanitize');
+const mongoSanitize = require('./middleware/mongoSanitize');
 const connectDB = require('./config/db');
 
 // Load env vars
@@ -71,16 +71,15 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Body parser
+ // Body parser
 app.use(express.json({ limit: '10kb' })); // Limit body size
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // Data sanitization against NoSQL injection
-// const mongoSanitize = require('./middleware/mongoSanitize');
+app.use(mongoSanitize());
 
-// Data sanitization against NoSQL injection
-// app.use(mongoSanitize());
+
 
 // Request logging in development
 if (process.env.NODE_ENV !== 'production') {

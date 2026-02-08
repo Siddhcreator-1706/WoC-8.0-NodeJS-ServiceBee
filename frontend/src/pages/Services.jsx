@@ -83,7 +83,7 @@ const Services = () => {
             }
         );
 
-    }, { scope: containerRef, dependencies: [loading] }); // Run only when loading finishes
+    }, { scope: containerRef, dependencies: [loading, filteredServices.length] }); // Re-run when list size changes
 
     if (loading) return (
         <div className="min-h-screen bg-[#0f0f13] flex items-center justify-center text-white relative">

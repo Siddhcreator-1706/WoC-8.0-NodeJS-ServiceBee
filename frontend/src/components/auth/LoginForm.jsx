@@ -33,7 +33,7 @@ const LoginForm = ({ loginData, handleLoginChange, handleLogin, loading, setIsFl
             <form onSubmit={handleLogin} className="space-y-5 relative z-10 w-full">
                 {/* Email Field */}
                 <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-400 ml-1 uppercase tracking-wider">Email Address</label>
+                    <label htmlFor="login-email" className="text-xs font-bold text-zinc-400 ml-1 uppercase tracking-wider">Email Address</label>
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                             <svg className="w-4 h-4 text-zinc-500 group-focus-within:text-orange-500 transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -41,7 +41,9 @@ const LoginForm = ({ loginData, handleLoginChange, handleLogin, loading, setIsFl
                             </svg>
                         </div>
                         <input
+                            id="login-email"
                             type="email" name="email" value={loginData.email} onChange={handleLoginChange} required
+                            autoComplete="email"
                             className="w-full bg-[#0a0a0f]/80 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-orange-500/50 focus:border-orange-500 block w-full pl-10 p-3.5 transition-all duration-300 placeholder-zinc-600 shadow-inner"
                             placeholder="spirit@phantom.realm"
                         />
@@ -51,7 +53,7 @@ const LoginForm = ({ loginData, handleLoginChange, handleLogin, loading, setIsFl
                 {/* Password Field */}
                 <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
-                        <label className="text-xs font-bold text-zinc-400 ml-1 uppercase tracking-wider">Password</label>
+                        <label htmlFor="login-password" className="text-xs font-bold text-zinc-400 ml-1 uppercase tracking-wider">Password</label>
                         <button type="button" onClick={onForgotPassword} className="text-[10px] text-orange-400 hover:text-orange-300 transition-colors font-medium">
                             Forgot Spell?
                         </button>
@@ -63,7 +65,9 @@ const LoginForm = ({ loginData, handleLoginChange, handleLogin, loading, setIsFl
                             </svg>
                         </div>
                         <input
+                            id="login-password"
                             type="password" name="password" value={loginData.password} onChange={handleLoginChange} required
+                            autoComplete="current-password"
                             className="w-full bg-[#0a0a0f]/80 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-orange-500/50 focus:border-orange-500 block w-full pl-10 p-3.5 transition-all duration-300 placeholder-zinc-600 shadow-inner"
                             placeholder="••••••••"
                         />

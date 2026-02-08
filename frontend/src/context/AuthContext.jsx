@@ -1,9 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import API_URL from '../config/api';
 
 const AuthContext = createContext(null);
-
-import API_URL from '../config/api';
 
 // AuthProvider component - the only export from this file for Fast Refresh
 export function AuthProvider({ children }) {
@@ -46,10 +45,14 @@ export function AuthProvider({ children }) {
         }
     }, []);
 
-    const signup = useCallback(async (name, email, password) => {
+    const signup = useCallback(async (userData) => {
         try {
-            const res = await axios.post(`${API_URL}/auth/signup`, { name, email, password });
-            setUser(res.data);
+            const res = await axios.post(`${API_URL}/auth/signup`, userData);
+            // Note: Signup might not return a user immediately if verification is needed (OTP)
+            // But if it does, we set it.
+            if (res.data && res.data.token) {
+                setUser(res.data);
+            }
             return res.data;
         } catch (error) {
             throw new Error(error.response?.data?.message || 'Signup failed');

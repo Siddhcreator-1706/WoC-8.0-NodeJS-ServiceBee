@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API_URL from '../../config/api';
+import axios from 'axios';
 
 const BookingList = () => {
     const [bookings, setBookings] = useState([]);
@@ -23,13 +24,8 @@ const BookingList = () => {
     const fetchBookings = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${API_URL}/api/bookings/company-bookings`, { credentials: 'include' });
-            if (res.ok) {
-                const data = await res.json();
-                setBookings(data);
-            } else {
-                setError('Failed to fetch bookings');
-            }
+            const res = await axios.get(`${API_URL}/api/bookings/company-bookings`);
+            setBookings(res.data);
         } catch (err) {
             console.error(err);
             setError('Error connecting to server');
@@ -40,22 +36,13 @@ const BookingList = () => {
 
     const handleBookingStatus = async (id, status) => {
         try {
-            const res = await fetch(`${API_URL}/api/bookings/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ status })
-            });
+            const res = await axios.put(`${API_URL}/api/bookings/${id}`, { status });
 
-            if (res.ok) {
-                const updatedBooking = await res.json();
-                setBookings(bookings.map(b => b._id === id ? updatedBooking : b));
-                setMessage(`Booking ${status}`);
-            } else {
-                setError('Failed to update booking');
-            }
+            const updatedBooking = res.data;
+            setBookings(prevBookings => prevBookings.map(b => (b._id === id ? updatedBooking : b)));
+            setMessage(`Booking ${status}`);
         } catch (err) {
-            setError('Failed to update booking');
+            setError(err.response?.data?.message || 'Failed to update booking');
         }
     };
 

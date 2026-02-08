@@ -359,7 +359,7 @@ const Complaints = () => {
 
                 {/* Image Modal */}
                 <ImageModal
-                    isOpen={!!selectedImage}
+                    isOpen={Boolean(selectedImage)}
                     image={selectedImage}
                     onClose={() => setSelectedImage(null)}
                 />

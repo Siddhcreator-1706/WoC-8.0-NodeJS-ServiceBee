@@ -14,14 +14,19 @@ export default function SmoothScroll({ children }) {
             touchMultiplier: 2,
         });
 
-        function raf(time) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
-        }
+        let animationFrameId;
 
-        requestAnimationFrame(raf);
+        const raf = (time) => {
+            lenis.raf(time);
+            animationFrameId = requestAnimationFrame(raf);
+        };
+
+        animationFrameId = requestAnimationFrame(raf);
 
         return () => {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
             lenis.destroy();
         };
     }, []);

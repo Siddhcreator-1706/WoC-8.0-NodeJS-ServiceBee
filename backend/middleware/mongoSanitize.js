@@ -9,10 +9,13 @@ const sanitize = (obj) => {
         const newObj = {};
         for (const [key, value] of Object.entries(obj)) {
             if (key.startsWith('$') || key.includes('.')) {
-                delete newObj[key]; // expanded to exclude . as well common in injections
-            } else {
-                newObj[key] = sanitize(value);
+                // Skip potentially unsafe keys
+                // Intentionally do not copy this key into the sanitized object
+                // to avoid introducing prototype pollution or query operators.
+                // eslint-disable-next-line no-continue
+                continue;
             }
+            newObj[key] = sanitize(value);
         }
         return newObj;
     }
