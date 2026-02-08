@@ -1,25 +1,76 @@
 {
     "short_name": "Phantom Agency",
-    "name": "Phantom Agency - Find & Book Local Services",
+    "name": "Phantom Agency 🎃",
+    "description": "Discover and book trusted local service providers. From home repairs to beauty services, Phantom Agency connects you with verified professionals.",
     "icons": [
-        {
-            "src": "favicon.ico",
-            "sizes": "64x64 32x32 24x24 16x16",
-            "type": "image/x-icon"
-        },
         {
             "src": "logo192.png",
             "type": "image/png",
-            "sizes": "192x192"
+            "sizes": "192x192",
+            "purpose": "any maskable"
         },
         {
             "src": "logo512.png",
             "type": "image/png",
-            "sizes": "512x512"
+            "sizes": "512x512",
+            "purpose": "any maskable"
         }
     ],
-    "start_url": ".",
+    "id": "/",
+    "start_url": "/",
     "display": "standalone",
     "theme_color": "#ff6600",
-    "background_color": "#1a1a1a"
+    "background_color": "#0a0a0f",
+    "orientation": "portrait",
+    "scope": "/",
+    "lang": "en",
+    "dir": "ltr",
+    "categories": [
+        "lifestyle",
+        "utilities",
+        "business",
+        "productivity"
+    ],
+    "shortcuts": [
+        {
+            "name": "Book Services",
+            "short_name": "Book",
+            "description": "Browse and book local services",
+            "url": "/services",
+            "icons": [
+                {
+                    "src": "logo192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "My Bookings",
+            "short_name": "Bookings",
+            "description": "View your upcoming appointments",
+            "url": "/bookings",
+            "icons": [
+                {
+                    "src": "logo192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "logo512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Phantom Agency Home"
+        },
+        {
+            "src": "logo512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "label": "Mobile View"
+        }
+    ],
+    "prefer_related_applications": false
 }
