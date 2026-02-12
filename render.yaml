@@ -52,7 +52,6 @@ services:
   - type: web
     name: servicebee
     runtime: static
-    region: oregon
     plan: free
     branch: render  # Deploy from the 'render' branch
     rootDir: frontend
