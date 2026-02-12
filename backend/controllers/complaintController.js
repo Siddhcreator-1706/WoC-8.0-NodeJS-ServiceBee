@@ -2,6 +2,7 @@ const Complaint = require('../models/Complaint');
 const Service = require('../models/Service');
 const { uploadComplaintImages, deleteImage } = require('../config/cloudinary');
 const { sendComplaintStatusEmail } = require('../utils/emailService');
+const { getIO } = require('../socket/emitter');
 
 // Validation helper
 const validateComplaintInput = (subject, message) => {
@@ -69,6 +70,16 @@ const createComplaint = async (req, res) => {
             message: message.trim(),
             images
         });
+
+        // Emit real-time event to admins
+        const io = getIO();
+        if (io) {
+            io.emit('complaint:new', {
+                complaintId: complaint._id,
+                subject: complaint.subject,
+                userName: req.user.name
+            });
+        }
 
         res.status(201).json(complaint);
     } catch (error) {
@@ -252,6 +263,16 @@ const updateComplaintStatus = async (req, res) => {
 
         if (previousStatus !== status && complaint.user?.email) {
             await sendComplaintStatusEmail(complaint.user.email, complaint, status, complaint.user.name);
+        }
+
+        // Emit real-time event to the complaint owner
+        const io = getIO();
+        if (io && complaint.user?._id) {
+            io.to(complaint.user._id.toString()).emit('complaint:updated', {
+                complaintId: complaint._id,
+                status,
+                adminResponse: complaint.adminResponse
+            });
         }
 
         res.json(complaint);

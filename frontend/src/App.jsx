@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthPage from './pages/AuthPage';
 import Services from './pages/Services';
@@ -53,7 +54,9 @@ function App() {
     <AuthProvider>
       <SmoothScroll>
         <Router>
-          <AnimatedRoutes />
+          <SocketProvider>
+            <AnimatedRoutes />
+          </SocketProvider>
         </Router>
       </SmoothScroll>
     </AuthProvider>

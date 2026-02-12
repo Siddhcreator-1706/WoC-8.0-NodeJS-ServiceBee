@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
@@ -6,6 +8,9 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('./middleware/mongoSanitize');
 const connectDB = require('./config/db');
+const socketAuth = require('./middleware/socketAuth');
+const { initializeSocket } = require('./socket/socketHandler');
+const AppError = require('./utils/AppError');
 
 // Load env vars
 dotenv.config();
@@ -18,11 +23,13 @@ const complaintRoutes = require('./routes/complaintRoutes');
 const bookmarkRoutes = require('./routes/bookmarkRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const bookingRoutes = require('./routes/bookingRoutes'); // Added booking routes
+const chatRoutes = require('./routes/chatRoutes');
 
 // Connect to database
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
 // Security Middleware
@@ -53,8 +60,23 @@ app.use('/api', apiLimiter);
 // CORS configuration
 const allowedOrigins =
     process.env.NODE_ENV === "production"
-        ? [process.env.FRONTEND_URL]
+        ? [process.env.FRONTEND_URL].filter(Boolean)
         : ["http://localhost:5173"];
+
+// Socket.IO setup
+const io = new Server(server, {
+    cors: {
+        origin: allowedOrigins,
+        credentials: true,
+        methods: ['GET', 'POST']
+    }
+});
+
+// Socket authentication middleware
+io.use(socketAuth);
+
+// Initialize socket event handlers
+initializeSocket(io);
 
 app.use(cors({
     origin: function (origin, callback) {
@@ -109,6 +131,7 @@ app.use('/api/complaints', complaintRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/bookings', bookingRoutes); // Mount booking routes
+app.use('/api/chat', chatRoutes);
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
 // Health check
@@ -125,9 +148,17 @@ app.get('/health', (req, res) => {
     res.json({ status: 'healthy' });
 });
 
-// Error handling middleware
+// Centralized error handling middleware
 app.use((err, req, res, next) => {
     console.error('Error:', err.message);
+
+    // AppError — known operational errors
+    if (err.isOperational) {
+        return res.status(err.statusCode).json({
+            status: err.status,
+            message: err.message
+        });
+    }
 
     // MongoDB duplicate key error
     if (err.code === 11000) {
@@ -148,12 +179,24 @@ app.use((err, req, res, next) => {
         return res.status(401).json({ message: 'Token expired' });
     }
 
-    // Default error
+    // CSRF errors
+    if (err.code === 'EBADCSRFTOKEN') {
+        return res.status(403).json({ message: 'Invalid CSRF token' });
+    }
+
     // Default error with Spooky Touch
-    res.status(err.statusCode || 500).json({
+    const statusCode = err.statusCode || 500;
+    const response = {
         message: err.message || 'Server Error',
         spookyMessage: 'The spirits are confused... something went wrong in the shadows.'
-    });
+    };
+
+    // Include stack trace in development
+    if (process.env.NODE_ENV !== 'production') {
+        response.stack = err.stack;
+    }
+
+    res.status(statusCode).json(response);
 });
 
 // 404 handler
@@ -161,12 +204,12 @@ app.use((req, res) => {
     res.status(404).json({ message: 'Route not found' });
 });
 
-// Start server if running directly
-if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`🎃 ServiceBee Server running on port ${PORT}`);
-        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
-}
+// Start the server
+server.listen(PORT, () => {
+    console.log(`🎃 ServiceBee Server running on port ${PORT}`);
+    console.log(`🔌 Socket.IO ready for connections`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
 
-module.exports = app; // Export for Vercel/Testing
+module.exports = { app, server };
+

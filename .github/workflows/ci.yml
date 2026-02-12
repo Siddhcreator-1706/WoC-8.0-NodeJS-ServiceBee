@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [render]
   pull_request:
-    branches: [main]
+    branches: [render]
 
 env:
   NODE_VERSION: 20
@@ -102,51 +102,8 @@ jobs:
           echo "✅ Backend entry point is valid"
 
   # ═══════════════════════════════════════════════════════════════
-  # STAGE 3: Deploy to Production
+  # STAGE 3: Render Auto-Deploys
   # ═══════════════════════════════════════════════════════════════
-  deploy-production:
-    name: 🚀 Deploy to Production
-    needs: [frontend, backend]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment:
-      name: production
-      url: ${{ steps.deploy.outputs.url }}
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
-      - name: Pull Vercel Environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build with Vercel
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy to Production
-        id: deploy
-        run: |
-          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$url" >> $GITHUB_OUTPUT
-          echo "## 🚀 Production Deployment" >> $GITHUB_STEP_SUMMARY
-          echo "Deployed to: $url" >> $GITHUB_STEP_SUMMARY
-
-      - name: Verify Deployment
-        run: |
-          sleep 10
-          status=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.deploy.outputs.url }}/health" || echo "000")
-          if [ "$status" = "200" ]; then
-            echo "✅ Health check passed"
-          else
-            echo "⚠️ Health check returned: $status"
-          fi
+  # Render auto-deploys from the 'render' branch via its native
+  # GitHub integration + render.yaml blueprint.
+  # No manual deploy step is needed here.

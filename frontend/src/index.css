@@ -150,14 +150,55 @@ body {
 
 /* 3D Transform Utilities - Essential for Auth Page Flip */
 .perspective-1000 {
-  perspective: 1000px;
+  perspective: 1200px;
+}
+
+/* Flip Card System */
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.flip-card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-card-face {
+  width: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-card-front {
+  position: relative;
+  z-index: 2;
+}
+
+.flip-card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  transform: rotateY(180deg);
+}
+
+/* When flipped, swap z-index and pointer-events */
+.flip-card-inner.flipped .flip-card-front {
+  pointer-events: none;
+}
+
+.flip-card-inner:not(.flipped) .flip-card-back {
+  pointer-events: none;
+}
+
+/* Legacy utility (keep for any other usage) */
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .transform-style-3d {
   transform-style: preserve-3d;
-}
-
-.backface-hidden {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }

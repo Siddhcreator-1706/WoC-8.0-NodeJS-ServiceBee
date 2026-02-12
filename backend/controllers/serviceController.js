@@ -3,6 +3,7 @@ const Complaint = require('../models/Complaint');
 const Bookmark = require('../models/Bookmark');
 const { uploadServiceImage, deleteImage, getPublicIdFromUrl } = require('../config/cloudinary');
 const { escapeRegex } = require('../utils/security');
+const { getIO } = require('../socket/emitter');
 
 // @desc    Get all services with filters
 // @route   GET /api/services
@@ -127,6 +128,12 @@ const createService = async (req, res) => {
             createdBy: req.user._id
         });
 
+        // Emit real-time event
+        const io = getIO();
+        if (io) {
+            io.emit('service:created', { serviceId: service._id, name: service.name });
+        }
+
         res.status(201).json(service);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -197,6 +204,12 @@ const updateService = async (req, res) => {
             { new: true, runValidators: true }
         );
 
+        // Emit real-time event
+        const io = getIO();
+        if (io) {
+            io.emit('service:updated', { serviceId: updatedService._id, name: updatedService.name });
+        }
+
         res.json(updatedService);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -255,6 +268,13 @@ const deleteService = async (req, res) => {
         }
 
         await service.deleteOne();
+
+        // Emit real-time event
+        const io = getIO();
+        if (io) {
+            io.emit('service:deleted', { serviceId: req.params.id });
+        }
+
         res.json({ message: 'Service removed successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });

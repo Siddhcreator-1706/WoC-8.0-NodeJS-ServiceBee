@@ -193,7 +193,7 @@ const AuthPage = () => {
                 otp
             });
 
-            const {data} = res;
+            const { data } = res;
 
             // Auto-login logic handled by backend setting cookies, but we might need to update context user
             // The backend returns user data on success
@@ -257,18 +257,12 @@ const AuthPage = () => {
                     {showForgotPassword ? (
                         <ForgotPasswordForm key="forgot-password" onBack={() => setShowForgotPassword(false)} />
                     ) : (
-                        <motion.div
+                        <div
                             key="auth-forms"
-                            className="relative w-full transform-style-3d"
-                            initial={false}
-                            animate={{ rotateY: isFlipped ? 180 : 0 }}
-                            transition={{ duration: 0.6, ease: "easeInOut" }}
+                            className={`flip-card-inner ${isFlipped ? 'flipped' : ''}`}
                         >
                             {/* Front Side: Login */}
-                            <div
-                                className={`w-full backface-hidden flex flex-col items-center justify-center ${isFlipped ? 'absolute inset-0 pointer-events-none' : 'relative z-20 pointer-events-auto'}`}
-                                style={{ transform: 'rotateY(0deg)', transformStyle: 'preserve-3d' }}
-                            >
+                            <div className="flip-card-face flip-card-front">
                                 <LoginForm
                                     loginData={loginData}
                                     handleLoginChange={handleLoginChange}
@@ -281,10 +275,7 @@ const AuthPage = () => {
                             </div>
 
                             {/* Back Side: Signup */}
-                            <div
-                                className={`w-full backface-hidden flex flex-col items-center justify-center ${isFlipped ? 'relative z-20 pointer-events-auto' : 'absolute inset-0 pointer-events-none'}`}
-                                style={{ transform: 'rotateY(180deg)', transformStyle: 'preserve-3d' }}
-                            >
+                            <div className="flip-card-face flip-card-back">
                                 <SignupForm
                                     signupData={signupData}
                                     handleSignupChange={handleSignupChange}
@@ -307,7 +298,7 @@ const AuthPage = () => {
                                     setSignupData={setSignupData}
                                 />
                             </div>
-                        </motion.div>
+                        </div>
                     )}
                 </AnimatePresence>
             </div>
