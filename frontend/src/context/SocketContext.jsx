@@ -15,26 +15,21 @@ export const SocketProvider = ({ children }) => {
     const socketRef = useRef(null);
 
     useEffect(() => {
+        // Don't reconnect if already connected for this user
+        if (user && socketRef.current?.connected) return;
+
         // Only connect when a user is authenticated
         if (!user) {
-            // Disconnect if user logs out
             if (socketRef.current) {
                 socketRef.current.disconnect();
                 socketRef.current = null;
-                setSocket(null);
-                setIsConnected(false);
             }
             return;
         }
 
-        // Don't reconnect if already connected for this user
-        if (socketRef.current?.connected) return;
-
         const newSocket = io(SOCKET_URL, {
             withCredentials: true,
             transports: ['websocket', 'polling'],
-            // JWT token can be passed via auth if cookies aren't available
-            // auth: { token: 'jwt-token-here' }
         });
 
         newSocket.on('connect', () => {
@@ -45,6 +40,7 @@ export const SocketProvider = ({ children }) => {
         newSocket.on('disconnect', () => {
             console.log('🔌 Socket disconnected');
             setIsConnected(false);
+            setSocket(null);
         });
 
         newSocket.on('connect_error', (error) => {
