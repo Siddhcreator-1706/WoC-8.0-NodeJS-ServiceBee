@@ -52,8 +52,7 @@ services:
   - type: web
     name: servicebee
     runtime: static
-    plan: free
-    branch: render  # Deploy from the 'render' branch
+    branch: render
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
