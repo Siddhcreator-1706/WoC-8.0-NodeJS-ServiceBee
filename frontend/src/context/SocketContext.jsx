@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { SOCKET_URL } from '../config/api';
 import { useAuth } from './AuthContext';
@@ -13,29 +13,34 @@ export const SocketProvider = ({ children }) => {
     const [isConnected, setIsConnected] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState(new Set());
     const socketRef = useRef(null);
+    // Track which user ID the current socket belongs to
+    const connectedUserIdRef = useRef(null);
 
-    const disconnect = useCallback(() => {
+    useEffect(() => {
+        // Only connect if we have a user ID
+        if (!user?._id) return;
+
+        // Skip if already connected for this user (prevent double-connection in potential race conditions, though dependency array handles most)
+        if (socketRef.current?.connected && connectedUserIdRef.current === user._id) {
+            return;
+        }
+
+        // Cleanup any existing connection before creating a new one
         if (socketRef.current) {
             socketRef.current.disconnect();
             socketRef.current = null;
         }
-    }, []);
-
-    useEffect(() => {
-        if (!user) {
-            disconnect();
-            return;
-        }
-
-        // Don't reconnect if already connected for this user
-        if (socketRef.current?.connected) return;
 
         const newSocket = io(SOCKET_URL, {
             withCredentials: true,
             transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
         });
 
         socketRef.current = newSocket;
+        connectedUserIdRef.current = user._id;
 
         newSocket.on('connect', () => {
             setIsConnected(true);
@@ -63,11 +68,20 @@ export const SocketProvider = ({ children }) => {
             });
         });
 
+        // Cleanup function runs when component unmounts or user changes
         return () => {
-            newSocket.disconnect();
-            socketRef.current = null;
+            if (newSocket) {
+                newSocket.disconnect();
+                newSocket.removeAllListeners();
+            }
+            if (socketRef.current === newSocket) {
+                socketRef.current = null;
+                connectedUserIdRef.current = null;
+                setSocket(null);
+                setIsConnected(false);
+            }
         };
-    }, [user, disconnect]);
+    }, [user?._id]);
 
     const value = {
         socket,

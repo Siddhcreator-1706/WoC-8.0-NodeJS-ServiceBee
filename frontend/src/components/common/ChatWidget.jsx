@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { useSocket } from '../context/SocketContext';
-import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
+import { useAuth } from '../../context/AuthContext';
 
 const ChatWidget = () => {
     const { socket, isConnected, isUserOnline } = useSocket();
@@ -260,19 +260,32 @@ const ChatWidget = () => {
                                     ) : (
                                         messages.map((msg, idx) => {
                                             const isMine = (msg.sender?._id || msg.sender) === user._id;
+                                            const showAvatar = !isMine && (idx === 0 || messages[idx - 1].sender?._id !== msg.sender?._id);
+
                                             return (
-                                                <div key={msg._id || idx} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                                                <div key={msg._id || idx} className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-1`}>
+                                                    {!isMine && (
+                                                        <div className="w-8 flex-shrink-0 flex flex-col justify-end mr-2">
+                                                            {showAvatar ? (
+                                                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center text-xs font-bold text-white shadow-sm">
+                                                                    {msg.sender?.name?.[0]?.toUpperCase() || '?'}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-8" />
+                                                            )}
+                                                        </div>
+                                                    )}
                                                     <div
-                                                        className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${isMine
-                                                                ? 'bg-pumpkin/80 text-white rounded-br-md'
-                                                                : 'bg-white/10 text-gray-200 rounded-bl-md'
+                                                        className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm shadow-md ${isMine
+                                                            ? 'bg-gradient-to-br from-orange-600 to-red-600 text-white rounded-br-none'
+                                                            : 'bg-[#2a2a35] text-gray-200 rounded-bl-none border border-gray-700'
                                                             }`}
                                                     >
-                                                        <p className="break-words">{msg.message}</p>
-                                                        <p className={`text-[10px] mt-1 ${isMine ? 'text-white/60' : 'text-gray-500'}`}>
+                                                        <p className="break-words leading-relaxed">{msg.message}</p>
+                                                        <p className={`text-[10px] mt-1 text-right ${isMine ? 'text-white/70' : 'text-gray-500'}`}>
                                                             {formatTime(msg.createdAt)}
                                                             {isMine && (
-                                                                <span className="ml-1">{msg.read ? '✓✓' : '✓'}</span>
+                                                                <span className="ml-1 opacity-80">{msg.read ? '✓✓' : '✓'}</span>
                                                             )}
                                                         </p>
                                                     </div>

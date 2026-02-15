@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ImageModal from '../ImageModal';
+import CustomSelect from '../ui/CustomSelect';
+import ImageModal from '../common/ImageModal';
+import axios from 'axios';
 import API_URL from '../../config/api';
 
 const ComplaintList = () => {
@@ -43,23 +45,12 @@ const ComplaintList = () => {
 
     const handleComplaintResponse = async (id, response, markResolved) => {
         try {
-            const res = await fetch(`${API_URL}/api/complaints/${id}/respond`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ response, markResolved })
-            });
-
-            if (res.ok) {
-                const updatedComplaint = await res.json();
-                setComplaints(complaints.map(c => c._id === id ? updatedComplaint : c));
-                setMessage('Response sent successfully');
-            } else {
-                const data = await res.json();
-                setError(data.message || 'Failed to send response');
-            }
+            const res = await axios.put(`/api/complaints/${id}/respond`, { response, markResolved });
+            const updatedComplaint = res.data;
+            setComplaints(complaints.map(c => c._id === id ? updatedComplaint : c));
+            setMessage('Response sent successfully');
         } catch (err) {
-            setError('Failed to send response');
+            setError(err.response?.data?.message || 'Failed to send response');
         }
     };
 
@@ -85,21 +76,19 @@ const ComplaintList = () => {
                 </div>
 
                 <div className="flex justify-end">
-                    <div className="relative group z-20">
-                        <select
-                            className="appearance-none bg-[#15151e] text-gray-300 text-sm py-2 px-4 pr-10 rounded-lg border border-gray-700 outline-none focus:border-orange-500 cursor-pointer shadow-lg"
+                    <div className="w-48 relative z-20">
+                        <CustomSelect
+                            options={[
+                                { value: 'All', label: 'All' },
+                                { value: 'Pending', label: 'Pending' },
+                                { value: 'In-Progress', label: 'In-Progress' },
+                                { value: 'Resolved', label: 'Resolved' },
+                                { value: 'Rejected', label: 'Rejected' },
+                            ]}
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                        >
-                            <option>All</option>
-                            <option>Pending</option>
-                            <option>In-Progress</option>
-                            <option>Resolved</option>
-                            <option>Rejected</option>
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                        </div>
+                            placeholder="Filter Status"
+                        />
                     </div>
                 </div>
             </div>

@@ -52,9 +52,17 @@ const serviceSchema = mongoose.Schema({
         required: [true, 'Please add a location'],
         trim: true
     },
+    state: {
+        type: String,
+        trim: true
+    },
+    city: {
+        type: String,
+        trim: true
+    },
     category: {
         type: String,
-        enum: ['cleaning', 'repair', 'beauty', 'tech', 'moving', 'events', 'plumbing', 'electrical', 'painting', 'gardening', 'other'],
+        enum: ['cleaning', 'repair', 'beauty', 'tech', 'moving', 'events', 'plumbing', 'electrical', 'painting', 'gardening', 'other', 'ritual', 'cleansing', 'exorcism', 'divination', 'astrology'],
         default: 'other'
     },
     image: {

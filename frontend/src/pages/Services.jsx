@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import API_URL from '../config/api';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -13,6 +13,7 @@ const Services = () => {
     const [services, setServices] = useState([]);
     const [filteredServices, setFilteredServices] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchParams] = useSearchParams();
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -27,8 +28,16 @@ const Services = () => {
                 const serviceList = data.services || data;
 
                 if (res.ok) {
-                    setServices(Array.isArray(serviceList) ? serviceList : []);
-                    setFilteredServices(Array.isArray(serviceList) ? serviceList : []);
+                    const list = Array.isArray(serviceList) ? serviceList : [];
+                    setServices(list);
+
+                    // Initial filter from URL params
+                    const categoryParam = searchParams.get('category');
+                    if (categoryParam) {
+                        setFilteredServices(list.filter(s => s.category === categoryParam));
+                    } else {
+                        setFilteredServices(list);
+                    }
                 }
             } catch (err) {
                 console.error("Failed to fetch services", err);
@@ -37,16 +46,40 @@ const Services = () => {
             }
         };
         fetchServices();
-    }, []);
+    }, [searchParams]); // Re-run if URL params change (e.g. clicking footer link while on page)
 
     const handleFilterChange = (filters) => {
         let result = services;
+        // Apply URL category param if present and not overridden by manual filter
+        // However, manual filter usually overrides. 
+        // Logic: manual filter object has 'category'? Assuming ServiceFilters passes it.
+        // If not, we check URL.
+
+        // Simpler: Just rely on passed filters.
         if (filters.search) {
             result = result.filter(s => s.name.toLowerCase().includes(filters.search.toLowerCase()));
         }
+
+        // State & City Filter
+        if (filters.state) {
+            result = result.filter(s => s.state && s.state.toLowerCase() === filters.state.toLowerCase());
+        }
+        if (filters.city) {
+            result = result.filter(s => s.city && s.city.toLowerCase() === filters.city.toLowerCase());
+        }
+        // If category is in filters (from ServiceFilters component), use it.
+        // But ServiceFilters doesn't have category input yet? 
+        // We added footer links for categories. ServiceFilters might need update if we want UI.
+        // For now, consistent logic:
         if (filters.category) {
             result = result.filter(s => s.category === filters.category);
+        } else {
+            const categoryParam = searchParams.get('category');
+            if (categoryParam) {
+                result = result.filter(s => s.category === categoryParam);
+            }
         }
+
         if (filters.priceRange) {
             const [min, max] = filters.priceRange.split('-').map(Number);
             if (max) result = result.filter(s => s.price >= min && s.price <= max);
@@ -97,16 +130,16 @@ const Services = () => {
 
     return (
         <PageTransition>
-            <div ref={containerRef} className="min-h-screen bg-[#0f0f13] text-gray-100 font-sans pt-24 pb-12 relative overflow-hidden">
+            <div ref={containerRef} className="min-h-screen bg-[#0f0f13] text-gray-100 font-sans relative overflow-hidden">
                 {/* Background Ambience */}
                 <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] bg-purple-900/10 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '10s' }} />
                     <div className="absolute top-[40%] -right-[10%] w-[60%] h-[60%] bg-orange-900/10 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
                 </div>
 
-                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                <div className="max-w-7xl mx-auto px-6 relative z-10 py-12">
                     <div className="text-center mb-16 hero-section">
-                        <h1 className="text-6xl md:text-8xl font-bold font-creepster text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 mb-6 drop-shadow-[0_2px_10px_rgba(255,69,0,0.5)]">
+                        <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600 mb-2 font-creepster tracking-wide drop-shadow-[0_2px_4px_rgba(255,165,0,0.3)]">
                             Mystic Bazaar
                         </h1>
                         <p className="text-xl text-gray-400 max-w-2xl mx-auto">

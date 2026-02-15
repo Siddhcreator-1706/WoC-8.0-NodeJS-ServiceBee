@@ -1,4 +1,11 @@
 const User = require('../models/User');
+const Company = require('../models/Company');
+const Service = require('../models/Service');
+const { deleteImage } = require('../config/cloudinary');
+const { sendAccountActionEmail } = require('../utils/emailService');
+
+// @desc    Get all users
+// ... (skiplines)
 
 // @desc    Get all users
 // @route   GET /api/users
@@ -7,7 +14,9 @@ const getUsers = async (req, res) => {
     try {
         const { includeInactive } = req.query;
         const filter = includeInactive === 'true' ? {} : { isActive: true };
-        const users = await User.find(filter).select('-password');
+        const users = await User.find(filter)
+            .select('-password')
+            .populate('company', 'name logo isVerified description email phone website address serviceType');
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -55,10 +64,6 @@ const updateUserRole = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
-// @desc    Delete user (smart delete)
-// @route   DELETE /api/users/:id
-// @access  Private/Superuser
 const deleteUser = async (req, res) => {
     try {
         const { force, reason } = req.query;
@@ -79,9 +84,30 @@ const deleteUser = async (req, res) => {
         if (!canDeleteCheck.canDelete) {
             // If force=true and admin, use soft delete (deactivate)
             if (force === 'true') {
+                const days = parseInt(req.query.days) || 0;
+                let expiresAt = null;
+                let durationText = 'indefinitely';
+
+                if (days > 0) {
+                    expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+                    durationText = `for ${days} days`;
+                }
+
                 await User.softDelete(req.params.id, reason || 'Account deactivated by admin');
+
+                // Send email notification: Banned/Suspended
+                const emailReason = (reason || 'Account deactivated by administrator') +
+                    (days > 0 ? ` (Suspended ${durationText})` : '');
+
+                await sendAccountActionEmail(
+                    user.email,
+                    'banned',
+                    emailReason,
+                    user.name
+                );
+
                 return res.json({
-                    message: 'User account has been deactivated (soft deleted). Active complaints preserved.',
+                    message: `User account has been suspended ${durationText}. Active complaints preserved.`,
                     note: 'User data is retained for complaint history. Use permanent delete only after complaints are resolved.'
                 });
             }
@@ -98,6 +124,36 @@ const deleteUser = async (req, res) => {
         }
 
         // Safe to delete - no active complaints
+
+        // Cascade Delete: If user is provider, remove their company and services
+        if (user.role === 'provider') {
+            const company = await Company.findOne({ owner: req.params.id });
+            if (company) {
+                // Delete services associated with company
+                await Service.deleteMany({ company: company._id });
+
+                // Delete company logo from Cloudinary
+                if (company.logoPublicId) {
+                    try {
+                        await deleteImage(company.logoPublicId);
+                    } catch (error) {
+                        console.error('Failed to delete company logo:', error);
+                    }
+                }
+
+                // Delete company
+                await company.deleteOne();
+            }
+        }
+
+        // Send email notification: Deleted
+        await sendAccountActionEmail(
+            user.email,
+            'deleted',
+            reason || 'Account deleted by administrator',
+            user.name
+        );
+
         await user.deleteOne();
         res.json({ message: 'User removed successfully' });
     } catch (error) {
@@ -124,6 +180,14 @@ const reactivateUser = async (req, res) => {
         user.deactivatedAt = undefined;
         user.deactivationReason = undefined;
         await user.save();
+
+        // Send email notification: Reactivated
+        await sendAccountActionEmail(
+            user.email,
+            'reactivated',
+            'Your account has been reactivated. Welcome back!',
+            user.name
+        );
 
         res.json({ message: 'User reactivated successfully', user: { _id: user._id, name: user.name, email: user.email } });
     } catch (error) {

@@ -4,7 +4,7 @@ const Company = require('../models/Company');
 const OTP = require('../models/OTP'); // Keep for password reset
 const PendingUser = require('../models/PendingUser');
 const Session = require('../models/Session');
-const { generateOTP, sendOTPEmail, sendPasswordResetEmail } = require('../utils/emailService');
+const { generateOTP, sendOTPEmail } = require('../utils/emailService');
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -34,9 +34,7 @@ const registerUser = async (req, res) => {
             city,
             state,
             companyName,
-            serviceType,
             description,
-            logo,
             avatar
         } = req.body;
 
@@ -148,7 +146,7 @@ const verifyOTP = async (req, res) => {
 
         // If provider, create company
         if (user.role === 'provider' && pendingUser.company && pendingUser.company.name) {
-            await Company.create({
+            const company = await Company.create({
                 name: pendingUser.company.name,
                 description: pendingUser.company.description,
                 email: user.email,
@@ -158,6 +156,10 @@ const verifyOTP = async (req, res) => {
                 serviceType: pendingUser.company.serviceType || 'General',
                 logo: pendingUser.company.logo
             });
+
+            // Link company to user
+            user.company = company._id;
+            await user.save();
         }
 
         // Delete pending user
@@ -245,11 +247,27 @@ const loginUser = async (req, res) => {
         }
 
         if (!user.isActive) {
-            return res.status(401).json({ message: 'Account is deactivated. Contact support.' });
+            // Check if ban has expired
+            if (user.bannedExpiresAt && new Date() > new Date(user.bannedExpiresAt)) {
+                // Reactivate user
+                user.isActive = true;
+                user.bannedExpiresAt = undefined;
+                user.deactivationReason = undefined;
+                await user.save();
+                // Proceed to login
+            } else {
+                const message = user.bannedExpiresAt
+                    ? `Account suspended until ${new Date(user.bannedExpiresAt).toLocaleDateString()}. Reason: ${user.deactivationReason || 'Admin Action'}`
+                    : 'Account is deactivated. Contact support.';
+                return res.status(403).json({ message });
+            }
         }
 
         if (await user.matchPassword(password)) {
             const token = generateToken(user._id);
+
+            // Invalidate previous session from this device
+            await Session.invalidateDeviceSession(user._id, req.get('User-Agent') || 'Unknown');
 
             // Create Session
             await Session.createSession(user._id, token, req);

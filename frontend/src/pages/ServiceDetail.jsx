@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 import API_URL from '../config/api';
 
@@ -35,7 +36,8 @@ const ServiceDetail = () => {
         try {
             const res = await fetch(`${API_URL}/api/bookings/my-bookings`, { credentials: 'include' });
             if (res.ok) {
-                const bookings = await res.json();
+                const data = await res.json();
+                const bookings = Array.isArray(data) ? data : data.bookings || [];
                 const hasCompletedBooking = bookings.some(
                     b => (b.service._id === id || b.service === id) && b.status === 'completed'
                 );
@@ -82,16 +84,11 @@ const ServiceDetail = () => {
         }
         try {
             if (isBookmarked) {
-                await fetch(`${API_URL}/api/bookmarks/${id}`, { method: 'DELETE', credentials: 'include' });
+                await axios.delete(`/api/bookmarks/${id}`);
                 setIsBookmarked(false);
                 setMessage('Removed from favorites');
             } else {
-                await fetch(`${API_URL}/api/bookmarks`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ serviceId: id })
-                });
+                await axios.post('/api/bookmarks', { serviceId: id });
                 setIsBookmarked(true);
                 setMessage('Added to favorites!');
             }
@@ -107,35 +104,25 @@ const ServiceDetail = () => {
         }
         setSubmitting(true);
         try {
-            const res = await fetch(`${API_URL}/api/services/${id}/rate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ value, review })
+            const res = await axios.post(`/api/services/${id}/rate`, { value, review });
+            const data = res.data;
+            // Manually populate the new rating with current user details for immediate display
+            // The backend returns the service with unpopulated user IDs in ratings
+            const updatedRatings = data.ratings.map(r => {
+                if (r.user === user._id || r.user?._id === user._id) {
+                    return { ...r, user: user, date: new Date() }; // Inject current user and date
+                }
+                // For other ratings, preserve existing populated data if available in current state
+                const existing = service.ratings.find(old => old._id === r._id);
+                return existing || r;
             });
-            const data = await res.json();
-            if (res.ok) {
-                // Manually populate the new rating with current user details for immediate display
-                // The backend returns the service with unpopulated user IDs in ratings
-                const updatedRatings = data.ratings.map(r => {
-                    if (r.user === user._id || r.user?._id === user._id) {
-                        return { ...r, user: user, date: new Date() }; // Inject current user and date
-                    }
-                    // For other ratings, preserve existing populated data if available in current state
-                    const existing = service.ratings.find(old => old._id === r._id);
-                    return existing || r;
-                });
 
-                setService({ ...data, ratings: updatedRatings });
-                setService({ ...data, ratings: updatedRatings });
-                setRating(value);
-                setIsEditingReview(false);
-                setMessage('Rating submitted!');
-            } else {
-                setMessage(data.message || 'Failed to submit rating');
-            }
+            setService({ ...data, ratings: updatedRatings });
+            setRating(value);
+            setIsEditingReview(false);
+            setMessage('Rating submitted!');
         } catch (error) {
-            setMessage('Error submitting rating');
+            setMessage(error.response?.data?.message || 'Error submitting rating');
         } finally {
             setSubmitting(false);
         }
@@ -153,32 +140,22 @@ const ServiceDetail = () => {
         try {
             const formattedDate = new Date(bookingDate).toISOString();
 
-            const res = await fetch(`${API_URL}/api/bookings`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    serviceId: id,
-                    companyId: service.company._id,
-                    date: formattedDate,
-                    notes: bookingNotes,
-                    address: bookingAddress || user.city
-                })
+            await axios.post('/api/bookings', {
+                serviceId: id,
+                companyId: service.company._id,
+                date: formattedDate,
+                notes: bookingNotes,
+                address: bookingAddress || user.city
             });
 
-            const data = await res.json();
-            if (res.ok) {
-                setMessage('Booking request sent successfully!');
-                setShowBookingModal(false);
-                setBookingDate('');
-                setBookingNotes('');
-                setBookingAddress(''); // Reset address as requested
-            } else {
-                setMessage(data.message || 'Booking failed');
-            }
+            setMessage('Booking request sent successfully!');
+            setShowBookingModal(false);
+            setBookingDate('');
+            setBookingNotes('');
+            setBookingAddress(''); // Reset address as requested
         } catch (error) {
             console.error('Booking error:', error);
-            setMessage('Error processing booking');
+            setMessage(error.response?.data?.message || 'Error processing booking');
         }
     };
 
@@ -199,7 +176,7 @@ const ServiceDetail = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#0f0f13] relative overflow-hidden pt-24 pb-12">
+        <div className="min-h-screen bg-[#0f0f13] relative overflow-hidden py-12">
             <div className="noise-overlay" />
 
             {/* Background Ambience */}

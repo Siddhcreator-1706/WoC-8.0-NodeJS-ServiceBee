@@ -10,7 +10,7 @@ router.post('/logo', uploadCompanyLogoMiddleware, (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: 'Please upload a file' });
         }
-        res.json({ url: req.file.path });
+        res.json({ url: req.file.secure_url || req.file.path });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -24,7 +24,7 @@ router.post('/avatar', uploadUserAvatarMiddleware, (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: 'Please upload a file' });
         }
-        res.json({ url: req.file.path });
+        res.json({ url: req.file.secure_url || req.file.path });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

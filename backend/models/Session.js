@@ -53,15 +53,13 @@ sessionSchema.statics.createSession = async function (userId, token, req, expire
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
 
-    const session = await this.create({
+    return await this.create({
         userId,
         token,
         userAgent: req.get('User-Agent') || 'Unknown',
         ipAddress: req.ip || req.connection?.remoteAddress || 'Unknown',
         expiresAt
     });
-
-    return session;
 };
 
 // Static method to invalidate a session
@@ -76,6 +74,14 @@ sessionSchema.statics.invalidateSession = async function (token) {
 sessionSchema.statics.invalidateAllUserSessions = async function (userId) {
     return await this.updateMany(
         { userId, isActive: true },
+        { $set: { isActive: false } }
+    );
+};
+
+// Static method to invalidate session for a specific device (User-Agent)
+sessionSchema.statics.invalidateDeviceSession = async function (userId, userAgent) {
+    return await this.updateMany(
+        { userId, userAgent, isActive: true },
         { $set: { isActive: false } }
     );
 };

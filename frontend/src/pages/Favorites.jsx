@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 import gsap from 'gsap';
 
 import API_URL from '../config/api';
@@ -43,10 +44,7 @@ const Favorites = () => {
 
     const removeBookmark = async (serviceId) => {
         try {
-            await fetch(`${API_URL}/api/bookmarks/${serviceId}`, {
-                method: 'DELETE',
-                credentials: 'include'
-            });
+            await axios.delete(`/api/bookmarks/${serviceId}`);
             setBookmarks(prev => prev.filter(b => b.service._id !== serviceId));
         } catch (error) {
             console.error('Failed to remove bookmark:', error);
@@ -56,7 +54,7 @@ const Favorites = () => {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-[#0f0f13] relative overflow-hidden font-sans text-gray-100 pt-24">
+        <div className="min-h-screen bg-[#0f0f13] relative overflow-hidden font-sans text-gray-100">
             {/* Ambient Background */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/20 via-[#0f0f13] to-[#0f0f13]" />

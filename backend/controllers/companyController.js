@@ -1,6 +1,7 @@
 const Company = require('../models/Company');
 const Service = require('../models/Service');
-const { uploadCompanyLogo, deleteImage, getPublicIdFromUrl } = require('../config/cloudinary');
+const Booking = require('../models/Booking');
+const { uploadCompanyLogo, deleteImage } = require('../config/cloudinary');
 
 // @desc    Create a company
 // @route   POST /api/companies
@@ -104,7 +105,35 @@ const getMyCompany = async (req, res) => {
             return res.status(404).json({ message: 'You have not registered a company yet' });
         }
 
-        res.json(company);
+        // Calculate stats
+        const completedBookings = await Booking.countDocuments({
+            company: company._id,
+            status: 'completed'
+        });
+
+        // Calculate average rating across all services
+        let totalRating = 0;
+        let totalReviews = 0;
+
+        company.services.forEach(service => {
+            if (service.ratings && service.ratings.length > 0) {
+                const serviceTotal = service.ratings.reduce((sum, r) => sum + r.value, 0);
+                totalRating += serviceTotal;
+                totalReviews += service.ratings.length;
+            }
+        });
+
+        const overallRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0;
+
+        // Return combined data
+        const companyData = company.toObject();
+        companyData.stats = {
+            completedBookings,
+            overallRating,
+            totalReviews
+        };
+
+        res.json(companyData);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -126,7 +155,7 @@ const updateCompany = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
-        const { name, description, email, phone, website, address, socialLinks } = req.body;
+        const { name, description, email, phone, website, address } = req.body;
 
         if (name) company.name = name;
         if (description) company.description = description;
@@ -164,7 +193,7 @@ const updateCompany = async (req, res) => {
             if (company.logoPublicId) {
                 await deleteImage(company.logoPublicId);
             }
-            company.logo = req.file.path || req.file.secure_url;
+            company.logo = req.file.secure_url || req.file.path;
             company.logoPublicId = req.file.filename;
         }
 
@@ -204,7 +233,7 @@ const uploadLogo = async (req, res) => {
             await deleteImage(company.logoPublicId);
         }
 
-        company.logo = req.file.path || req.file.secure_url;
+        company.logo = req.file.secure_url || req.file.path;
         company.logoPublicId = req.file.filename;
         await company.save();
 
@@ -234,8 +263,11 @@ const deleteCompany = async (req, res) => {
             await deleteImage(company.logoPublicId);
         }
 
+        // Cascade delete: Remove all services associated with this company
+        await Service.deleteMany({ company: company._id });
+
         await company.deleteOne();
-        res.json({ message: 'Company removed' });
+        res.json({ message: 'Company and its services removed' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

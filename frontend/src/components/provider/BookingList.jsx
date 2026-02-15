@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import CustomSelect from '../ui/CustomSelect';
 import API_URL from '../../config/api';
 import axios from 'axios';
 
@@ -25,7 +26,7 @@ const BookingList = () => {
         try {
             setLoading(true);
             const res = await axios.get(`${API_URL}/api/bookings/company-bookings`);
-            setBookings(res.data);
+            setBookings(Array.isArray(res.data) ? res.data : res.data.bookings || []);
         } catch (err) {
             console.error(err);
             setError('Error connecting to server');
@@ -67,27 +68,30 @@ const BookingList = () => {
                     <p className="text-gray-400">Respond to mortal summons and inquiries</p>
                 </div>
                 <div className="flex justify-end">
-                    <div className="relative group">
-                        <select
-                            className="appearance-none bg-[#15151e] text-gray-300 text-sm py-2 px-4 pr-10 rounded-lg border border-gray-700 outline-none focus:border-orange-500 cursor-pointer shadow-lg"
+                    <div className="w-48 relative z-20">
+                        <CustomSelect
+                            options={[
+                                { value: 'all', label: 'All Status' },
+                                { value: 'pending', label: 'Pending' },
+                                { value: 'accepted', label: 'Accepted' },
+                                { value: 'completed', label: 'Completed' },
+                                { value: 'rejected', label: 'Rejected' },
+                            ]}
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                        >
-                            <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="accepted">Accepted</option>
-                            <option value="completed">Completed</option>
-                            <option value="rejected">Rejected</option>
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                        </div>
+                            placeholder="Filter Status"
+                        />
                     </div>
                 </div>
             </div>
 
             {filteredBookings.length === 0 ? (
-                <div className="text-center text-gray-500 py-12 bg-[#15151e]/50 rounded-xl border border-dashed border-gray-800">No bookings found</div>
+                (
+                        <div className="flex flex-col items-center justify-center py-20 bg-[#15151e]/30 rounded-2xl border border-dashed border-gray-800">
+                            <div className="text-8xl mb-6">👻</div>
+                            <h3 className="text-2xl font-bold text-gray-300 mb-2 font-creepster tracking-wider">No Bookings Found</h3>
+                        </div>
+                    )
             ) : (
                 filteredBookings.map((booking) => (
                     <div key={booking._id} className="bg-[#15151e]/80 backdrop-blur-sm rounded-xl p-6 border border-gray-800 hover:border-orange-500/30 transition-all flex flex-col md:flex-row justify-between gap-4 shadow-lg">

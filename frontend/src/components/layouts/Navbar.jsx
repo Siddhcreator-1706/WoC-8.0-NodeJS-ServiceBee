@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
@@ -15,7 +15,7 @@ const Navbar = () => {
 
     return (
         <>
-            <nav className="px-6 py-4 border-b border-white/5 fixed top-0 w-full bg-[#0a0a0f]/80 backdrop-blur-xl z-50 transition-all duration-300">
+            <nav className="px-6 py-4 border-b border-white/5 fixed top-0 w-full bg-[#0a0a0f]/80 backdrop-blur-xl z-50 transition-all duration-300 h-20">
                 <div className="flex justify-between items-center max-w-7xl mx-auto">
                     <Link to="/" className="flex items-center gap-3 group">
                         <img src="/logo.png" alt="Phantom Agency Logo" className="w-10 h-10 group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,102,0,0.5)]" />
@@ -67,25 +67,25 @@ const Navbar = () => {
                                         {/* Role Specific Links */}
                                         {user.role === 'user' && (
                                             <>
-                                                <Link to="/services" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-pumpkin hover:text-blood font-creepster tracking-wider transition-colors text-xl border-l-2 border-transparent hover:border-blood">Find Services</Link>
-                                                <Link to="/profile?tab=profile" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">My Profile</Link>
-                                                <Link to="/bookings" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">My Bookings</Link>
-                                                <Link to="/complaints" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-blood font-medium transition-colors text-lg border-l-2 border-transparent hover:border-blood">My Complaints</Link>
+                                                <Link to="/profile" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Profile</Link>
+                                                <Link to="/services" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Find Services</Link>
+                                                <Link to="/bookings" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Bookings</Link>
+                                                <Link to="/complaints" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Complaints</Link>
                                                 <Link to="/favorites" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Favorites</Link>
                                             </>
                                         )}
 
                                         {user.role === 'provider' && (
                                             <>
-                                                <Link to="/provider?tab=profile" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-pumpkin hover:text-blood font-creepster tracking-wider transition-colors text-xl border-l-2 border-transparent hover:border-blood">Profile Page</Link>
-                                                <Link to="/provider?tab=services" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">My Services</Link>
-                                                <Link to="/provider?tab=bookings" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Bookings</Link>
-                                                <Link to="/provider?tab=complaints" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-blood font-medium transition-colors text-lg border-l-2 border-transparent hover:border-blood">Complaints</Link>
+                                                <Link to="/provider/profile" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">My Profile</Link>
+                                                <Link to="/provider/services" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">My Services</Link>
+                                                <Link to="/provider/bookings" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Bookings</Link>
+                                                <Link to="/provider/complaints" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Complaints</Link>
                                             </>
                                         )}
 
                                         {user.role === 'admin' && (
-                                            <Link to="/admin" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-purple-400 font-creepster tracking-widest hover:text-purple-300 transition-colors text-xl">Admin Panel</Link>
+                                            <Link to="/admin" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Admin Panel</Link>
                                         )}
 
                                         <div className="border-t border-white/10 my-4 pt-4">

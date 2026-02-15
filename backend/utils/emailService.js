@@ -225,11 +225,116 @@ const escapeHtml = (text) => {
     return String(text).replace(/[&<>"']/g, m => map[m]);
 };
 
+// Send service action email (deletion/suspension)
+const sendServiceActionEmail = async (email, serviceName, action, reason, name = 'Partner') => {
+    const transporter = createTransporter();
+    const cleanEmail = sanitizeEmail(email);
+
+    const actionColors = {
+        'deleted': '#ef4444', // Red
+        'suspended': '#f59e0b' // Amber
+    };
+
+    const actionColor = actionColors[action] || '#71717a';
+    const actionText = action.toUpperCase();
+
+    const content = `
+        <p style="margin: 0 0 24px 0; color: #a1a1aa; font-size: 16px; line-height: 1.6;">Hello <strong style="color: #f4f4f5;">${escapeHtml(name)}</strong>,</p>
+        <p style="margin: 0 0 20px 0; color: #a1a1aa; font-size: 15px; line-height: 1.6;">Important update regarding your service listing.</p>
+
+        <div style="background-color: #27272a; border-radius: 12px; padding: 25px; border: 1px solid #3f3f46; margin: 25px 0;">
+            <div style="margin-bottom: 16px;">
+                <span style="color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Service Name</span>
+                <span style="color: #f4f4f5; font-size: 16px; font-weight: 500;">${escapeHtml(serviceName)}</span>
+            </div>
+            
+            <div style="padding-top: 20px; border-top: 1px solid #3f3f46;">
+                <span style="color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">Action Taken</span>
+                <span style="display: inline-block; background-color: ${actionColor}20; color: ${actionColor}; border: 1px solid ${actionColor}40; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; letter-spacing: 0.5px;">${actionText}</span>
+            </div>
+
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #3f3f46;">
+                <span style="color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px;">Reason</span>
+                <p style="color: #d4d4d8; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${escapeHtml(reason || 'Violation of terms of service.')}</p>
+            </div>
+        </div>
+
+        <p style="margin: 0; color: #71717a; font-size: 13px; text-align: center;">If you believe this is an error, please contact support.</p>
+    `;
+
+    const mailOptions = {
+        from: getFromAddress(),
+        to: cleanEmail,
+        subject: `Service ${actionText}: ${serviceName} - Phantom Agency`,
+        html: getEmailTemplate(`Service ${actionText}`, content)
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return { success: true };
+    } catch (error) {
+        console.error('Email send error:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+// Send account action email (ban/unban/delete)
+const sendAccountActionEmail = async (email, action, reason, name = 'User') => {
+    const transporter = createTransporter();
+    const cleanEmail = sanitizeEmail(email);
+
+    const actionColors = {
+        'banned': '#ef4444',      // Red
+        'deleted': '#ef4444',     // Red
+        'reactivated': '#10b981'  // Emerald
+    };
+
+    const actionColor = actionColors[action] || '#71717a';
+    const actionText = action.toUpperCase();
+
+    const content = `
+        <p style="margin: 0 0 24px 0; color: #a1a1aa; font-size: 16px; line-height: 1.6;">Hello <strong style="color: #f4f4f5;">${escapeHtml(name)}</strong>,</p>
+        <p style="margin: 0 0 20px 0; color: #a1a1aa; font-size: 15px; line-height: 1.6;">Important update regarding your account status.</p>
+
+        <div style="background-color: #27272a; border-radius: 12px; padding: 25px; border: 1px solid #3f3f46; margin: 25px 0;">
+            <div style="margin-bottom: 16px;">
+                <span style="color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">Account Status</span>
+                <span style="display: inline-block; background-color: ${actionColor}20; color: ${actionColor}; border: 1px solid ${actionColor}40; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; letter-spacing: 0.5px;">${actionText}</span>
+            </div>
+
+            ${reason ? `
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #3f3f46;">
+                <span style="color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px;">Reason / Details</span>
+                <p style="color: #d4d4d8; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${escapeHtml(reason)}</p>
+            </div>` : ''}
+        </div>
+
+        <p style="margin: 0; color: #71717a; font-size: 13px; text-align: center;">If you have questions, please contact our support team.</p>
+    `;
+
+    const mailOptions = {
+        from: getFromAddress(),
+        to: cleanEmail,
+        subject: `Account Update: ${actionText} - Phantom Agency`,
+        html: getEmailTemplate(`Account ${actionText}`, content)
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return { success: true };
+    } catch (error) {
+        console.error('Email send error:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 module.exports = {
     generateOTP,
     sendOTPEmail,
     sendPasswordResetEmail,
     sendComplaintStatusEmail,
+    sendServiceActionEmail,
+    sendAccountActionEmail,
     sanitizeEmail,
     escapeHtml
 };

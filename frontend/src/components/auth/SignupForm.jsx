@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import CustomSelect from '../ui/CustomSelect';
+import useLocationData from '../../hooks/useLocationData';
 
 const SignupForm = ({
     signupData,
@@ -21,9 +24,18 @@ const SignupForm = ({
     handleAvatarChange,
     uploadingAvatar
 }) => {
+    // Use the custom hook for locations
+    const { statesList: stateOptions, districtsList: districtOptions, loadingStates, loadingDistricts } = useLocationData(signupData.state);
+
+    // Prepare dropdown options for role
+    const roleOptions = [
+        { value: 'user', label: 'Customer' },
+        { value: 'provider', label: 'Provider' }
+    ];
+
     return (
         <div
-            className="w-full h-auto max-h-[85vh] bg-[#12121a]/80 backdrop-blur-xl px-4 py-6 md:px-6 md:py-8 rounded-3xl justify-center items-center border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden"
+            className="w-full h-full max-h-[92vh] bg-[#12121a]/95 backdrop-blur-xl px-4 py-5 md:px-6 md:py-6 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden"
             style={{ backfaceVisibility: 'hidden' }}
         >
             {/* Ambient Background Glow */}
@@ -50,7 +62,7 @@ const SignupForm = ({
             {/* Scrollable Form Area */}
             {showOTP ? (
                 // OTP View
-                <div className="flex-1 flex flex-col justify-center relative z-10">
+                <div className="flex-1 flex flex-col justify-center relative z-10 w-full">
                     <div className="text-center mb-4">
                         <div className="w-14 h-14 bg-violet-500/10 rounded-full flex items-center justify-center mx-auto mb-3 border border-violet-500/30 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
                             <svg className="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,25 +111,15 @@ const SignupForm = ({
                                         placeholder="John Doe"
                                     />
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label htmlFor="signup-role" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Role</label>
-                                    <div className="relative">
-                                        <select
-                                            id="signup-role"
-                                            name="role" value={signupData.role} onChange={handleSignupChange}
-                                            autoComplete="organization-title"
-                                            className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all cursor-pointer appearance-none"
-                                        >
-                                            <option value="user" className="bg-[#0a0a0f] text-white">Customer</option>
-                                            <option value="provider" className="bg-[#0a0a0f] text-white">Provider</option>
-                                        </select>
-                                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400">
-                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
+
+                                {/* Custom Role Select */}
+                                <CustomSelect
+                                    label="Role"
+                                    name="role"
+                                    value={signupData.role}
+                                    onChange={handleSignupChange}
+                                    options={roleOptions}
+                                />
                             </div>
 
                             {/* Email */}
@@ -165,35 +167,40 @@ const SignupForm = ({
                                         type="tel" name="phone" value={signupData.phone} onChange={handleSignupChange}
                                         autoComplete="tel"
                                         className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
-                                        placeholder="123..."
+                                        placeholder="958****207"
                                     />
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label htmlFor="signup-city" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">City</label>
-                                    <input
-                                        id="signup-city"
-                                        type="text" name="city" value={signupData.city} onChange={handleSignupChange}
-                                        autoComplete="address-level2"
-                                        className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
-                                        placeholder="City"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label htmlFor="signup-state" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">State</label>
-                                    <input
-                                        id="signup-state"
-                                        type="text" name="state" value={signupData.state} onChange={handleSignupChange}
-                                        autoComplete="address-level1"
-                                        className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
-                                        placeholder="State"
-                                    />
-                                </div>
+
+                                {/* Custom State Select */}
+                                <CustomSelect
+                                    label="State"
+                                    name="state"
+                                    value={signupData.state}
+                                    onChange={(e) => {
+                                        setSignupData(prev => ({ ...prev, state: e.target.value, city: '' }));
+                                    }}
+                                    options={stateOptions}
+                                    loading={loadingStates}
+                                    placeholder="Select State"
+                                />
+
+                                {/* Custom District Select */}
+                                <CustomSelect
+                                    label="District"
+                                    name="city"
+                                    value={signupData.city}
+                                    onChange={handleSignupChange}
+                                    options={districtOptions}
+                                    loading={loadingDistricts}
+                                    disabled={!signupData.state}
+                                    placeholder={signupData.state ? "Select District" : "Select state first"}
+                                />
                             </div>
 
                             {/* Dynamic Fields: User (Avatar & Bio) */}
                             <AnimatePresence>
                                 {signupData.role === 'user' && (
-                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2 pt-2 border-t border-white/5">
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2 pt-2 border-t border-white/5 overflow-hidden">
                                         <div className="space-y-1.5">
                                             <label htmlFor="signup-avatar" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Profile Avatar</label>
                                             <div className="flex items-center gap-3 bg-[#0a0a0f]/40 p-2 rounded-xl border border-zinc-800/50">
@@ -223,7 +230,7 @@ const SignupForm = ({
                             {/* Dynamic Fields: Provider (Company Info) */}
                             <AnimatePresence>
                                 {signupData.role === 'provider' && (
-                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2 pt-2 border-t border-white/5">
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2 pt-2 border-t border-white/5 overflow-hidden">
                                         <div className="space-y-1.5">
                                             <label htmlFor="signup-company-name" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Company Name</label>
                                             <input
@@ -267,7 +274,7 @@ const SignupForm = ({
                                     className="w-4 h-4 accent-violet-500 rounded cursor-pointer"
                                 />
                                 <label htmlFor="terms" className="text-xs text-zinc-500 cursor-pointer select-none">
-                                    I agree to the <span className="text-violet-400 hover:text-violet-300">Terms & Conditions</span>
+                                    I agree to the <Link to="/terms" className="text-violet-400 hover:text-violet-300">Terms & Conditions</Link>
                                 </label>
                             </div>
                         </div>

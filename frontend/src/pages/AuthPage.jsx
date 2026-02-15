@@ -235,7 +235,7 @@ const AuthPage = () => {
     };
 
     return (
-        <div className="min-h-screen w-full bg-[#0f0f13] flex items-center justify-center p-4 relative font-sans">
+        <div className="h-screen w-full bg-[#0f0f13] py-2 px-4 relative font-sans flex flex-col items-center justify-center overflow-hidden">
             <ParticleBackground />
 
             {/* Error/Success Messages */}

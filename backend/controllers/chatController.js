@@ -1,7 +1,6 @@
 const ChatMessage = require('../models/ChatMessage');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
-const AppError = require('../utils/AppError');
 
 // @desc    Get list of conversations (users the current user has chatted with)
 // @route   GET /api/chat/conversations

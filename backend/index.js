@@ -90,7 +90,7 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token']
 }));
 
 // Body parser
@@ -105,7 +105,13 @@ app.use(mongoSanitize());
 
 // CSRF Protection
 // Must be used after cookie-parser
-app.use(csrfProtection);
+// Skip CSRF for Socket.IO polling requests (they use JWT auth via socketAuth middleware)
+app.use((req, res, next) => {
+    if (req.path.startsWith('/socket.io')) {
+        return next();
+    }
+    csrfProtection(req, res, next);
+});
 
 // CSRF Token Endpoint
 // Frontend calls this to get the token and include it in subsequent mutation requests
@@ -132,6 +138,7 @@ app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/bookings', bookingRoutes); // Mount booking routes
 app.use('/api/chat', chatRoutes);
+app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
 // Health check

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../config/api';
-import ImageUpload from './ImageUpload';
+import ImageUpload from './common/ImageUpload';
 
 const ComplaintModal = ({ isOpen, onClose, bookingId, booking, onSuccess }) => {
     const navigate = useNavigate();

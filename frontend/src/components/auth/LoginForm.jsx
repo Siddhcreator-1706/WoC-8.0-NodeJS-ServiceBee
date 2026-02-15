@@ -5,7 +5,7 @@ const LoginForm = ({ loginData, handleLoginChange, handleLogin, loading, setIsFl
 
     return (
         <div
-            className="w-full h-auto max-h-[85vh] bg-[#12121a]/80 backdrop-blur-xl px-4 py-6 md:px-6 md:py-8 rounded-3xl justify-center items-center border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden"
+            className="w-full max-h-[92vh] bg-[#12121a]/95 backdrop-blur-xl px-4 py-5 md:px-6 md:py-6 rounded-3xl justify-center items-center border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden"
             style={{ backfaceVisibility: 'hidden' }}
         >
             {/* Ambient Background Glow */}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 import API_URL from '../../config/api';
 
 const ForgotPasswordForm = ({ onBack }) => {
@@ -18,21 +19,11 @@ const ForgotPasswordForm = ({ onBack }) => {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch(`${API_URL}/auth/forgot-password`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-                setStep(2);
-                setSuccess('Verification code sent to your email.');
-            } else {
-                setError(data.message || 'Failed to send verification code');
-            }
+            await axios.post('/auth/forgot-password', { email });
+            setStep(2);
+            setSuccess('Verification code sent to your email.');
         } catch (err) {
-            setError('Network error. Please try again.');
+            setError(err.response?.data?.message || 'Failed to send verification code');
         } finally {
             setLoading(false);
         }
@@ -43,22 +34,12 @@ const ForgotPasswordForm = ({ onBack }) => {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch(`${API_URL}/auth/verify-reset-otp`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, otp })
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-                setResetToken(data.resetToken);
-                setStep(3);
-                setSuccess('Code verified! Set your new password.');
-            } else {
-                setError(data.message || 'Invalid code');
-            }
+            const res = await axios.post('/auth/verify-reset-otp', { email, otp });
+            setResetToken(res.data.resetToken);
+            setStep(3);
+            setSuccess('Code verified! Set your new password.');
         } catch (err) {
-            setError('Verification failed');
+            setError(err.response?.data?.message || 'Invalid code');
         } finally {
             setLoading(false);
         }
@@ -74,23 +55,13 @@ const ForgotPasswordForm = ({ onBack }) => {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch(`${API_URL}/auth/reset-password`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ resetToken, newPassword: password })
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-                setSuccess('Password reset successful! Logging you in...');
-                setTimeout(() => {
-                    onBack(); // Go back to login
-                }, 2000);
-            } else {
-                setError(data.message || 'Reset failed');
-            }
+            await axios.post('/auth/reset-password', { resetToken, newPassword: password });
+            setSuccess('Password reset successful! Logging you in...');
+            setTimeout(() => {
+                onBack(); // Go back to login
+            }, 2000);
         } catch (err) {
-            setError('Reset failed');
+            setError(err.response?.data?.message || 'Reset failed');
         } finally {
             setLoading(false);
         }

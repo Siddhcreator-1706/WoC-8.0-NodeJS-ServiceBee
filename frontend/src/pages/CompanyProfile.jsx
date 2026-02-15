@@ -62,7 +62,7 @@ const CompanyProfile = () => {
     if (!company) return <div className="min-h-screen bg-[#0f0f13] flex items-center justify-center text-white">Company not found</div>;
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-[#0f0f13] text-white pt-24 pb-12">
+        <div ref={containerRef} className="min-h-screen bg-[#0f0f13] text-white py-12">
             {/* Background Ambience */}
             <div className="fixed inset-0 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/20 via-[#0f0f13] to-[#0f0f13]" />
