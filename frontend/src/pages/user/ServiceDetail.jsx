@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 
-import API_URL from '../config/api';
+import API_URL from '../../config/api';
 
 const ServiceDetail = () => {
     const { id } = useParams();
@@ -105,7 +105,7 @@ const ServiceDetail = () => {
         setSubmitting(true);
         try {
             const res = await axios.post(`/api/services/${id}/rate`, { value, review });
-            const data = res.data;
+            const { data } = res;
             // Manually populate the new rating with current user details for immediate display
             // The backend returns the service with unpopulated user IDs in ratings
             const updatedRatings = data.ratings.map(r => {
@@ -177,7 +177,6 @@ const ServiceDetail = () => {
 
     return (
         <div className="min-h-screen bg-[#0f0f13] relative overflow-hidden py-12">
-            <div className="noise-overlay" />
 
             {/* Background Ambience */}
             <div className="fixed top-20 left-[10%] w-96 h-96 bg-purple-900/20 rounded-full blur-[128px] pointer-events-none" />
@@ -263,7 +262,7 @@ const ServiceDetail = () => {
 
             <div className="max-w-5xl mx-auto px-6">
                 {/* Back Button */}
-                <Link to="/services" className="inline-flex items-center gap-2 text-gray-400 hover:text-orange-400 mb-8 transition-colors group">
+                <Link to="/user/services" className="inline-flex items-center gap-2 text-gray-400 hover:text-orange-400 mb-8 transition-colors group">
                     <svg className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                     Back to Services
                 </Link>
@@ -334,7 +333,7 @@ const ServiceDetail = () => {
                                     </h1>
                                     <div className="flex items-center text-gray-300 gap-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
                                         <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                        <span className="font-medium tracking-wide">{service.location}</span>
+                                        <span className="font-medium tracking-wide">{service.city}, {service.state}</span>
                                     </div>
                                 </div>
                             </div>
@@ -537,12 +536,12 @@ const ServiceDetail = () => {
                             ) : (
                                 <div className="text-center p-4 bg-white/5 rounded-xl border border-white/5">
                                     <p className="text-gray-400 text-sm">
-                                        {!user ? (
+                                        {user ? (
+                                            "Providers cannot book services."
+                                        ) : (
                                             <>
                                                 <Link to="/login" className="text-orange-400 hover:underline">Login</Link> to book this service.
                                             </>
-                                        ) : (
-                                            "Providers cannot book services."
                                         )}
                                     </p>
                                 </div>

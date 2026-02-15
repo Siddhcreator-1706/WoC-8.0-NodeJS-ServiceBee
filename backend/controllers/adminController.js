@@ -20,7 +20,9 @@ const getAdminStats = async (req, res) => {
             bookingTotal,
             revenueTotal,
             recentBookings,
-            recentComplaints
+            recentComplaints,
+            recentUsers,
+            recentCompanies
         ] = await Promise.all([
             User.countDocuments({ role: 'user' }), // Customers
             User.countDocuments({ role: 'provider' }),
@@ -46,7 +48,17 @@ const getAdminStats = async (req, res) => {
             Complaint.find()
                 .sort({ createdAt: -1 })
                 .limit(5)
-                .populate('user', 'name')
+                .populate('user', 'name'),
+            // Fetch recent users
+            User.find({ role: 'user' }) // Only customers
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .select('name createdAt'),
+            // Fetch recent companies
+            Company.find()
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .select('name createdAt')
         ]);
 
         const revenue = revenueTotal.length > 0 ? revenueTotal[0].total : 0;
@@ -66,8 +78,22 @@ const getAdminStats = async (req, res) => {
                 action: `Reported an issue: ${c.subject}`,
                 time: c.createdAt,
                 type: 'complaint'
+            })),
+            ...recentUsers.map(u => ({
+                id: u._id,
+                user: u.name,
+                action: 'Joined the platform',
+                time: u.createdAt,
+                type: 'user_signup'
+            })),
+            ...recentCompanies.map(c => ({
+                id: c._id,
+                user: c.name, // Company Name as user
+                action: 'Registered a new company',
+                time: c.createdAt,
+                type: 'company_registered'
             }))
-        ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 5);
+        ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 10);
 
         res.status(200).json({
             success: true,

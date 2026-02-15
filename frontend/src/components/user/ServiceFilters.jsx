@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import API_URL from '../config/api';
-import CustomSelect from './ui/CustomSelect';
-import useLocationData from '../hooks/useLocationData';
+import API_URL from '../../config/api';
+import CustomSelect from '../ui/CustomSelect';
+import useLocationData from '../../hooks/useLocationData';
 
 const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
     // Location Data Hook
@@ -42,7 +42,11 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFilters(prev => ({ ...prev, [name]: value }));
+        setFilters(prev => ({
+            ...prev,
+            [name]: value,
+            ...(name === 'state' ? { city: '' } : {})
+        }));
     };
 
     const handleSubmit = (e) => {

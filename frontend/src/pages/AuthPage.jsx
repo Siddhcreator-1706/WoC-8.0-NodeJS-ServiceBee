@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Import axios for upload
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config/api';
-import ParticleBackground from '../components/ParticleBackground';
+import ParticleBackground from '../components/common/ParticleBackground';
 import LoginForm from '../components/auth/LoginForm';
 import SignupForm from '../components/auth/SignupForm';
 import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
@@ -16,7 +16,7 @@ const AuthPage = () => {
     useEffect(() => {
         if (user) {
             const target = user.role === 'admin' ? '/admin' :
-                user.role === 'provider' ? '/provider' : '/services';
+                user.role === 'provider' ? '/provider' : '/user/services';
             navigate(target);
         }
     }, [user, navigate]);
@@ -211,7 +211,7 @@ const AuthPage = () => {
             // Simple fix: reload page to trigger checkAuth, OR rely on navigate triggering re-render if we had a way to signal.
             // But since we are inside the page, we can simply:
             window.location.href = data.role === 'admin' ? '/admin' :
-                data.role === 'provider' ? '/provider' : '/services';
+                data.role === 'provider' ? '/provider' : '/user/profile';
 
         } catch (err) {
             setError(err.response?.data?.message || 'Verification failed');

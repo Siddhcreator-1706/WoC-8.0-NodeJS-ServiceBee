@@ -19,7 +19,6 @@ const getServices = async (req, res) => {
 
         const filter = { isActive: true };
 
-        if (location) filter.location = { $regex: escapeRegex(location), $options: 'i' };
         if (state) filter.state = state;
         if (city) filter.city = city;
         if (category) filter.category = category;

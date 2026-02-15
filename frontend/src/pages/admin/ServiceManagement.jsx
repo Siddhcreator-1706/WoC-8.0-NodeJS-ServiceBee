@@ -47,7 +47,6 @@ const ServiceManagement = () => {
 
     const filteredServices = services.filter(service => {
         const matchesSearch = service.name.toLowerCase().includes(search.toLowerCase()) ||
-            service.location.toLowerCase().includes(search.toLowerCase()) ||
             (service.company?.name && service.company.name.toLowerCase().includes(search.toLowerCase()));
         const matchesCategory = categoryFilter === 'all' || service.category === categoryFilter;
         return matchesSearch && matchesCategory;
@@ -61,7 +60,7 @@ const ServiceManagement = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h2 className="text-2xl text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 font-bold font-creepster tracking-wider">
-                        🕯️ Manage Services
+                        Manage Services
                     </h2>
                     <p className="text-gray-500 text-xs mt-1">{filteredServices.length} services found</p>
                 </div>
@@ -233,7 +232,6 @@ const ServiceManagement = () => {
                                 </div>
                                 <div className="bg-[#0a0a0f] p-3.5 rounded-xl border border-gray-800/50">
                                     <div className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Location</div>
-                                    <p className="text-white text-sm">{statsModal.service.location}</p>
                                     {statsModal.service.city && <p className="text-gray-500 text-xs mt-0.5">{statsModal.service.city}, {statsModal.service.state}</p>}
                                 </div>
                             </div>

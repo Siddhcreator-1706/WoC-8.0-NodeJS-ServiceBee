@@ -87,18 +87,18 @@ const AdminLayout = () => {
             {/* Content Area */}
             <div className="flex-1 flex flex-col min-w-0">
                 {/* Mobile Header */}
-                <header className="md:hidden bg-[#0d0d14]/95 backdrop-blur-md border-b border-orange-900/20 h-14 flex items-center justify-between px-4 sticky top-0 z-30">
+                <header className="md:hidden bg-[#0d0d14]/95 backdrop-blur-md border-b border-orange-900/20 h-14 flex items-center justify-between px-4 sticky top-0 z-50">
                     <div className="flex items-center gap-2">
                         <span className="text-xl">🎃</span>
                         <span className="font-creepster text-lg tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">PHANTOM</span>
                     </div>
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="text-orange-400 hover:text-orange-300 p-2 rounded-lg focus:outline-none"
+                        className="text-orange-400 hover:text-orange-300 p-2 rounded-lg focus:outline-none bg-orange-500/5 border border-orange-500/20"
                     >
                         <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5">
                             <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-                            <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`} />
+                            <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`} />
                             <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
                         </div>
                     </button>

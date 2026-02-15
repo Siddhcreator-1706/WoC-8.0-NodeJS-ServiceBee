@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import API_URL from '../config/api';
+import API_URL from '../../config/api';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import PageTransition from '../components/PageTransition';
-import ServiceFilters from '../components/ServiceFilters';
+import PageTransition from '../../components/common/PageTransition';
+import ServiceFilters from '../../components/user/ServiceFilters';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -151,7 +151,7 @@ const Services = () => {
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 services-grid perspective-1000 mt-8">
                         {filteredServices.map(service => (
-                            <Link to={`/services/${service._id}`} key={service._id} className="service-card block group h-full">
+                            <Link to={`/user/services/${service._id}`} key={service._id} className="service-card block group h-full">
                                 <div className="bg-[#15151e]/80 backdrop-blur-md border border-white/5 rounded-2xl overflow-hidden hover:border-orange-500/50 hover:shadow-[0_0_30px_rgba(255,69,0,0.15)] transition-all duration-500 h-full flex flex-col transform-gpu hover:-translate-y-2">
                                     <div className="h-56 bg-zinc-950 relative overflow-hidden">
                                         {service.image ? (
@@ -173,6 +173,10 @@ const Services = () => {
 
                                     <div className="p-6 flex-1 flex flex-col">
                                         <h2 className="text-2xl font-bold text-white mb-2 group-hover:text-orange-400 transition-colors">{service.name}</h2>
+                                        <div className="flex items-center gap-2 text-sm text-gray-400 mb-3">
+                                            <span>📍</span>
+                                            {service.city}, {service.state}
+                                        </div>
                                         <p className="text-gray-400 text-sm line-clamp-2 mb-4 flex-1">{service.description}</p>
 
                                         <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-auto">

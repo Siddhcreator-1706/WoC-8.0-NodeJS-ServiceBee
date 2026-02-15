@@ -11,7 +11,7 @@ import useLocationData from '../../hooks/useLocationData';
 const ServiceList = ({ services, onUpdate }) => {
     const [serviceForm, setServiceForm] = useState({
         name: '', description: '', price: '', priceType: 'fixed',
-        category: 'other', duration: '', location: '', state: '', city: ''
+        category: 'other', duration: '', state: '', city: ''
     });
 
     const { statesList, districtsList, loadingStates, loadingDistricts } = useLocationData(serviceForm.state);
@@ -63,7 +63,7 @@ const ServiceList = ({ services, onUpdate }) => {
             if (onUpdate) onUpdate();
             setServiceForm({
                 name: '', description: '', price: '', priceType: 'fixed',
-                category: 'other', duration: '', location: '', state: '', city: ''
+                category: 'other', duration: '', state: '', city: ''
             });
         } catch (err) {
             setError('Error saving service');
@@ -83,7 +83,6 @@ const ServiceList = ({ services, onUpdate }) => {
             priceType: service.priceType,
             category: service.category,
             duration: service.duration || '',
-            location: service.location || '',
             state: service.state || '',
             city: service.city || ''
         });
@@ -133,7 +132,7 @@ const ServiceList = ({ services, onUpdate }) => {
                             setServiceImage([]);
                             setServiceForm({
                                 name: '', description: '', price: '', priceType: 'fixed',
-                                category: 'other', duration: '', location: '', state: '', city: ''
+                                category: 'other', duration: '', state: '', city: ''
                             });
                             setShowServiceModal(true);
                         }}
@@ -243,10 +242,6 @@ const ServiceList = ({ services, onUpdate }) => {
                                             <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Duration</label>
                                             <input type="text" value={serviceForm.duration} onChange={e => setServiceForm({ ...serviceForm, duration: e.target.value })} className="w-full p-3.5 bg-black/40 rounded-xl text-white border border-white/10 focus:border-orange-500 outline-none transition-colors" placeholder="e.g. 2 hours" />
                                         </div>
-                                        <div>
-                                            <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Address/Location</label>
-                                            <input type="text" value={serviceForm.location} onChange={e => setServiceForm({ ...serviceForm, location: e.target.value })} className="w-full p-3.5 bg-black/40 rounded-xl text-white border border-white/10 focus:border-orange-500 outline-none transition-colors" placeholder="e.g. Haunted Mansion" />
-                                        </div>
                                     </div>
 
                                     {/* Service Image Upload */}
@@ -292,7 +287,7 @@ const ServiceList = ({ services, onUpdate }) => {
                             setServiceImage([]);
                             setServiceForm({
                                 name: '', description: '', price: '', priceType: 'fixed',
-                                category: 'other', duration: '', location: '', state: '', city: ''
+                                category: 'other', duration: '', state: '', city: ''
                             });
                             setShowServiceModal(true);
                         }}

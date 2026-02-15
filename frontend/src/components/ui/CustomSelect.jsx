@@ -14,6 +14,8 @@ const CustomSelect = ({
     icon = null,
     className = ""
 }) => {
+    // Ensure className is a string
+    const validatedClassName = typeof className === 'string' ? className : '';
     const [isOpen, setIsOpen] = useState(false);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
     const triggerRef = useRef(null);
@@ -77,7 +79,7 @@ const CustomSelect = ({
     const isPlaceholder = !value;
 
     return (
-        <div className={`space-y-1.5 relative ${className}`}>
+        <div className={`space-y-1.5 relative ${validatedClassName}`}>
             {label && (
                 <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">
                     {label}

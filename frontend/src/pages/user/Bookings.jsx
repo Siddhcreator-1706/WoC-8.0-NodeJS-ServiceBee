@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
-import API_URL from '../config/api';
-import ComplaintModal from '../components/ComplaintModal';
-import CustomSelect from '../components/ui/CustomSelect';
+import { useAuth } from '../../context/AuthContext';
+import API_URL from '../../config/api';
+import ComplaintModal from '../../components/user/ComplaintModal';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 const Bookings = () => {
     const { user } = useAuth();
@@ -168,7 +168,7 @@ const Bookings = () => {
                                 You haven't summoned any services yet. Check the Necronomicon (Services page) to get started!
                             </p>
                             <button
-                                onClick={() => navigate('/services')}
+                                onClick={() => navigate('/user/services')}
                                 className="px-8 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-900/40 transform hover:scale-105"
                             >
                                 Browse Services

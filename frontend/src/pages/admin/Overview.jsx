@@ -152,8 +152,11 @@ const Overview = () => {
                                         <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm
                                             ${activity.type === 'booking' ? 'bg-green-500/15 text-green-400' :
                                                 activity.type === 'complaint' ? 'bg-orange-500/15 text-orange-400' :
-                                                    'bg-blue-500/15 text-blue-400'}`}>
-                                            {activity.user.charAt(0)}
+                                                    activity.type === 'user_signup' ? 'bg-blue-500/15 text-blue-400' :
+                                                        'bg-purple-500/15 text-purple-400'}`}>
+                                            {activity.type === 'booking' ? '📅' :
+                                                activity.type === 'complaint' ? '⚠️' :
+                                                    activity.type === 'user_signup' ? '👤' : '🏢'}
                                         </div>
                                         <div>
                                             <p className="text-gray-200 text-sm font-medium">{activity.user} <span className="text-gray-500 font-normal text-xs">— {activity.action}</span></p>

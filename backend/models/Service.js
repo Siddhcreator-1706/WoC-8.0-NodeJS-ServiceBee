@@ -47,11 +47,6 @@ const serviceSchema = mongoose.Schema({
         enum: ['fixed', 'hourly', 'starting-from', 'quote'],
         default: 'fixed'
     },
-    location: {
-        type: String,
-        required: [true, 'Please add a location'],
-        trim: true
-    },
     state: {
         type: String,
         trim: true

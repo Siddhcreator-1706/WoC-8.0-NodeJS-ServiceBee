@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
-import ComplaintModal from '../components/ComplaintModal';
-import CustomSelect from '../components/ui/CustomSelect';
-import ImageModal from '../components/common/ImageModal';
-import API_URL from '../config/api';
+import ComplaintModal from '../../components/user/ComplaintModal';
+import CustomSelect from '../../components/ui/CustomSelect';
+import ImageModal from '../../components/common/ImageModal';
+import API_URL from '../../config/api';
 
 const Complaints = () => {
     const { user } = useAuth();

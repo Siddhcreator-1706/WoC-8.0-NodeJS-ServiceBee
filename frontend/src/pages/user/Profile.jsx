@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
-import API_URL from '../config/api';
-import CustomSelect from '../components/ui/CustomSelect'; // Added import
-import useLocationData from '../hooks/useLocationData'; // Added import
+import { useAuth } from '../../context/AuthContext';
+import API_URL from '../../config/api';
+import CustomSelect from '../../components/ui/CustomSelect'; // Added import
+import useLocationData from '../../hooks/useLocationData'; // Added import
 
 const Profile = () => {
     const { user, logout, logoutAll, updateUser } = useAuth();
@@ -191,7 +191,7 @@ const Profile = () => {
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIi8+Cjwvc3ZnPg==')] [mask-image:linear-gradient(to_bottom,white,transparent)]" />
 
                     {/* Header Section */}
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 mb-6 md:mb-8 relative z-10 border-b border-gray-800 pb-4 md:pb-6">
+                    <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 md:gap-4 mb-6 md:mb-8 relative z-10 border-b border-gray-800 pb-4 md:pb-6">
                         <div className="flex items-center gap-4">
                             <div className="w-14 h-14 md:w-20 md:h-20 bg-[#0a0a0f] rounded-full flex items-center justify-center text-2xl md:text-4xl border border-gray-700 shadow-lg overflow-hidden relative group flex-shrink-0">
                                 <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>

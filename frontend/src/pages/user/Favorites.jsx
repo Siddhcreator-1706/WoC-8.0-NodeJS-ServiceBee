@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import gsap from 'gsap';
 
-import API_URL from '../config/api';
+import API_URL from '../../config/api';
 
 const Favorites = () => {
     const { user } = useAuth();
@@ -76,7 +76,7 @@ const Favorites = () => {
                     <div className="flex flex-col items-center justify-center py-20 text-center bg-[#15151e]/30 rounded-2xl border border-dashed border-gray-800">
                         <div className="text-8xl mb-6 animate-pulse drop-shadow-[0_0_15px_rgba(150,0,255,0.5)]">⚰️</div>
                         <p className="text-2xl mb-4 text-gray-400 font-creepster tracking-wider">No favorite specters yet?</p>
-                        <Link to="/services" className="text-orange-400 hover:text-orange-300 underline decoration-orange-500/30 underline-offset-4 hover:decoration-orange-500 transition-all">Browse the catalogue →</Link>
+                        <Link to="/user/services" className="text-orange-400 hover:text-orange-300 underline decoration-orange-500/30 underline-offset-4 hover:decoration-orange-500 transition-all">Browse the catalogue →</Link>
                     </div>
                 ) : (
                     <div ref={cardsRef} className="space-y-4">
@@ -88,7 +88,7 @@ const Favorites = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold text-white group-hover:text-orange-400 transition-colors">{bookmark.service.name}</h3>
-                                        <p className="text-sm text-gray-400">📍 {bookmark.service.location}</p>
+                                        <p className="text-sm text-gray-400">📍 {bookmark.service.city}, {bookmark.service.state}</p>
                                         <div className="flex gap-4 text-sm mt-1">
                                             <span className="text-green-400 font-bold">₹{bookmark.service.price}</span>
                                             <span className="text-yellow-400 flex items-center gap-1">⭐ {bookmark.service.averageRating ? bookmark.service.averageRating.toFixed(1) : 'New'}</span>
@@ -97,7 +97,7 @@ const Favorites = () => {
                                 </div>
                                 <div className="flex gap-2">
                                     <Link
-                                        to={`/services/${bookmark.service._id}`}
+                                        to={`/user/services/${bookmark.service._id}`}
                                         className="px-4 py-2 bg-purple-600/20 text-purple-400 rounded-lg hover:bg-purple-600/30 border border-purple-500/20 transition-all"
                                     >
                                         View

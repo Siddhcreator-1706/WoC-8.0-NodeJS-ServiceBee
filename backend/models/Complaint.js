@@ -96,7 +96,6 @@ complaintSchema.pre('save', async function () {
             if (service) {
                 this.serviceSnapshot = {
                     name: service.name,
-                    location: service.location,
                     category: service.category,
                     createdBy: service.createdBy
                 };

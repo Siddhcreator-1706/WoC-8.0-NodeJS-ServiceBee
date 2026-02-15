@@ -67,11 +67,11 @@ const Navbar = () => {
                                         {/* Role Specific Links */}
                                         {user.role === 'user' && (
                                             <>
-                                                <Link to="/profile" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Profile</Link>
-                                                <Link to="/services" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Find Services</Link>
-                                                <Link to="/bookings" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Bookings</Link>
-                                                <Link to="/complaints" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Complaints</Link>
-                                                <Link to="/favorites" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Favorites</Link>
+                                                <Link to="/user/profile" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Profile</Link>
+                                                <Link to="/user/services" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Find Services</Link>
+                                                <Link to="/user/bookings" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Bookings</Link>
+                                                <Link to="/user/complaints" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Complaints</Link>
+                                                <Link to="/user/favorites" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Favorites</Link>
                                             </>
                                         )}
 

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import API_URL from '../config/api';
+import API_URL from '../../config/api';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -134,9 +134,9 @@ const CompanyProfile = () => {
                                     <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-400 transition-colors">{service.name}</h3>
                                     <p className="text-gray-400 text-sm line-clamp-3 mb-6">{service.description}</p>
 
-                                    <button className="w-full py-3 bg-white/5 hover:bg-orange-600 hover:text-white border border-white/10 hover:border-orange-500 rounded-lg transition-all font-bold text-sm uppercase tracking-wider">
+                                    <Link to={`/user/services/${service._id}`} className="block w-full py-3 bg-white/5 hover:bg-orange-600 hover:text-white border border-white/10 hover:border-orange-500 rounded-lg transition-all font-bold text-sm uppercase tracking-wider text-center">
                                         Book Ritual
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                         ))}
