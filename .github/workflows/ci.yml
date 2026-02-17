@@ -11,7 +11,7 @@ jobs:
   # STAGE 1: Security Audit
   # ═══════════════════════════════════════════════════════════════
   security-audit:
-    name: � Security Audit
+    name: Security Audit
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
   # STAGE 2: Backend Validation
   # ═══════════════════════════════════════════════════════════════
   backend-check:
-    name: ⚙️ Backend Check
+    name: Backend Check
     needs: security-audit
     runs-on: ubuntu-latest
     steps:
@@ -59,7 +59,7 @@ jobs:
   # STAGE 3: Frontend Validation & Build
   # ═══════════════════════════════════════════════════════════════
   frontend-check:
-    name: � Frontend Check
+    name: Frontend Check
     needs: security-audit
     runs-on: ubuntu-latest
     steps:
