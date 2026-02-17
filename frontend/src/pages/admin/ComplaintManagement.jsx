@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import API_URL from '../../config/api';
+
 import CustomSelect from '../../components/ui/CustomSelect';
 
 const ComplaintManagement = () => {
@@ -30,7 +30,7 @@ const ComplaintManagement = () => {
                 // The instruction's query logic uses 'all', but CustomSelect uses ''.
                 // I'll adapt the instruction's logic to match the existing CustomSelect's '' for 'All Status'.
                 const query = filter ? `?status=${filter}` : '';
-                const res = await axios.get(`${API_URL}/api/complaints${query}`, { withCredentials: true }); // Added withCredentials for axios
+                const res = await axios.get(`/api/complaints${query}`, { withCredentials: true }); // Added withCredentials for axios
                 setComplaints(res.data.complaints || []); // Assuming API returns { complaints: [...] }
                 setLoading(false);
             } catch (error) {
@@ -46,7 +46,7 @@ const ComplaintManagement = () => {
 
     const handleUpdateStatus = async (id, newStatus, adminResponse = '') => { // Renamed and added adminResponse
         try {
-            await axios.put(`${API_URL}/api/complaints/${id}`, { status: newStatus, adminResponse }, { withCredentials: true }); // Added adminResponse and withCredentials
+            await axios.put(`/api/complaints/${id}`, { status: newStatus, adminResponse }, { withCredentials: true }); // Added adminResponse and withCredentials
             setMessage({ text: `Complaint marked as ${newStatus}`, type: 'success' });
             refreshData();
         } catch (error) {

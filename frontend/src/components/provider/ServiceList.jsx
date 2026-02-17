@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ImageUpload from '../common/ImageUpload';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import API_URL from '../../config/api';
+
 import CustomSelect from '../ui/CustomSelect';
 import useLocationData from '../../hooks/useLocationData';
 

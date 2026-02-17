@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import API_URL from '../../config/api';
+import axios from 'axios';
+
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -21,23 +22,20 @@ const Services = () => {
             try {
                 // Fetch all services without pagination for now to simplify filtering/animation demo
                 // In production with pagination, this needs adjustment
-                const res = await fetch(`${API_URL}/api/services?limit=100`, { credentials: 'include' });
-                const data = await res.json();
+                const res = await axios.get('/api/services?limit=100', { withCredentials: true });
+                const { data } = res;
 
                 // Handle both paginated and non-paginated responses
                 const serviceList = data.services || data;
+                const list = Array.isArray(serviceList) ? serviceList : [];
+                setServices(list);
 
-                if (res.ok) {
-                    const list = Array.isArray(serviceList) ? serviceList : [];
-                    setServices(list);
-
-                    // Initial filter from URL params
-                    const categoryParam = searchParams.get('category');
-                    if (categoryParam) {
-                        setFilteredServices(list.filter(s => s.category === categoryParam));
-                    } else {
-                        setFilteredServices(list);
-                    }
+                // Initial filter from URL params
+                const categoryParam = searchParams.get('category');
+                if (categoryParam) {
+                    setFilteredServices(list.filter(s => s.category === categoryParam));
+                } else {
+                    setFilteredServices(list);
                 }
             } catch (err) {
                 console.error("Failed to fetch services", err);

@@ -147,7 +147,6 @@ serviceSchema.statics.forceDelete = async function (serviceId, serviceName) {
 };
 
 // Pre-delete hook
-// Pre-delete hook
 serviceSchema.pre('deleteOne', { document: true, query: false }, async function () {
     const serviceId = this._id;
     const Service = mongoose.model('Service');

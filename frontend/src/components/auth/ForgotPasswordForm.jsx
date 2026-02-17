@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import API_URL from '../../config/api';
+
 
 const ForgotPasswordForm = ({ onBack }) => {
     const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import API_URL from '../../config/api';
+
 import CustomSelect from '../../components/ui/CustomSelect';
 
 const ServiceManagement = () => {
@@ -20,9 +20,8 @@ const ServiceManagement = () => {
 
     const fetchServices = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/services`);
-            const data = await res.json();
-            setServices(data.services || []);
+            const res = await axios.get('/api/services');
+            setServices(res.data.services || []);
         } catch (error) {
             console.error('Failed to fetch services:', error);
         } finally {
@@ -33,7 +32,7 @@ const ServiceManagement = () => {
     const handleDelete = async (id, name) => {
         if (!confirm(`Are you sure you want to delete service "${name}"? This will remove all associated data.`)) return;
         try {
-            await axios.delete(`${API_URL}/api/services/${id}?force=true`, { withCredentials: true });
+            await axios.delete(`/api/services/${id}?force=true`, { withCredentials: true });
             fetchServices();
         } catch (error) {
             console.error('Failed to delete:', error);

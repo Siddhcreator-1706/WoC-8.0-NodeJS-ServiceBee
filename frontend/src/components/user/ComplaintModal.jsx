@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import API_URL from '../../config/api';
+
 import ImageUpload from '../common/ImageUpload';
 
 const ComplaintModal = ({ isOpen, onClose, bookingId, booking, onSuccess }) => {
@@ -33,7 +33,7 @@ const ComplaintModal = ({ isOpen, onClose, bookingId, booking, onSuccess }) => {
             images.forEach(img => formPayload.append('images', img));
 
             // Axios automatically sets Content-Type to multipart/form-data for FormData
-            const res = await axios.post(`${API_URL}/api/complaints`, formPayload);
+            const res = await axios.post('/api/complaints', formPayload);
 
             if (onSuccess) onSuccess(res.data);
             onClose();

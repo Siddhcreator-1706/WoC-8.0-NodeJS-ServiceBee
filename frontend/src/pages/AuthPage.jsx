@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Import axios for upload
 import { useAuth } from '../context/AuthContext';
-import API_URL from '../config/api';
+
 import ParticleBackground from '../components/common/ParticleBackground';
 import LoginForm from '../components/auth/LoginForm';
 import SignupForm from '../components/auth/SignupForm';
@@ -132,7 +132,7 @@ const AuthPage = () => {
                 const formData = new FormData();
                 formData.append('avatar', avatarFile);
                 try {
-                    const res = await axios.post(`${API_URL}/api/upload/avatar`, formData, {
+                    const res = await axios.post('/api/upload/avatar', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' },
                         withCredentials: true
                     });
@@ -152,7 +152,7 @@ const AuthPage = () => {
                 const formData = new FormData();
                 formData.append('logo', logoFile);
                 try {
-                    const res = await axios.post(`${API_URL}/api/upload/logo`, formData, {
+                    const res = await axios.post('/api/upload/logo', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' },
                         withCredentials: true
                     });
@@ -173,7 +173,7 @@ const AuthPage = () => {
                 logo: finalLogoUrl || signupData.logo
             };
 
-            const res = await axios.post(`${API_URL}/auth/signup`, payload);
+            const res = await axios.post('/auth/signup', payload);
 
             setSuccess('Verification code sent to your email!');
             setShowOTP(true);
@@ -188,7 +188,7 @@ const AuthPage = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await axios.post(`${API_URL}/auth/verify-otp`, {
+            const res = await axios.post('/auth/verify-otp', {
                 email: signupData.email,
                 otp
             });
@@ -223,7 +223,7 @@ const AuthPage = () => {
     const handleResendOTP = async () => {
         setLoading(true);
         try {
-            await axios.post(`${API_URL}/auth/resend-otp`, {
+            await axios.post('/auth/resend-otp', {
                 email: signupData.email
             });
             setSuccess('Verification code resent!');

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 
-import API_URL from '../../config/api';
+
 
 const ServiceDetail = () => {
     const { id } = useParams();
@@ -34,15 +34,13 @@ const ServiceDetail = () => {
 
     const checkBookingStatus = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/bookings/my-bookings`, { credentials: 'include' });
-            if (res.ok) {
-                const data = await res.json();
-                const bookings = Array.isArray(data) ? data : data.bookings || [];
-                const hasCompletedBooking = bookings.some(
-                    b => (b.service._id === id || b.service === id) && b.status === 'completed'
-                );
-                setCanRate(hasCompletedBooking);
-            }
+            const res = await axios.get('/api/bookings/my-bookings', { withCredentials: true });
+            const { data } = res;
+            const bookings = Array.isArray(data) ? data : data.bookings || [];
+            const hasCompletedBooking = bookings.some(
+                b => (b.service._id === id || b.service === id) && b.status === 'completed'
+            );
+            setCanRate(hasCompletedBooking);
         } catch (error) {
             console.error('Error checking booking status:', error);
         }
@@ -50,8 +48,8 @@ const ServiceDetail = () => {
 
     const fetchService = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/services/${id}`);
-            const data = await res.json();
+            const res = await axios.get(`/api/services/${id}`);
+            const { data } = res;
             setService(data);
             if (user && data.ratings) {
                 const userRating = data.ratings.find(r => (r.user?._id || r.user) === user._id);
@@ -69,9 +67,8 @@ const ServiceDetail = () => {
 
     const checkBookmark = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/bookmarks/check/${id}`, { credentials: 'include' });
-            const data = await res.json();
-            setIsBookmarked(data.isBookmarked);
+            const res = await axios.get(`/api/bookmarks/check/${id}`, { withCredentials: true });
+            setIsBookmarked(res.data.isBookmarked);
         } catch (error) {
             console.error('Failed to check bookmark:', error);
         }

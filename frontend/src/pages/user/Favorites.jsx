@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import gsap from 'gsap';
 
-import API_URL from '../../config/api';
+
 
 const Favorites = () => {
     const { user } = useAuth();
@@ -32,9 +32,8 @@ const Favorites = () => {
 
     const fetchBookmarks = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/bookmarks`, { credentials: 'include' });
-            const data = await res.json();
-            setBookmarks(data);
+            const res = await axios.get('/api/bookmarks', { withCredentials: true });
+            setBookmarks(res.data);
         } catch (error) {
             console.error('Failed to fetch bookmarks:', error);
         } finally {

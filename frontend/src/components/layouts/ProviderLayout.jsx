@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
-import API_URL from '../../config/api';
+
 
 import Navbar from './Navbar';
 import Footer from './Footer';
@@ -21,7 +21,7 @@ const ProviderLayout = () => {
 
     const fetchCompany = async () => {
         try {
-            const res = await axios.get(`${API_URL}/api/companies/me`);
+            const res = await axios.get('/api/companies/me');
             setCompany(res.data);
         } catch (err) {
             console.error('No company found:', err);

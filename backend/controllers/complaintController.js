@@ -52,9 +52,8 @@ const createComplaint = async (req, res) => {
         }
 
         // Process uploaded images
-        // LOGGING FOR DEBUGGING
         if (req.files) {
-            console.log('Uploaded files:', req.files.map(f => ({ path: f.path, secure_url: f.secure_url, filename: f.filename })));
+            // Processing files
         }
 
         const images = req.files ? req.files.map(file => ({

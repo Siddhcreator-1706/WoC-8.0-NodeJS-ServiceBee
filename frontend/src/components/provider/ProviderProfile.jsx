@@ -4,7 +4,7 @@ import ImageUpload from '../common/ImageUpload';
 import CustomSelect from '../ui/CustomSelect';
 import useLocationData from '../../hooks/useLocationData';
 import axios from 'axios';
-import API_URL from '../../config/api';
+
 import { useAuth } from '../../context/AuthContext';
 
 const ProviderProfile = ({ company, onUpdate }) => {
@@ -80,7 +80,7 @@ const ProviderProfile = ({ company, onUpdate }) => {
 
             if (company?._id) {
                 try {
-                    await axios.put(`${API_URL}/api/companies/${company._id}`, formData);
+                    await axios.put(`/api/companies/${company._id}`, formData);
                     successCount++;
                 } catch (err) {
                     errors.push(`Company Update Failed: ${err.response?.data?.message || err.message}`);
@@ -89,7 +89,7 @@ const ProviderProfile = ({ company, onUpdate }) => {
 
             // 2. Update Account Profile
             try {
-                const profileRes = await axios.put(`${API_URL}/api/users/profile`, {
+                const profileRes = await axios.put('/api/users/profile', {
                     name: userForm.name,
                     email: userForm.email,
                     phone: userForm.phone
@@ -127,7 +127,7 @@ const ProviderProfile = ({ company, onUpdate }) => {
         }
 
         try {
-            await axios.put(`${API_URL}/api/users/password`, {
+            await axios.put('/api/users/password', {
                 currentPassword: userForm.currentPassword,
                 newPassword: userForm.newPassword
             });

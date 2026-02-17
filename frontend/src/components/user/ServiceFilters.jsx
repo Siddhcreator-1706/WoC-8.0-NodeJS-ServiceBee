@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import API_URL from '../../config/api';
+import axios from 'axios';
+
 import CustomSelect from '../ui/CustomSelect';
 import useLocationData from '../../hooks/useLocationData';
 
@@ -28,10 +29,9 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
 
             try {
                 // Fetch companies instead of categories
-                const compRes = await fetch(`${API_URL}/api/companies`);
-                const compData = await compRes.json();
-                if (compData.companies) {
-                    setCompanies(compData.companies);
+                const compRes = await axios.get('/api/companies');
+                if (compRes.data.companies) {
+                    setCompanies(compRes.data.companies);
                 }
             } catch (error) {
                 console.error('Failed to fetch companies:', error);

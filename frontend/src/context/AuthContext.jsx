@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import API_URL from '../config/api';
+
 
 const AuthContext = createContext(null);
 
@@ -21,7 +21,7 @@ export function AuthProvider({ children }) {
 
             try {
                 // Axios uses withCredentials=true from global config
-                const res = await axios.get(`${API_URL}/auth/me`);
+                const res = await axios.get('/auth/me');
                 setUser(res.data);
             } catch (error) {
                 setUser(null);
@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
 
     const login = useCallback(async (email, password) => {
         try {
-            const res = await axios.post(`${API_URL}/auth/login`, { email, password });
+            const res = await axios.post('/auth/login', { email, password });
             setUser(res.data);
             return res.data;
         } catch (error) {
@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
 
     const signup = useCallback(async (userData) => {
         try {
-            const res = await axios.post(`${API_URL}/auth/signup`, userData);
+            const res = await axios.post('/auth/signup', userData);
             // Note: Signup might not return a user immediately if verification is needed (OTP)
             // But if it does, we set it.
             if (res.data && res.data.token) {
@@ -61,7 +61,7 @@ export function AuthProvider({ children }) {
 
     const logout = useCallback(async () => {
         try {
-            await axios.post(`${API_URL}/auth/logout`);
+            await axios.post('/auth/logout');
         } catch (error) {
             console.error(error);
         }
@@ -70,7 +70,7 @@ export function AuthProvider({ children }) {
 
     const logoutAll = useCallback(async () => {
         try {
-            await axios.post(`${API_URL}/auth/logout-all`);
+            await axios.post('/auth/logout-all');
         } catch (error) {
             console.error(error);
         }

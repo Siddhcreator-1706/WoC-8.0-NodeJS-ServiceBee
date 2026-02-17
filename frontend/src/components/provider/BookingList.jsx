@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CustomSelect from '../ui/CustomSelect';
-import API_URL from '../../config/api';
+
 import axios from 'axios';
 import { useSocket } from '../../context/SocketContext';
 
@@ -52,7 +52,7 @@ const BookingList = () => {
     const fetchBookings = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_URL}/api/bookings/company-bookings`);
+            const res = await axios.get('/api/bookings/company-bookings');
             setBookings(Array.isArray(res.data) ? res.data : res.data.bookings || []);
         } catch (err) {
             console.error(err);
@@ -65,7 +65,7 @@ const BookingList = () => {
     const handleBookingStatus = async (id, status) => {
         try {
             setProcessingId(id);
-            const res = await axios.put(`${API_URL}/api/bookings/${id}`, { status });
+            const res = await axios.put(`/api/bookings/${id}`, { status });
 
             const updatedBooking = res.data;
             setBookings(prevBookings => prevBookings.map(b => (b._id === id ? updatedBooking : b)));

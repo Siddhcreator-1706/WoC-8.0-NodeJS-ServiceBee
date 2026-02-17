@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import API_URL from '../../config/api';
+
 import CustomSelect from '../../components/ui/CustomSelect'; // Added import
 import useLocationData from '../../hooks/useLocationData'; // Added import
 
@@ -73,11 +73,8 @@ const Profile = () => {
 
     const fetchReviewCount = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/services/my-reviews`, { credentials: 'include' });
-            if (res.ok) {
-                const data = await res.json();
-                setReviewCount(Array.isArray(data) ? data.length : 0);
-            }
+            const res = await axios.get('/api/services/my-reviews', { withCredentials: true });
+            setReviewCount(Array.isArray(res.data) ? res.data.length : 0);
         } catch (error) {
             console.error('Failed to fetch review count');
         }
@@ -85,12 +82,9 @@ const Profile = () => {
 
     const fetchBookings = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/bookings/my-bookings`, { credentials: 'include' });
-            if (res.ok) {
-                const data = await res.json();
-                // API returns { bookings: [...], page, pages, total }
-                setBookings(Array.isArray(data) ? data : data.bookings || []);
-            }
+            const res = await axios.get('/api/bookings/my-bookings', { withCredentials: true });
+            // API returns { bookings: [...], page, pages, total }
+            setBookings(Array.isArray(res.data) ? res.data : res.data.bookings || []);
         } catch (error) {
             console.error('Failed to fetch bookings');
         }
@@ -98,11 +92,8 @@ const Profile = () => {
 
     const fetchCompanyDetails = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/companies/me`, { credentials: 'include' });
-            if (res.ok) {
-                const data = await res.json();
-                setCompany(data);
-            }
+            const res = await axios.get('/api/companies/me', { withCredentials: true });
+            setCompany(res.data);
         } catch (error) {
             console.error('Failed to fetch company details');
         }
@@ -122,7 +113,7 @@ const Profile = () => {
         setLoading(true);
 
         try {
-            const res = await axios.put(`${API_URL}/api/users/profile`, formData);
+            const res = await axios.put('/api/users/profile', formData);
             setMessage({ text: 'Profile updated successfully!', type: 'success' });
             updateUser(res.data);
             setEditMode(null);
@@ -142,7 +133,7 @@ const Profile = () => {
 
         setLoading(true);
         try {
-            await axios.put(`${API_URL}/api/users/password`, {
+            await axios.put('/api/users/password', {
                 currentPassword: passwordData.currentPassword,
                 newPassword: passwordData.newPassword
             });

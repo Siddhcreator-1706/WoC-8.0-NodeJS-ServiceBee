@@ -6,7 +6,7 @@ import axios from 'axios';
 import ComplaintModal from '../../components/user/ComplaintModal';
 import CustomSelect from '../../components/ui/CustomSelect';
 import ImageModal from '../../components/common/ImageModal';
-import API_URL from '../../config/api';
+
 import { useSocket } from '../../context/SocketContext';
 
 const Complaints = () => {
@@ -64,9 +64,8 @@ const Complaints = () => {
 
     const fetchComplaints = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/complaints/me`, { credentials: 'include' });
-            const data = await res.json();
-            setComplaints(Array.isArray(data) ? data : []);
+            const res = await axios.get('/api/complaints/me', { withCredentials: true });
+            setComplaints(res.data || []);
         } catch (error) {
             console.error('Failed to fetch complaints:', error);
             // Log detail if available

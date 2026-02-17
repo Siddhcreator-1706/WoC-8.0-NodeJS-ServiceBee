@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CustomSelect from '../ui/CustomSelect';
 import ImageModal from '../common/ImageModal';
 import axios from 'axios';
-import API_URL from '../../config/api';
+
 import { useSocket } from '../../context/SocketContext';
 
 const ComplaintList = () => {
@@ -60,10 +60,9 @@ const ComplaintList = () => {
     const fetchComplaints = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${API_URL}/api/complaints/my-services`, { credentials: 'include' });
-            if (res.ok) {
-                const data = await res.json();
-                setComplaints(data || []);
+            const res = await axios.get('/api/complaints/my-services');
+            if (res.data) {
+                setComplaints(res.data || []);
             } else {
                 console.error('Failed to fetch complaints');
             }
@@ -77,7 +76,7 @@ const ComplaintList = () => {
     const handleComplaintResponse = async (id, response, markResolved) => {
         try {
             setSubmittingId(id);
-            const res = await axios.put(`${API_URL}/api/complaints/${id}/respond`, { response, markResolved });
+            const res = await axios.put(`/api/complaints/${id}/respond`, { response, markResolved });
             const updatedComplaint = res.data;
 
             setComplaints(prev => prev.map(c => c._id === id ? updatedComplaint : c));

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import API_URL from '../../config/api';
+import axios from 'axios';
+
 
 const CompanyProfile = () => {
     const { id } = useParams();
@@ -13,11 +14,8 @@ const CompanyProfile = () => {
     useEffect(() => {
         const fetchCompany = async () => {
             try {
-                const res = await fetch(`${API_URL}/api/companies/${id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setCompany(data);
-                }
+                const res = await axios.get(`/api/companies/${id}`);
+                setCompany(res.data);
             } catch (err) {
                 console.error(err);
             } finally {

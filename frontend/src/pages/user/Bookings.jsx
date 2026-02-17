@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
-import API_URL from '../../config/api';
+
 import ComplaintModal from '../../components/user/ComplaintModal';
 import CustomSelect from '../../components/ui/CustomSelect';
 
@@ -44,7 +44,7 @@ const Bookings = () => {
     const fetchMyBookings = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/api/bookings/my-bookings`);
+            const res = await axios.get('/api/bookings/my-bookings');
             // API returns { bookings: [...], page, pages, total }
             const { data } = res;
             setBookings(Array.isArray(data) ? data : data.bookings || []);

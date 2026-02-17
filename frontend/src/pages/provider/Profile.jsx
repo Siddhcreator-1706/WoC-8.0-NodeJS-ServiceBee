@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import API_URL from '../../config/api';
+
 import ImageUpload from '../../components/common/ImageUpload';
 import ProviderProfile from '../../components/provider/ProviderProfile';
 import { useAuth } from '../../context/AuthContext';
@@ -41,7 +41,7 @@ const Overview = () => {
                 }
             }
 
-            await axios.post(`${API_URL}/api/companies`, formData);
+            await axios.post('/api/companies', formData);
             setMessage('Company registered successfully!');
             refreshCompany(); // Refresh context
         } catch (err) {

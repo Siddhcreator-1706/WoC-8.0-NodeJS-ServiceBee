@@ -7,7 +7,7 @@ const Booking = require('../models/Booking');
 // @desc    Get admin dashboard statistics
 // @route   GET /api/admin/stats
 // @access  Private/Admin
-const getAdminStats = async (req, res) => {
+const getAdminStats = async (_req, res) => {
     try {
         // Run all counts in parallel for performance
         const [

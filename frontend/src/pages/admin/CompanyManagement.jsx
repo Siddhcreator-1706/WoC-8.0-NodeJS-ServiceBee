@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import API_URL from '../../config/api';
+
 
 const CompanyManagement = () => {
     const [companies, setCompanies] = useState([]);
@@ -13,7 +13,7 @@ const CompanyManagement = () => {
     useEffect(() => {
         const fetchCompanies = async () => {
             try {
-                const res = await axios.get(`${API_URL}/api/companies`);
+                const res = await axios.get('/api/companies');
                 setCompanies(res.data.companies || []);
                 setLoading(false);
             } catch (error) {
@@ -31,7 +31,7 @@ const CompanyManagement = () => {
         if (!confirm(`Are you sure you want to verify ${name}?`)) return;
 
         try {
-            await axios.put(`${API_URL}/api/companies/${id}/verify`, {}, { withCredentials: true });
+            await axios.put(`/api/companies/${id}/verify`, {}, { withCredentials: true });
             setMessage({ text: 'Company verified successfully', type: 'success' });
             refreshData();
         } catch (error) {
@@ -44,7 +44,7 @@ const CompanyManagement = () => {
         if (!confirm(`WARNING: Deleting company ${name} will also PERMANENTLY DELETE all its services. This cannot be undone. Proceed?`)) return;
 
         try {
-            await axios.delete(`${API_URL}/api/companies/${id}`, { withCredentials: true });
+            await axios.delete(`/api/companies/${id}`, { withCredentials: true });
             setMessage({ text: 'Company and associated services deleted', type: 'success' });
             refreshData();
         } catch (error) {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import API_URL from '../../config/api';
+
 
 const Overview = () => {
     const [stats, setStats] = useState({
@@ -18,7 +18,7 @@ const Overview = () => {
         const toastId = toast.loading('Running system checks...');
         try {
             // Ping stats endpoint as a health check
-            await axios.get(`${API_URL}/api/admin/stats`, { withCredentials: true });
+            await axios.get('/api/admin/stats', { withCredentials: true });
             setTimeout(() => {
                 toast.success('System Operational: All systems nominal', {
                     id: toastId,
@@ -33,7 +33,7 @@ const Overview = () => {
     const handleExportUsers = async () => {
         const toastId = toast.loading('Exporting user data...');
         try {
-            const res = await axios.get(`${API_URL}/api/users`, { withCredentials: true });
+            const res = await axios.get('/api/users', { withCredentials: true });
             const users = res.data;
 
             if (!users || users.length === 0) {
@@ -78,7 +78,7 @@ const Overview = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axios.get(`${API_URL}/api/admin/stats`, { withCredentials: true });
+                const res = await axios.get('/api/admin/stats', { withCredentials: true });
                 if (res.data.success) {
                     setStats(prev => ({ ...prev, ...res.data.data }));
                 }

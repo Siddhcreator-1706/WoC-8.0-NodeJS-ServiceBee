@@ -206,10 +206,27 @@ app.use((err, req, res, next) => {
     res.status(statusCode).json(response);
 });
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({ message: 'Route not found' });
+// 404 handler (API only)
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ message: 'API Route not found' });
 });
+
+// Serve frontend in production
+if (process.env.NODE_ENV === 'production') {
+    const path = require('path');
+    // Serve static files from frontend/dist
+    app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+    // Catch-all to serve index.html for SPA client-side routing
+    app.get('*', (req, res) => {
+        res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
+    });
+} else {
+    // Development 404
+    app.use((req, res) => {
+        res.status(404).json({ message: 'Route not found' });
+    });
+}
 
 // Start the server
 server.listen(PORT, () => {

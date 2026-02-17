@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import API_URL from '../../config/api';
+
 import CustomSelect from '../../components/ui/CustomSelect';
 
 const UserManagement = () => {
@@ -22,7 +22,7 @@ const UserManagement = () => {
 
     const fetchUsers = async () => {
         try {
-            const res = await axios.get(`${API_URL}/api/users?includeInactive=true`, { withCredentials: true });
+            const res = await axios.get('/api/users?includeInactive=true', { withCredentials: true });
             setUsers(res.data);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -48,7 +48,7 @@ const UserManagement = () => {
     const handleBanSubmit = async () => {
         if (!banModal.user) return;
         try {
-            await axios.delete(`${API_URL}/api/users/${banModal.user._id}?force=true&reason=${encodeURIComponent(banForm.reason || 'Admin Ban')}&days=${banForm.duration}`, { withCredentials: true });
+            await axios.delete(`/api/users/${banModal.user._id}?force=true&reason=${encodeURIComponent(banForm.reason || 'Admin Ban')}&days=${banForm.duration}`, { withCredentials: true });
             setMessage({ text: `User banned ${banForm.duration > 0 ? `for ${banForm.duration} days` : 'indefinitely'}`, type: 'success' });
             setBanModal({ isOpen: false, user: null });
             fetchUsers();
@@ -61,7 +61,7 @@ const UserManagement = () => {
     const handleUnban = async (user) => {
         if (!confirm(`Are you sure you want to reactivate ${user.name}?`)) return;
         try {
-            await axios.put(`${API_URL}/api/users/${user._id}/reactivate`, {}, { withCredentials: true });
+            await axios.put(`/api/users/${user._id}/reactivate`, {}, { withCredentials: true });
             setMessage({ text: 'User unbanned successfully', type: 'success' });
             fetchUsers();
         } catch (error) {
@@ -74,7 +74,7 @@ const UserManagement = () => {
         if (!confirm(`Are you sure you want to PERMANENTLY delete user ${name}? This cannot be undone.`)) return;
 
         try {
-            await axios.delete(`${API_URL}/api/users/${id}`, { withCredentials: true });
+            await axios.delete(`/api/users/${id}`, { withCredentials: true });
             setMessage({ text: 'User permanently deleted', type: 'success' });
             fetchUsers();
         } catch (error) {
