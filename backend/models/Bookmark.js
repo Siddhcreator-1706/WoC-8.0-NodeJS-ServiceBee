@@ -35,12 +35,8 @@ bookmarkSchema.pre('save', async function () {
     }
 });
 
-// Populate service details on save
-bookmarkSchema.pre('save', async function () {
-    if (this.isNew || this.isModified('service')) {
-        await this.populate('service', 'name price location image company');
-    }
-});
+// Populate service details on save - REMOVED to prevent validation errors (populated object vs ObjectId)
+// bookmarkSchema.pre('save', async function () { ... });
 
 // Update service bookmarks count - REMOVED (Field does not exist in Service schema)
 // bookmarkSchema.post('save', async function () { ... });

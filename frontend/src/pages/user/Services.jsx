@@ -47,13 +47,9 @@ const Services = () => {
     }, [searchParams]); // Re-run if URL params change (e.g. clicking footer link while on page)
 
     const handleFilterChange = (filters) => {
-        let result = services;
-        // Apply URL category param if present and not overridden by manual filter
-        // However, manual filter usually overrides. 
-        // Logic: manual filter object has 'category'? Assuming ServiceFilters passes it.
-        // If not, we check URL.
+        let result = [...services]; // Clone to avoid mutation and ensure re-render
 
-        // Simpler: Just rely on passed filters.
+        // Search Filter
         if (filters.search) {
             result = result.filter(s => s.name.toLowerCase().includes(filters.search.toLowerCase()));
         }
@@ -78,11 +74,42 @@ const Services = () => {
             }
         }
 
-        if (filters.priceRange) {
-            const [min, max] = filters.priceRange.split('-').map(Number);
-            if (max) result = result.filter(s => s.price >= min && s.price <= max);
-            else result = result.filter(s => s.price >= min);
+        // Company Filter
+        if (filters.company) {
+            result = result.filter(s => s.company && (s.company._id === filters.company || s.company === filters.company));
         }
+
+        // Max Price Filter
+        if (filters.maxPrice) {
+            result = result.filter(s => s.price <= Number(filters.maxPrice));
+        }
+
+        // Min Rating Filter
+        if (filters.minRating) {
+            result = result.filter(s => (s.averageRating || 0) >= Number(filters.minRating));
+        }
+
+        // Sorting
+        if (filters.sortBy) {
+            switch (filters.sortBy) {
+                case 'price-asc':
+                    result.sort((a, b) => a.price - b.price);
+                    break;
+                case 'price-desc':
+                    result.sort((a, b) => b.price - a.price);
+                    break;
+                case 'rating':
+                    result.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+                    break;
+                case 'newest':
+                default:
+                    // Assuming _id or createdAt can be used for 'newest'. 
+                    // If createdAt exists, use it, else fallback to reversed index or _id timestamp
+                    result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                    break;
+            }
+        }
+
         setFilteredServices(result);
 
         // Re-run animation on filter change

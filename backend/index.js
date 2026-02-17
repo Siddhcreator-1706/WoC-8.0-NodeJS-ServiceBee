@@ -23,7 +23,6 @@ const complaintRoutes = require('./routes/complaintRoutes');
 const bookmarkRoutes = require('./routes/bookmarkRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const bookingRoutes = require('./routes/bookingRoutes'); // Added booking routes
-const chatRoutes = require('./routes/chatRoutes');
 
 // Connect to database
 connectDB();
@@ -137,7 +136,6 @@ app.use('/api/complaints', complaintRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/bookings', bookingRoutes); // Mount booking routes
-app.use('/api/chat', chatRoutes);
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
@@ -206,8 +204,7 @@ app.use((err, req, res, next) => {
     res.status(statusCode).json(response);
 });
 
-// 404 handler (API only)
-app.use('/api/*', (req, res) => {
+app.use('/api', (req, res) => {
     res.status(404).json({ message: 'API Route not found' });
 });
 
