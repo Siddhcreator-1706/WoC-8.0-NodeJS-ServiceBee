@@ -7,8 +7,11 @@ on:
     branches: [ "main", "render" ]
 
 jobs:
-  quality-check:
-    name: 🔍 Quality Assurance
+  # ═══════════════════════════════════════════════════════════════
+  # STAGE 1: Security Audit
+  # ═══════════════════════════════════════════════════════════════
+  security-audit:
+    name: � Security Audit
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -20,15 +23,18 @@ jobs:
         cache: 'npm'
         cache-dependency-path: '**/package-lock.json'
 
-    - name: Install Dependencies (Root & Modules)
-      run: npm run install-all
+    - name: Audit Backend
+      run: npm audit --audit-level=critical --prefix backend || echo "⚠️ Backend vulnerabilities found"
 
-    - name: Linting (Frontend & Backend)
-      run: npm run lint
+    - name: Audit Frontend
+      run: npm audit --audit-level=critical --prefix frontend || echo "⚠️ Frontend vulnerabilities found"
 
-  build-verification:
-    name: 🏗️ Build Verification
-    needs: quality-check
+  # ═══════════════════════════════════════════════════════════════
+  # STAGE 2: Backend Validation
+  # ═══════════════════════════════════════════════════════════════
+  backend-check:
+    name: ⚙️ Backend Check
+    needs: security-audit
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -38,10 +44,39 @@ jobs:
       with:
         node-version: '20'
         cache: 'npm'
-        cache-dependency-path: '**/package-lock.json'
+        cache-dependency-path: 'backend/package-lock.json'
 
-    - name: Install Dependencies
-      run: npm run install-all
+    - name: Install Backend Dependencies
+      run: npm ci --prefix backend
+
+    - name: Lint Backend
+      run: npm run lint --prefix backend
+
+    - name: Validate Entry Point
+      run: node --check backend/index.js
+
+  # ═══════════════════════════════════════════════════════════════
+  # STAGE 3: Frontend Validation & Build
+  # ═══════════════════════════════════════════════════════════════
+  frontend-check:
+    name: � Frontend Check
+    needs: security-audit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: 'frontend/package-lock.json'
+
+    - name: Install Frontend Dependencies
+      run: npm ci --prefix frontend
+
+    - name: Lint Frontend
+      run: npm run lint --prefix frontend
 
     - name: Build Frontend
-      run: npm run build-frontend
+      run: npm run build --prefix frontend
