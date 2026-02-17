@@ -28,8 +28,7 @@ const Profile = () => {
     });
     const [message, setMessage] = useState({ text: '', type: '' });
     const [loading, setLoading] = useState(false);
-    const [showPasswordSection, setShowPasswordSection] = useState(false);
-    const [isEditing, setIsEditing] = useState(false); // Toggle state
+    const [editMode, setEditMode] = useState(null); // 'details' | 'password' | null
 
     const [company, setCompany] = useState(null);
     const [bookings, setBookings] = useState([]);
@@ -126,7 +125,7 @@ const Profile = () => {
             const res = await axios.put(`${API_URL}/api/users/profile`, formData);
             setMessage({ text: 'Profile updated successfully!', type: 'success' });
             updateUser(res.data);
-            setIsEditing(false);
+            setEditMode(null);
         } catch (error) {
             setMessage({ text: error.response?.data?.message || 'Update failed', type: 'error' });
         } finally {
@@ -149,7 +148,7 @@ const Profile = () => {
             });
             setMessage({ text: 'Password updated successfully!', type: 'success' });
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-            setShowPasswordSection(false);
+            setEditMode(null);
         } catch (error) {
             setMessage({ text: error.response?.data?.message || 'Password update failed', type: 'error' });
         } finally {
@@ -211,14 +210,24 @@ const Profile = () => {
                             </div>
                         </div>
 
-                        <button
-                            onClick={() => setIsEditing(!isEditing)}
-                            className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-all ${isEditing
-                                ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
-                                : 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white shadow-lg shadow-orange-900/20'}`}
-                        >
-                            {isEditing ? 'Cancel Editing' : 'Edit Profile'}
-                        </button>
+                        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                            {editMode !== 'details' && (
+                                <button
+                                    onClick={() => setEditMode('password')}
+                                    className={`w-full md:w-auto px-4 py-2.5 rounded-xl font-bold text-sm md:text-base transition-all border border-gray-700 ${editMode === 'password' ? 'bg-orange-600/20 text-orange-400 border-orange-500/50' : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700 hover:text-white'}`}
+                                >
+                                    🔒 Change Password
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setEditMode(editMode === 'details' ? null : 'details')}
+                                className={`w-full md:w-auto px-4 py-2.5 rounded-xl font-bold text-sm md:text-base transition-all ${editMode === 'details'
+                                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                                    : 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white shadow-lg shadow-orange-900/20'}`}
+                            >
+                                {editMode === 'details' ? 'Cancel Editing' : 'Edit Profile'}
+                            </button>
+                        </div>
                     </div>
 
                     <AnimatePresence>
@@ -230,7 +239,7 @@ const Profile = () => {
                     </AnimatePresence>
 
                     {/* Profile Stats (Visible in both modes) */}
-                    {activeTab === 'profile' && !isEditing && (
+                    {activeTab === 'profile' && (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
                             {/* Services Used - Large Card */}
                             <div className="col-span-2 md:col-span-2 bg-gradient-to-br from-[#0a0a0f] to-[#15151e] p-4 md:p-6 rounded-2xl border border-gray-800 flex flex-col justify-between relative overflow-hidden group hover:border-orange-500/30 transition-all">
@@ -265,10 +274,13 @@ const Profile = () => {
                         </div>
                     )}
 
+                    {/* Password Modal */}
+
+
                     {/* Content Section */}
                     {activeTab === 'profile' && (
                         <div className="relative z-10">
-                            {isEditing ? (
+                            {editMode === 'details' ? (
                                 <motion.form
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
@@ -289,8 +301,9 @@ const Profile = () => {
                                             <label className="block text-gray-400 text-sm mb-1">Email Address <span className="text-red-400">*</span></label>
                                             <input
                                                 type="email" name="email" value={formData.email} onChange={handleChange}
-                                                className="w-full p-2.5 md:p-3 bg-[#0a0a0f] rounded-lg text-sm md:text-base text-white border border-gray-700 focus:border-orange-500 outline-none transition-colors"
-                                                required
+                                                className="w-full p-2.5 md:p-3 bg-[#0a0a0f] rounded-lg text-sm md:text-base text-gray-500 border border-gray-800 cursor-not-allowed outline-none transition-colors"
+                                                disabled
+                                                title="Email cannot be changed"
                                             />
                                         </div>
                                     </div>
@@ -335,66 +348,12 @@ const Profile = () => {
                                         </div>
                                     </div>
 
-                                    <div className="border-t border-gray-800 pt-6 mt-6">
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPasswordSection(!showPasswordSection)}
-                                            className="text-orange-400 hover:text-orange-300 transition-colors font-medium flex items-center gap-2 mb-4"
-                                        >
-                                            <svg className={`w-5 h-5 transition-transform ${showPasswordSection ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                            Change Password
-                                        </button>
 
-                                        <AnimatePresence>
-                                            {showPasswordSection && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, height: 0 }}
-                                                    animate={{ opacity: 1, height: 'auto' }}
-                                                    exit={{ opacity: 0, height: 0 }}
-                                                    className="overflow-hidden"
-                                                >
-                                                    <div className="p-4 md:p-6 bg-[#0a0a0f] rounded-xl border border-gray-800 space-y-4 mb-6">
-                                                        <div>
-                                                            <label className="block text-gray-400 text-sm mb-1">Current Password</label>
-                                                            <input
-                                                                type="password" name="currentPassword" value={passwordData.currentPassword} onChange={handlePasswordChange}
-                                                                className="w-full p-3 bg-[#15151e] rounded-lg text-white border border-gray-700 focus:border-orange-500 outline-none"
-                                                                placeholder="Required to set new password"
-                                                            />
-                                                        </div>
-                                                        <div className="grid md:grid-cols-2 gap-4">
-                                                            <div>
-                                                                <label className="block text-gray-400 text-sm mb-1">New Password</label>
-                                                                <input
-                                                                    type="password" name="newPassword" value={passwordData.newPassword} onChange={handlePasswordChange}
-                                                                    className="w-full p-3 bg-[#15151e] rounded-lg text-white border border-gray-700 focus:border-orange-500 outline-none"
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-gray-400 text-sm mb-1">Confirm New Password</label>
-                                                                <input
-                                                                    type="password" name="confirmPassword" value={passwordData.confirmPassword} onChange={handlePasswordChange}
-                                                                    className="w-full p-3 bg-[#15151e] rounded-lg text-white border border-gray-700 focus:border-orange-500 outline-none"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <button
-                                                            onClick={handlePasswordSubmit}
-                                                            type="button"
-                                                            className="w-full py-3 bg-purple-600/20 text-purple-400 border border-purple-600/30 hover:bg-purple-600/30 rounded-lg font-semibold transition-all"
-                                                        >
-                                                            Update Password Only
-                                                        </button>
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
 
                                     <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 md:gap-4 pt-4">
                                         <button
                                             type="button"
-                                            onClick={() => setIsEditing(false)}
+                                            onClick={() => setEditMode(null)}
                                             className="px-6 py-2.5 md:py-3 rounded-lg text-sm md:text-base text-gray-400 hover:text-white font-medium hover:bg-gray-800 transition-colors text-center"
                                         >
                                             Cancel
@@ -468,7 +427,95 @@ const Profile = () => {
                     )}
                 </motion.div>
             </div>
-        </div>
+
+            {/* Password Modal - Moved to root for proper fixed positioning */}
+            <AnimatePresence>
+                {editMode === 'password' && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setEditMode(null)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="bg-[#15151e] w-full max-w-lg p-6 md:p-8 rounded-2xl border border-gray-800 shadow-2xl relative z-10"
+                        >
+                            <button
+                                onClick={() => setEditMode(null)}
+                                className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+                            >
+                                ✕
+                            </button>
+
+                            <h3 className="text-2xl font-bold text-gray-200 mb-6 flex items-center gap-2">
+                                <span className="text-orange-500">🔒</span> Change Password
+                            </h3>
+
+                            <form onSubmit={handlePasswordSubmit} className="space-y-5">
+                                <div>
+                                    <label className="block text-gray-500 text-xs uppercase font-bold mb-1.5 ml-1">Current Password</label>
+                                    <input
+                                        type="password"
+                                        name="currentPassword"
+                                        value={passwordData.currentPassword}
+                                        onChange={handlePasswordChange}
+                                        className="w-full bg-[#0f0f13] border border-gray-800 rounded-xl p-3 text-white focus:border-orange-500 outline-none transition-colors"
+                                        placeholder="Enter current password"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-500 text-xs uppercase font-bold mb-1.5 ml-1">New Password</label>
+                                    <input
+                                        type="password"
+                                        name="newPassword"
+                                        value={passwordData.newPassword}
+                                        onChange={handlePasswordChange}
+                                        className="w-full bg-[#0f0f13] border border-gray-800 rounded-xl p-3 text-white focus:border-orange-500 outline-none transition-colors"
+                                        placeholder="Enter new password"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-500 text-xs uppercase font-bold mb-1.5 ml-1">Confirm New Password</label>
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        value={passwordData.confirmPassword}
+                                        onChange={handlePasswordChange}
+                                        className="w-full bg-[#0f0f13] border border-gray-800 rounded-xl p-3 text-white focus:border-orange-500 outline-none transition-colors"
+                                        placeholder="Confirm new password"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="pt-4 flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditMode(null)}
+                                        className="flex-1 py-3 rounded-xl font-bold text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="flex-1 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl font-bold hover:shadow-lg hover:from-orange-500 hover:to-red-500 transition-all disabled:opacity-50"
+                                    >
+                                        {loading ? 'Updating...' : 'Update Password'}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div >
     );
 };
 

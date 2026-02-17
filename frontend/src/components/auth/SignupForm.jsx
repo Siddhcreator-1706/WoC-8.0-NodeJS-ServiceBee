@@ -263,6 +263,15 @@ const SignupForm = ({
                                                 placeholder="Describe your spectral services..."
                                             />
                                         </div>
+                                        <div className="space-y-1.5">
+                                            <label htmlFor="signup-company-website" className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Website <span className="text-zinc-600 lowercase font-normal">(optional)</span></label>
+                                            <input
+                                                id="signup-company-website"
+                                                type="url" name="website" value={signupData.website} onChange={handleSignupChange}
+                                                className="w-full bg-[#0a0a0f]/60 border border-zinc-800 text-white text-sm rounded-xl focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500 p-3 transition-all placeholder-zinc-600"
+                                                placeholder="https://your-coven.com"
+                                            />
+                                        </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>

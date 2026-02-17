@@ -174,7 +174,7 @@ const ProviderProfile = ({ company, onUpdate }) => {
                     <div className="flex flex-col md:flex-row items-center gap-5 relative z-10 w-full md:w-auto">
                         <div className="w-24 h-24 md:w-24 md:h-24 bg-[#0a0a0f] rounded-full flex items-center justify-center text-4xl border-2 border-gray-700 shadow-lg overflow-hidden relative group shrink-0">
                             {logo[0]?.preview ? (
-                                <img src={logo[0].preview} alt="Logo" className="w-full h-full object-cover" />
+                                <img src={logo[0].preview} alt="Logo" className="w-full h-full object-contain" />
                             ) : (
                                 <span>🏗️</span>
                             )}

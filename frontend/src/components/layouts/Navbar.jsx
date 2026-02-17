@@ -16,7 +16,7 @@ const Navbar = () => {
     return (
         <>
             <nav className="px-6 py-4 border-b border-white/5 fixed top-0 w-full bg-[#0a0a0f]/80 backdrop-blur-xl z-50 transition-all duration-300 h-20">
-                <div className="flex justify-between items-center max-w-7xl mx-auto">
+                <div className="flex justify-between items-center  mx-auto">
                     <Link to="/" className="flex items-center gap-3 group">
                         <img src="/logo.png" alt="Phantom Agency Logo" className="w-10 h-10 group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,102,0,0.5)]" />
                         <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 tracking-wider drop-shadow-[0_2px_4px_rgba(255,165,0,0.3)] group-hover:text-orange-400 transition-colors" style={{ fontFamily: 'Creepster, cursive' }}>
@@ -82,10 +82,6 @@ const Navbar = () => {
                                                 <Link to="/provider/bookings" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Bookings</Link>
                                                 <Link to="/provider/complaints" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Complaints</Link>
                                             </>
-                                        )}
-
-                                        {user.role === 'admin' && (
-                                            <Link to="/admin" onClick={() => setIsOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 hover:text-pumpkin font-medium transition-colors text-lg border-l-2 border-transparent hover:border-pumpkin">Admin Panel</Link>
                                         )}
 
                                         <div className="border-t border-white/10 my-4 pt-4">

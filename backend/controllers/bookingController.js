@@ -149,6 +149,10 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
         });
     }
 
+    // Populate fields before returning so frontend doesn't lose data
+    await booking.populate('user', 'name phone email city');
+    await booking.populate('service', 'name price');
+
     res.json(booking);
 });
 

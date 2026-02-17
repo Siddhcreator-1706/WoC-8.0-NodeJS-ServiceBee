@@ -160,7 +160,7 @@ const UserManagement = () => {
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-tr from-gray-800 to-gray-900 flex items-center justify-center overflow-hidden border border-gray-700/50 group-hover:border-orange-500/30 transition-colors shrink-0 relative">
                                                     {user.role === 'provider' && user.company?.logo ? (
-                                                        <img src={user.company.logo} alt="" className="w-full h-full object-cover" />
+                                                        <img src={user.company.logo} alt="" className="w-full h-full object-contain" />
                                                     ) : user.avatar && user.avatar !== 'default-avatar.png' ? (
                                                         <img src={user.avatar} alt="" className="w-full h-full object-cover" />
                                                     ) : (
@@ -310,7 +310,7 @@ const UserManagement = () => {
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-xl bg-gradient-to-tr from-gray-800 to-gray-900 flex items-center justify-center overflow-hidden border border-gray-700/50 shadow-lg relative">
                                     {detailsModal.user.role === 'provider' && detailsModal.user.company?.logo ? (
-                                        <img src={detailsModal.user.company.logo} alt="" className="w-full h-full object-cover" />
+                                        <img src={detailsModal.user.company.logo} alt="" className="w-full h-full object-contain" />
                                     ) : detailsModal.user.avatar && detailsModal.user.avatar !== 'default-avatar.png' ? (
                                         <img src={detailsModal.user.avatar} alt="" className="w-full h-full object-cover" />
                                     ) : (

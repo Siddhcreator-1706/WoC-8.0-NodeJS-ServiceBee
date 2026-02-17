@@ -215,7 +215,7 @@ const ServiceDetail = () => {
                                             required
                                             value={bookingDate}
                                             onChange={(e) => setBookingDate(e.target.value)}
-                                            className="w-full p-3.5 bg-black/40 rounded-xl text-gray-200 border border-white/10 focus:border-purple-500 outline-none transition-colors"
+                                            className="w-full p-3.5 bg-black/40 rounded-xl text-gray-200 border border-white/10 focus:border-purple-500 outline-none transition-colors [color-scheme:dark]"
                                         />
                                     </div>
                                     <div>
@@ -516,6 +516,25 @@ const ServiceDetail = () => {
                                 <div className="flex justify-center items-baseline gap-1">
                                     <span className="text-lg text-orange-500 font-bold">₹</span>
                                     <span className="text-5xl font-bold text-white tracking-tight">{service.price}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className={`p-2 ${service.company.logo ? 'p-0 w-12 h-12 overflow-hidden border border-white/10' : 'bg-gray-800'} rounded-lg`}>
+                                    {service.company.logo ? (
+                                        <img src={service.company.logo} alt="Provider" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-xl">🏢</span>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-400">Provider</p>
+                                    <Link
+                                        to={`/user/company/${service.company._id}`}
+                                        className="text-white hover:text-pumpkin font-medium transition-colors hover:underline"
+                                    >
+                                        {service.company.companyName || service.company.name || 'Unknown Provider'}
+                                    </Link>
                                 </div>
                             </div>
 

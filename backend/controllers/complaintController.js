@@ -71,12 +71,20 @@ const createComplaint = async (req, res) => {
             images
         });
 
-        // Emit real-time event to admins
+        // Emit real-time event to admins 
         const io = getIO();
         if (io) {
-            io.emit('complaint:new', {
-                complaintId: complaint._id,
-                subject: complaint.subject,
+            // Notify admins (if there's an admin room or specific logic, add here)
+            // For now, perhaps we just log or emit to a general admin channel if one existed
+            // usage: io.to('admin-room').emit(...)
+        }
+
+        // Also notify the service provider if it's related to a service
+        const Service = require('../models/Service');
+        const service = await Service.findById(booking.service);
+        if (io && service && service.createdBy) {
+            io.to(service.createdBy.toString()).emit('complaint:new', {
+                complaint,
                 userName: req.user.name
             });
         }
@@ -171,7 +179,17 @@ const serviceProviderRespond = async (req, res) => {
         await complaint.save();
 
         if (complaint.user?.email) {
-            await sendComplaintStatusEmail(complaint.user.email, complaint, complaint.status, complaint.user.name);
+            // await sendComplaintStatusEmail(complaint.user.email, complaint, complaint.status, complaint.user.name);
+        }
+
+        // Emit real-time update to the user
+        const io = getIO();
+        if (io && complaint.user) {
+            io.to(complaint.user._id.toString()).emit('complaint:updated', {
+                complaintId: complaint._id,
+                status: complaint.status,
+                serviceProviderResponse: complaint.serviceProviderResponse
+            });
         }
 
         res.json(complaint);
@@ -185,7 +203,7 @@ const serviceProviderRespond = async (req, res) => {
 // @access  Private (complaint owner)
 const userResolveComplaint = async (req, res) => {
     try {
-        const complaint = await Complaint.findById(req.params.id).populate('service', 'name');
+        const complaint = await Complaint.findById(req.params.id).populate('service', 'name createdBy');
 
         if (!complaint) return res.status(404).json({ message: 'Complaint not found' });
 
@@ -202,6 +220,24 @@ const userResolveComplaint = async (req, res) => {
         complaint.resolvedAt = new Date();
 
         await complaint.save();
+
+        // Emit real-time update
+        const io = getIO();
+        if (io) {
+            // Notify Provider
+            if (complaint.service?.createdBy) {
+                io.to(complaint.service.createdBy.toString()).emit('complaint:updated', {
+                    complaintId: complaint._id,
+                    status: complaint.status
+                });
+            }
+            // Notify User (in case of multi-device)
+            io.to(complaint.user.toString()).emit('complaint:updated', {
+                complaintId: complaint._id,
+                status: complaint.status
+            });
+        }
+
         res.json(complaint);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -262,7 +298,7 @@ const updateComplaintStatus = async (req, res) => {
         await complaint.save();
 
         if (previousStatus !== status && complaint.user?.email) {
-            await sendComplaintStatusEmail(complaint.user.email, complaint, status, complaint.user.name);
+            // await sendComplaintStatusEmail(complaint.user.email, complaint, status, complaint.user.name);
         }
 
         // Emit real-time event to the complaint owner

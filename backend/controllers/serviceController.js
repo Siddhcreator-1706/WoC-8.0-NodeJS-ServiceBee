@@ -102,7 +102,7 @@ const getServiceById = async (req, res) => {
 // @access  Private/Admin/Superuser
 const createService = async (req, res) => {
     try {
-        let { name, description, price, priceType, location, state, city, category, company, duration } = req.body;
+        let { name, description, price, priceType, state, city, category, company, duration } = req.body;
 
         // If provider, ensure they own a company and link it
         if (req.user.role === 'provider') {
@@ -122,7 +122,6 @@ const createService = async (req, res) => {
             description,
             price,
             priceType,
-            location,
             state,
             city,
             category,

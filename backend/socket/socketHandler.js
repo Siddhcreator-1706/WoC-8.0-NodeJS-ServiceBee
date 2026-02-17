@@ -104,6 +104,42 @@ const initializeSocket = (io) => {
             }
         });
 
+
+
+        // ─── Booking Events ─────────────────────────────────────────
+
+        socket.on('booking:create', (data) => {
+            const { receiverId, booking } = data;
+            if (receiverId) {
+                io.to(receiverId).emit('booking:new', { booking, userName: socket.user.name });
+            }
+        });
+
+        socket.on('booking:update', (data) => {
+            const { receiverId, booking } = data;
+            if (receiverId) {
+                io.to(receiverId).emit('booking:updated', { booking });
+            }
+        });
+
+        // ─── Complaint Events ───────────────────────────────────────
+
+        socket.on('complaint:create', (data) => {
+            // Complaints might be broadcast to admins or specific providers
+            // For now, we'll just emit to the receiver if specified
+            const { receiverId, complaint } = data;
+            if (receiverId) {
+                io.to(receiverId).emit('complaint:new', { complaint, userName: socket.user.name });
+            }
+        });
+
+        socket.on('complaint:update', (data) => {
+            const { receiverId, complaint } = data;
+            if (receiverId) {
+                io.to(receiverId).emit('complaint:updated', { complaint });
+            }
+        });
+
         // ─── Disconnect ─────────────────────────────────────────────
 
         socket.on('disconnect', () => {

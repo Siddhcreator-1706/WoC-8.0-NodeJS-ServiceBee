@@ -137,7 +137,7 @@ const Services = () => {
                     <div className="absolute top-[40%] -right-[10%] w-[60%] h-[60%] bg-orange-900/10 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
                 </div>
 
-                <div className="max-w-7xl mx-auto px-6 relative z-10 py-12">
+                <div className=" mx-auto px-6 relative z-10 py-12">
                     <div className="text-center mb-16 hero-section">
                         <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600 mb-2 font-creepster tracking-wide drop-shadow-[0_2px_4px_rgba(255,165,0,0.3)]">
                             Mystic Bazaar
@@ -173,6 +173,22 @@ const Services = () => {
 
                                     <div className="p-6 flex-1 flex flex-col">
                                         <h2 className="text-2xl font-bold text-white mb-2 group-hover:text-orange-400 transition-colors">{service.name}</h2>
+
+                                        {service.company && (
+                                            <Link
+                                                to={`/user/company/${service.company._id}`}
+                                                className="flex items-center gap-2 text-sm text-pumpkin hover:text-orange-400 mb-2 w-fit hover:underline group/company"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {service.company.logo ? (
+                                                    <img src={service.company.logo} alt="Logo" className="w-5 h-5 rounded-full object-cover border border-white/10" />
+                                                ) : (
+                                                    <span className="text-lg">🏢</span>
+                                                )}
+                                                <span>By {service.company.companyName || service.company.name || 'Unknown Provider'}</span>
+                                            </Link>
+                                        )}
+
                                         <div className="flex items-center gap-2 text-sm text-gray-400 mb-3">
                                             <span>📍</span>
                                             {service.city}, {service.state}

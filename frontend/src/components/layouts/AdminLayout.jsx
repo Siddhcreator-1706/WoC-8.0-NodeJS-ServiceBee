@@ -158,7 +158,7 @@ const AdminLayout = () => {
 
                 {/* Main Content Scrollable Area */}
                 <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 custom-scrollbar relative z-0" data-lenis-prevent>
-                    <div className="max-w-7xl mx-auto w-full">
+                    <div className=" mx-auto w-full">
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={location.pathname}

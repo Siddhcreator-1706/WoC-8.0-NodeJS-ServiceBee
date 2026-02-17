@@ -6,7 +6,7 @@ const Footer = () => {
             {/* Background elements */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blood to-transparent opacity-50"></div>
 
-            <div className="max-w-7xl mx-auto px-4 md:px-6">
+            <div className=" mx-auto px-4 md:px-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-8 md:mb-12 text-center md:text-left">
                     {/* Brand */}
                     <div className="space-y-3 md:space-y-4 flex flex-col items-center md:items-start">

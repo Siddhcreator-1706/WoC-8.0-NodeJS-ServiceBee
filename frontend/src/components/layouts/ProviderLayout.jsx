@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import API_URL from '../../config/api';
+
 import Navbar from './Navbar';
 import Footer from './Footer';
-import ChatWidget from '../common/ChatWidget';
 
 const ProviderLayout = () => {
     const { user, logout } = useAuth();
@@ -45,7 +45,7 @@ const ProviderLayout = () => {
     return (
         <div className="min-h-screen flex flex-col bg-[#0a0a0f] text-gray-100 font-sans selection:bg-orange-500/30 selection:text-orange-200">
             <Navbar />
-            <main className="flex-grow pt-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full pb-12">
+            <main className="flex-grow pt-24 px-4 sm:px-6 lg:px-8  mx-auto w-full pb-12">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={location.pathname}
@@ -60,7 +60,6 @@ const ProviderLayout = () => {
                 </AnimatePresence>
             </main>
             <Footer />
-            <ChatWidget />
         </div>
     );
 };

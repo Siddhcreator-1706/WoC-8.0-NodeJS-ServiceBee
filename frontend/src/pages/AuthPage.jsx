@@ -33,7 +33,7 @@ const AuthPage = () => {
     const [signupData, setSignupData] = useState({
         name: '', email: '', password: '', confirmPassword: '', role: 'user',
         phone: '', city: '', state: '',
-        companyName: '', description: '',
+        companyName: '', description: '', website: '', // Added website field
         logo: '', avatar: '', // Add avatar field
         terms: false
     });

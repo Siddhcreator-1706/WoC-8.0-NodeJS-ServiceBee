@@ -7,6 +7,7 @@ import ComplaintModal from '../../components/user/ComplaintModal';
 import CustomSelect from '../../components/ui/CustomSelect';
 import ImageModal from '../../components/common/ImageModal';
 import API_URL from '../../config/api';
+import { useSocket } from '../../context/SocketContext';
 
 const Complaints = () => {
     const { user } = useAuth();
@@ -19,6 +20,8 @@ const Complaints = () => {
     const [showSuccess, setShowSuccess] = useState(false);
 
     const [searchParams] = useSearchParams();
+
+    const { socket } = useSocket();
 
     useEffect(() => {
         if (!user) {
@@ -41,6 +44,23 @@ const Complaints = () => {
             setTimeout(() => setShowSuccess(false), 5000);
         }
     }, [user, navigate, searchParams]);
+
+    // Socket listeners
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('complaint:updated', (data) => {
+            const { complaintId, status, serviceProviderResponse } = data;
+            setComplaints(prev => prev.map(c =>
+                c._id === complaintId ? { ...c, status, serviceProviderResponse } : c
+            ));
+            // Optional: show a toast/message
+        });
+
+        return () => {
+            socket.off('complaint:updated');
+        };
+    }, [socket]);
 
     const fetchComplaints = async () => {
         try {
@@ -233,10 +253,14 @@ const Complaints = () => {
                                                         onClick={async () => {
                                                             if (!window.confirm('Are you satisfied that the spirits are at rest? This will close the complaint.')) return;
                                                             try {
+                                                                // Optimistic Update
+                                                                setComplaints(prev => prev.map(c => c._id === complaint._id ? { ...c, status: 'resolved' } : c));
+
                                                                 await axios.put(`/api/complaints/${complaint._id}/resolve?confirm=true`);
                                                                 fetchComplaints();
                                                             } catch (err) {
                                                                 console.error(err);
+                                                                fetchComplaints(); // Revert on error
                                                             }
                                                         }}
                                                         className={`px-6 py-3 rounded-xl text-sm font-bold shadow-lg transition-all flex items-center gap-2 whitespace-nowrap min-w-[200px] justify-center ${complaint.status === 'awaiting-confirmation'

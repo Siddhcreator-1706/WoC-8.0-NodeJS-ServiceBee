@@ -106,8 +106,8 @@ serviceSchema.virtual('totalReviews').get(function () {
 });
 
 // Indexes (company already indexed via index: true in schema)
-serviceSchema.index({ name: 'text', description: 'text', location: 'text' });
-serviceSchema.index({ category: 1, location: 1, price: 1 });
+serviceSchema.index({ name: 'text', description: 'text', city: 'text', state: 'text' });
+serviceSchema.index({ category: 1, city: 1, state: 1, price: 1 });
 serviceSchema.index({ createdBy: 1 });
 
 // Static methods

@@ -4,6 +4,7 @@ import CustomSelect from '../ui/CustomSelect';
 import ImageModal from '../common/ImageModal';
 import axios from 'axios';
 import API_URL from '../../config/api';
+import { useSocket } from '../../context/SocketContext';
 
 const ComplaintList = () => {
     const [complaints, setComplaints] = useState([]);
@@ -12,10 +13,41 @@ const ComplaintList = () => {
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
+    const [responseTexts, setResponseTexts] = useState({});
+    const [submittingId, setSubmittingId] = useState(null);
+
+    const { socket } = useSocket();
 
     useEffect(() => {
         fetchComplaints();
     }, []);
+
+    // Socket listeners
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('complaint:new', (data) => {
+            const { userName } = data;
+            setMessage(`New complaint from ${userName} ⚠️`);
+            fetchComplaints();
+        });
+
+        socket.on('complaint:updated', (data) => {
+            // Merge the incoming data with existing complaint to ensure all fields (like response) are updated
+            setComplaints(prev => prev.map(c =>
+                c._id === data.complaintId || c._id === data._id
+                    ? { ...c, ...data, status: data.status || c.status } // Ensure we merge the full object if provided, or at least the specific fields
+                    : c
+            ));
+
+            if (data.status === 'resolved') setMessage('Complaint resolved! ✅');
+        });
+
+        return () => {
+            socket.off('complaint:new');
+            socket.off('complaint:updated');
+        };
+    }, [socket]);
 
     // Auto-dismiss messages
     useEffect(() => {
@@ -33,7 +65,6 @@ const ComplaintList = () => {
                 const data = await res.json();
                 setComplaints(data || []);
             } else {
-                // Silently fail or minimal error if just emptiness, but here likely error
                 console.error('Failed to fetch complaints');
             }
         } catch (err) {
@@ -45,12 +76,19 @@ const ComplaintList = () => {
 
     const handleComplaintResponse = async (id, response, markResolved) => {
         try {
-            const res = await axios.put(`/api/complaints/${id}/respond`, { response, markResolved });
+            setSubmittingId(id);
+            const res = await axios.put(`${API_URL}/api/complaints/${id}/respond`, { response, markResolved });
             const updatedComplaint = res.data;
-            setComplaints(complaints.map(c => c._id === id ? updatedComplaint : c));
+
+            setComplaints(prev => prev.map(c => c._id === id ? updatedComplaint : c));
             setMessage('Response sent successfully');
+
+            // Clear the text area for this complaint
+            setResponseTexts(prev => ({ ...prev, [id]: '' }));
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to send response');
+        } finally {
+            setSubmittingId(null);
         }
     };
 
@@ -202,30 +240,44 @@ const ComplaintList = () => {
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3">
+                                                    {complaint.serviceProviderResponse && (
+                                                        <div className="bg-blue-500/10 p-3 rounded-lg border border-blue-500/20 mb-3 block">
+                                                            <span className="text-xs text-blue-400 font-bold uppercase block mb-1">Current Response:</span>
+                                                            <p className="text-gray-300 text-sm italic">"{complaint.serviceProviderResponse}"</p>
+                                                        </div>
+                                                    )}
                                                     <textarea
                                                         className="w-full bg-[#0a0a0f] border border-gray-700 rounded-lg p-3 text-sm text-white focus:ring-1 focus:ring-orange-500 outline-none"
                                                         rows="3"
                                                         placeholder="Type your response to the customer..."
-                                                        id={`response-${complaint._id}`}
+                                                        value={responseTexts[complaint._id] || ''}
+                                                        onChange={(e) => setResponseTexts(prev => ({ ...prev, [complaint._id]: e.target.value }))}
+                                                        disabled={submittingId === complaint._id}
                                                     ></textarea>
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => {
-                                                                const response = document.getElementById(`response-${complaint._id}`).value;
+                                                                const response = responseTexts[complaint._id] || '';
                                                                 if (response.trim()) handleComplaintResponse(complaint._id, response, false);
                                                             }}
-                                                            className="flex-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/30 py-2 rounded-lg text-sm font-bold transition-all"
+                                                            disabled={submittingId === complaint._id || !responseTexts[complaint._id]?.trim()}
+                                                            className="flex-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/30 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
                                                         >
-                                                            Send Reply
+                                                            {submittingId === complaint._id ? (
+                                                                <span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                                                            ) : 'Send Reply'}
                                                         </button>
                                                         <button
                                                             onClick={() => {
-                                                                const response = document.getElementById(`response-${complaint._id}`).value;
+                                                                const response = responseTexts[complaint._id] || '';
                                                                 handleComplaintResponse(complaint._id, response || 'Issue resolved', true);
                                                             }}
-                                                            className="flex-1 bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/30 py-2 rounded-lg text-sm font-bold transition-all"
+                                                            disabled={submittingId === complaint._id}
+                                                            className="flex-1 bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/30 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
                                                         >
-                                                            Resolve & Close
+                                                            {submittingId === complaint._id ? (
+                                                                <span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                                                            ) : 'Resolve & Close'}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -243,7 +295,8 @@ const ComplaintList = () => {
             <AnimatePresence>
                 {selectedImage && (
                     <ImageModal
-                        imageUrl={selectedImage}
+                        isOpen={!!selectedImage}
+                        image={selectedImage}
                         onClose={() => setSelectedImage(null)}
                     />
                 )}

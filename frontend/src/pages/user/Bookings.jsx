@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import API_URL from '../../config/api';
 import ComplaintModal from '../../components/user/ComplaintModal';
 import CustomSelect from '../../components/ui/CustomSelect';
@@ -16,6 +17,8 @@ const Bookings = () => {
     const [showComplaintModal, setShowComplaintModal] = useState(false);
     const [selectedBookingForComplaint, setSelectedBookingForComplaint] = useState(null);
 
+    const { socket } = useSocket();
+
     useEffect(() => {
         if (!user) {
             navigate('/login');
@@ -23,6 +26,20 @@ const Bookings = () => {
         }
         fetchMyBookings();
     }, [user, navigate]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('booking:updated', (data) => {
+            const { bookingId, status } = data;
+            setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status } : b));
+            // Show toast or message? functionality not in this component yet, maybe native alert or toast if available
+        });
+
+        return () => {
+            socket.off('booking:updated');
+        };
+    }, [socket]);
 
     const fetchMyBookings = async () => {
         setLoading(true);

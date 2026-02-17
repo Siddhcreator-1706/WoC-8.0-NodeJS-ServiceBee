@@ -97,7 +97,7 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
         <form onSubmit={handleSubmit} className="bg-[#15151e]/80 backdrop-blur-md p-6 rounded-2xl border border-gray-800 mb-8 shadow-xl relative overflow-visible group">
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIi8+Cjwvc3ZnPg==')] [mask-image:linear-gradient(to_bottom,white,transparent)]" />
 
-            <div className="grid md:grid-cols-3 gap-4 mb-4 relative z-10">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 relative z-10">
                 {/* State */}
                 <CustomSelect
                     name="state"
@@ -142,7 +142,7 @@ const ServiceFilters = ({ onFilter, initialFilters = {} }) => {
                 />
             </div>
 
-            <div className="grid md:grid-cols-3 gap-4 mb-4 relative z-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 relative z-10">
                 {/* Max Price */}
                 <input
                     type="number"

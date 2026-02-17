@@ -84,7 +84,35 @@ const getCompanyById = async (req, res) => {
             return res.status(404).json({ message: 'Company not found' });
         }
 
-        res.json(company);
+        // Calculate stats
+        const completedBookings = await Booking.countDocuments({
+            company: company._id,
+            status: 'completed'
+        });
+
+        // Calculate average rating across all services
+        let totalRating = 0;
+        let totalReviews = 0;
+
+        company.services.forEach(service => {
+            if (service.ratings && service.ratings.length > 0) {
+                const serviceTotal = service.ratings.reduce((sum, r) => sum + r.value, 0);
+                totalRating += serviceTotal;
+                totalReviews += service.ratings.length;
+            }
+        });
+
+        const overallRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(2) : 0;
+
+        // Return combined data
+        const companyData = company.toObject();
+        companyData.stats = {
+            completedBookings,
+            overallRating,
+            totalReviews
+        };
+
+        res.json(companyData);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -123,7 +151,7 @@ const getMyCompany = async (req, res) => {
             }
         });
 
-        const overallRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0;
+        const overallRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(2) : 0;
 
         // Return combined data
         const companyData = company.toObject();
