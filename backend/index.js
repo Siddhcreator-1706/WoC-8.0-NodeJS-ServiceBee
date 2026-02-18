@@ -1,15 +1,15 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const socketAuth = require('./middleware/socketAuth');
+const mongoSanitize = require('./middleware/mongoSanitize');
+const connectDB = require('./config/db');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const mongoSanitize = require('./middleware/mongoSanitize');
-const connectDB = require('./config/db');
-const socketAuth = require('./middleware/socketAuth');
+const { Server } = require('socket.io');
 const { initializeSocket } = require('./socket/socketHandler');
+const http = require('http');
 const AppError = require('./utils/AppError');
 
 // Load env vars
@@ -215,7 +215,7 @@ if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
     // Catch-all to serve index.html for SPA client-side routing
-    app.get('*', (req, res) => {
+    app.get(/.*/, (req, res) => {
         res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
     });
 } else {
