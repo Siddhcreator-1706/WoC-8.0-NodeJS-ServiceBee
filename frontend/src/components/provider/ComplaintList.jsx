@@ -246,20 +246,31 @@ const ComplaintList = () => {
                                                         </div>
                                                     )}
                                                     <textarea
-                                                        className="w-full bg-[#0a0a0f] border border-gray-700 rounded-lg p-3 text-sm text-white focus:ring-1 focus:ring-orange-500 outline-none"
+                                                        className={`w-full bg-[#0a0a0f] border rounded-lg p-3 text-sm text-white focus:ring-1 outline-none ${(responseTexts[complaint._id] || '').length > 0 && (responseTexts[complaint._id] || '').trim().length < 10
+                                                                ? 'border-red-500/50 focus:ring-red-500'
+                                                                : 'border-gray-700 focus:ring-orange-500'
+                                                            }`}
                                                         rows="3"
-                                                        placeholder="Type your response to the customer..."
+                                                        placeholder="Type your response to the customer (min 10 chars)..."
                                                         value={responseTexts[complaint._id] || ''}
                                                         onChange={(e) => setResponseTexts(prev => ({ ...prev, [complaint._id]: e.target.value }))}
                                                         disabled={submittingId === complaint._id}
                                                     ></textarea>
+
+                                                    {/* Validation Hint */}
+                                                    <div className="flex justify-end mb-2">
+                                                        <span className={`text-xs ${(responseTexts[complaint._id] || '').trim().length < 10 ? 'text-red-400' : 'text-green-400'}`}>
+                                                            {(responseTexts[complaint._id] || '').trim().length}/10 characters
+                                                        </span>
+                                                    </div>
+
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => {
                                                                 const response = responseTexts[complaint._id] || '';
-                                                                if (response.trim()) handleComplaintResponse(complaint._id, response, false);
+                                                                if (response.trim().length >= 10) handleComplaintResponse(complaint._id, response, false);
                                                             }}
-                                                            disabled={submittingId === complaint._id || !responseTexts[complaint._id]?.trim()}
+                                                            disabled={submittingId === complaint._id || (responseTexts[complaint._id] || '').trim().length < 10}
                                                             className="flex-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/30 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
                                                         >
                                                             {submittingId === complaint._id ? (
@@ -269,9 +280,13 @@ const ComplaintList = () => {
                                                         <button
                                                             onClick={() => {
                                                                 const response = responseTexts[complaint._id] || '';
-                                                                handleComplaintResponse(complaint._id, response || 'Issue resolved', true);
+                                                                // Allow resolving with default message if empty, or require min length if typed
+                                                                const finalResponse = response.trim() || 'Issue resolved';
+                                                                if (response.trim() && response.trim().length < 10) return; // Prevent short custom messages
+
+                                                                handleComplaintResponse(complaint._id, finalResponse, true);
                                                             }}
-                                                            disabled={submittingId === complaint._id}
+                                                            disabled={submittingId === complaint._id || (responseTexts[complaint._id]?.trim().length > 0 && responseTexts[complaint._id]?.trim().length < 10)}
                                                             className="flex-1 bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/30 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
                                                         >
                                                             {submittingId === complaint._id ? (

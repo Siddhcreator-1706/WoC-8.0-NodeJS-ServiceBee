@@ -9,7 +9,16 @@ const cookie = require('cookie');
  */
 const socketAuth = async (socket, next) => {
     try {
-        let token = null;
+        if (socket.handshake.auth && socket.handshake.auth.token) {
+            token = socket.handshake.auth.token;
+        } else if (socket.handshake.headers.cookie) {
+            const cookies = cookie.parse(socket.handshake.headers.cookie);
+            token = cookies.jwt;
+        }
+
+        if (!token) {
+            return next(new Error('Authentication error: No token provided'));
+        }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded.id).select('-password');

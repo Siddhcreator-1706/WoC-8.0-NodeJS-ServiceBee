@@ -120,6 +120,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/companies', companyRoutes);
+app.use('/api/bookings', bookingRoutes);
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
 app.get('/', (req, res) => {
