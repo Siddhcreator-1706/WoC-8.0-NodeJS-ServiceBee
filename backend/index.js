@@ -16,6 +16,11 @@ dotenv.config();
 
 const companyRoutes = require('./routes/companyRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
+const authRoutes = require('./routes/authRoutes');
+const serviceRoutes = require('./routes/serviceRoutes');
+const userRoutes = require('./routes/userRoutes');
+const complaintRoutes = require('./routes/complaintRoutes');
+const bookmarkRoutes = require('./routes/bookmarkRoutes');
 
 connectDB();
 
@@ -173,12 +178,13 @@ app.use('/api', (req, res) => {
     res.status(404).json({ message: 'API Route not found' });
 });
 
-const path = require('path');
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+if (process.env.NODE_ENV === 'production') {
+    const path = require('path');
+    app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
-app.get(/.*/, (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
-});
+    app.get(/.*/, (req, res) => {
+        res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
+    });
 } else {
     // Development 404
     app.use((req, res) => {
