@@ -9,7 +9,6 @@ const Booking = require('../models/Booking');
 // @access  Private/Admin
 const getAdminStats = async (_req, res) => {
     try {
-        // Run all counts in parallel for performance
         const [
             userCount,
             providerCount,
@@ -24,37 +23,32 @@ const getAdminStats = async (_req, res) => {
             recentUsers,
             recentCompanies
         ] = await Promise.all([
-            User.countDocuments({ role: 'user' }), // Customers
+            User.countDocuments({ role: 'user' }),
             User.countDocuments({ role: 'provider' }),
             Service.countDocuments(),
             Company.countDocuments(),
             Complaint.countDocuments(),
             Complaint.countDocuments({ status: 'pending' }),
             Booking.countDocuments(),
-            // Calculate total revenue from completed bookings if price exists
             Booking.aggregate([
                 { $match: { status: 'completed' } },
                 { $lookup: { from: 'services', localField: 'service', foreignField: '_id', as: 'serviceDetails' } },
                 { $unwind: '$serviceDetails' },
                 { $group: { _id: null, total: { $sum: '$serviceDetails.price' } } }
             ]),
-            // Fetch recent bookings
             Booking.find()
                 .sort({ createdAt: -1 })
                 .limit(5)
                 .populate('user', 'name')
                 .populate('service', 'name'),
-            // Fetch recent complaints
             Complaint.find()
                 .sort({ createdAt: -1 })
                 .limit(5)
                 .populate('user', 'name'),
-            // Fetch recent users
-            User.find({ role: 'user' }) // Only customers
+            User.find({ role: 'user' })
                 .sort({ createdAt: -1 })
                 .limit(5)
                 .select('name createdAt'),
-            // Fetch recent companies
             Company.find()
                 .sort({ createdAt: -1 })
                 .limit(5)
@@ -63,7 +57,6 @@ const getAdminStats = async (_req, res) => {
 
         const revenue = revenueTotal.length > 0 ? revenueTotal[0].total : 0;
 
-        // Combine and format recent activity
         const activities = [
             ...recentBookings.map(b => ({
                 id: b._id,
@@ -88,7 +81,7 @@ const getAdminStats = async (_req, res) => {
             })),
             ...recentCompanies.map(c => ({
                 id: c._id,
-                user: c.name, // Company Name as user
+                user: c.name,
                 action: 'Registered a new company',
                 time: c.createdAt,
                 type: 'company_registered'

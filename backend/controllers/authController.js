@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Company = require('../models/Company');
-const OTP = require('../models/OTP'); // Keep for password reset
+const OTP = require('../models/OTP');
 const PendingUser = require('../models/PendingUser');
 const Session = require('../models/Session');
 const { generateOTP, sendOTPEmail } = require('../utils/emailService');
@@ -12,7 +12,6 @@ const generateToken = (id) => {
     });
 };
 
-// Cookie options
 const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -45,10 +44,8 @@ const registerUser = async (req, res) => {
         // Validate role if provided
         const userRole = (role === 'provider') ? 'provider' : 'user';
 
-        // Properly handle email - preserve dots
         const cleanEmail = email.trim().toLowerCase();
 
-        // Check if email is valid format
         const emailRegex = /^\S+@\S+\.\S+$/;
         if (!emailRegex.test(cleanEmail)) {
             return res.status(400).json({ message: 'Please use a valid email address' });
@@ -59,14 +56,10 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // Generate OTP
         const otp = generateOTP();
 
-        // Remove any existing pending user for this email
         await PendingUser.deleteMany({ email: cleanEmail });
 
-        // Create Pending User (password hashed by pre-save hook)
-        // Store OTP as plain text in PendingUser (as per schema)
         await PendingUser.create({
             name,
             email: cleanEmail,
@@ -76,16 +69,15 @@ const registerUser = async (req, res) => {
             phone,
             city,
             state,
-            avatar, // Store avatar URL
+            avatar,
             company: (userRole === 'provider' && companyName) ? {
                 name: companyName,
                 description,
-                serviceType: req.body.serviceType, // Keep this just in case, though optional
+                serviceType: req.body.serviceType,
                 logo: req.body.logo
             } : undefined
         });
 
-        // Send OTP email
         const emailResult = await sendOTPEmail(cleanEmail, otp, name);
 
         if (!emailResult.success) {
@@ -118,33 +110,28 @@ const verifyOTP = async (req, res) => {
 
         const cleanEmail = email.trim().toLowerCase();
 
-        // Find Pending User
         const pendingUser = await PendingUser.findOne({ email: cleanEmail });
 
         if (!pendingUser) {
             return res.status(400).json({ message: 'Invalid or expired verification request. Please sign up again.' });
         }
 
-        // Verify OTP (Direct comparison as stored plain text in PendingUser)
         if (pendingUser.otp !== otp) {
             return res.status(400).json({ message: 'Invalid verification code' });
         }
 
-        // OTP valid - create user
-        // pendingUser.password is already hashed
         const user = await User.create({
             name: pendingUser.name,
             email: pendingUser.email,
-            password: pendingUser.password, // already hashed
+            password: pendingUser.password,
             role: pendingUser.role,
             phone: pendingUser.phone,
             city: pendingUser.city,
             state: pendingUser.state,
-            avatar: pendingUser.avatar || 'default-avatar.png', // Transfer avatar
+            avatar: pendingUser.avatar || 'default-avatar.png',
             isActive: true
         });
 
-        // If provider, create company
         if (user.role === 'provider' && pendingUser.company && pendingUser.company.name) {
             const company = await Company.create({
                 name: pendingUser.company.name,
@@ -152,26 +139,21 @@ const verifyOTP = async (req, res) => {
                 email: user.email,
                 phone: user.phone,
                 owner: user._id,
-                isVerified: true, // Auto-verify since OTP passed
+                isVerified: true,
                 serviceType: pendingUser.company.serviceType || 'General',
                 logo: pendingUser.company.logo
             });
 
-            // Link company to user
             user.company = company._id;
             await user.save();
         }
 
-        // Delete pending user
         await PendingUser.deleteOne({ _id: pendingUser._id });
 
-        // Auto-login: Generate token
         const token = generateToken(user._id);
 
-        // Create Session
         await Session.createSession(user._id, token, req);
 
-        // Set cookies
         res.cookie('jwt', token, cookieOptions);
         res.cookie('logged_in', 'true', {
             ...cookieOptions,
@@ -201,25 +183,17 @@ const resendOTP = async (req, res) => {
         const { email } = req.body;
         const cleanEmail = email.trim().toLowerCase();
 
-        // Find existing Pending User
         const pendingUser = await PendingUser.findOne({ email: cleanEmail });
 
         if (!pendingUser) {
             return res.status(400).json({ message: 'No pending registration found. Please sign up again.' });
         }
 
-        // Generate new OTP
         const newOtp = generateOTP();
 
-        // Update with new OTP (password remains same hashed value)
         pendingUser.otp = newOtp;
-        // Reset expiration by resetting createdAt? or just save? 
-        // Logic: if we update, we might want to extend time. 
-        // Since TTL is on createdAt, we'd need to update createdAt to extend.
-        // But for simplicity, we just update OTP. The original 24h window applies.
         await pendingUser.save();
 
-        // Send email
         const emailResult = await sendOTPEmail(cleanEmail, newOtp, pendingUser.name);
 
         if (!emailResult.success) {
@@ -247,14 +221,11 @@ const loginUser = async (req, res) => {
         }
 
         if (!user.isActive) {
-            // Check if ban has expired
             if (user.bannedExpiresAt && new Date() > new Date(user.bannedExpiresAt)) {
-                // Reactivate user
                 user.isActive = true;
                 user.bannedExpiresAt = undefined;
                 user.deactivationReason = undefined;
                 await user.save();
-                // Proceed to login
             } else {
                 const message = user.bannedExpiresAt
                     ? `Account suspended until ${new Date(user.bannedExpiresAt).toLocaleDateString()}. Reason: ${user.deactivationReason || 'Admin Action'}`
@@ -266,10 +237,8 @@ const loginUser = async (req, res) => {
         if (await user.matchPassword(password)) {
             const token = generateToken(user._id);
 
-            // Invalidate previous session from this device
             await Session.invalidateDeviceSession(user._id, req.get('User-Agent') || 'Unknown');
 
-            // Create Session
             await Session.createSession(user._id, token, req);
 
             res.cookie('jwt', token, cookieOptions);
@@ -296,7 +265,6 @@ const loginUser = async (req, res) => {
 // @access  Private
 const logoutUser = async (req, res) => {
     try {
-        // Get token from cookie or header
         let token = req.cookies.jwt;
         if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
             token = req.headers.authorization.split(' ')[1];
@@ -349,14 +317,11 @@ const updateProfile = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Update basic info
         if (name) user.name = name;
         if (email) user.email = email.trim().toLowerCase();
         if (phone) user.phone = phone;
         if (city) user.city = city;
         if (state) user.state = state;
-
-        // Update password if provided
 
         if (currentPassword && newPassword) {
             const isMatch = await user.matchPassword(currentPassword);
@@ -395,16 +360,12 @@ const forgotPassword = async (req, res) => {
             return res.status(404).json({ message: 'No account found with this email address.' });
         }
 
-        // Generate 6-digit OTP
         const otp = generateOTP();
-
-        // Store in OTP collection
-        // Delete any existing OTPs for password reset for this email
         await OTP.deleteMany({ email: cleanEmail, purpose: 'password-reset' });
 
         await OTP.create({
             email: cleanEmail,
-            otp: otp, // Store plain OTP (or hash it if you prefer security over convenience, but plain for now matching signup)
+            otp: otp,
             name: user.name,
             password: 'N/A',
             purpose: 'password-reset',
@@ -428,7 +389,6 @@ const verifyResetOTP = async (req, res) => {
         const { email, otp } = req.body;
         const cleanEmail = email.trim().toLowerCase();
 
-        // Find OTP entry by email and purpose (expiresAt check included)
         const otpEntry = await OTP.findOne({
             email: cleanEmail,
             purpose: 'password-reset',
@@ -439,7 +399,6 @@ const verifyResetOTP = async (req, res) => {
             return res.status(400).json({ message: 'Invalid or expired verification code' });
         }
 
-        // Verify OTP hash
         const isMatch = await otpEntry.verifyOTP(otp);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid verification code' });
@@ -450,15 +409,12 @@ const verifyResetOTP = async (req, res) => {
             return res.status(400).json({ message: 'User not found' });
         }
 
-        // Generate a temporary reset token (valid for 15 mins)
-        // We use a different secret or add a type to the payload to distinguish from login tokens
         const resetToken = jwt.sign(
             { id: user._id, type: 'password-reset' },
             process.env.JWT_SECRET,
             { expiresIn: '15m' }
         );
 
-        // Delete the used OTP
         await OTP.deleteOne({ _id: otpEntry._id });
 
         res.json({
@@ -481,7 +437,6 @@ const resetPassword = async (req, res) => {
             return res.status(400).json({ message: 'Token and a valid new password (min 6 chars) are required' });
         }
 
-        // Verify token
         let decoded;
         try {
             decoded = jwt.verify(resetToken, process.env.JWT_SECRET);

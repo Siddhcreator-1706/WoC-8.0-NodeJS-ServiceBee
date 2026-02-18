@@ -13,19 +13,15 @@ export const SocketProvider = ({ children }) => {
     const [isConnected, setIsConnected] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState(new Set());
     const socketRef = useRef(null);
-    // Track which user ID the current socket belongs to
     const connectedUserIdRef = useRef(null);
 
     useEffect(() => {
-        // Only connect if we have a user ID
         if (!user?._id) return;
 
-        // Skip if already connected for this user (prevent double-connection in potential race conditions, though dependency array handles most)
         if (socketRef.current?.connected && connectedUserIdRef.current === user._id) {
             return;
         }
 
-        // Cleanup any existing connection before creating a new one
         if (socketRef.current) {
             socketRef.current.disconnect();
             socketRef.current = null;
@@ -68,7 +64,6 @@ export const SocketProvider = ({ children }) => {
             });
         });
 
-        // Cleanup function runs when component unmounts or user changes
         return () => {
             if (newSocket) {
                 newSocket.disconnect();

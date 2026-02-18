@@ -5,7 +5,6 @@ const Session = require('../models/Session');
 const protect = async (req, res, next) => {
     let token;
 
-    // Check for token in cookies (primary) or Authorization header (fallback)
     if (req.cookies.jwt) {
         token = req.cookies.jwt;
     } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -19,7 +18,6 @@ const protect = async (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Check session validity in database
         const session = await Session.findOne({
             userId: decoded.id,
             token,
@@ -30,7 +28,6 @@ const protect = async (req, res, next) => {
             return res.status(401).json({ message: 'Session expired or invalid (No Session Found)' });
         }
 
-        // Manual expiration check
         if (session.expiresAt && new Date() > session.expiresAt) {
             return res.status(401).json({ message: 'Session expired' });
         }
@@ -41,7 +38,6 @@ const protect = async (req, res, next) => {
             return res.status(401).json({ message: 'User not found' });
         }
 
-        // Update session activity
         await Session.updateActivity(token);
 
         next();
@@ -51,7 +47,6 @@ const protect = async (req, res, next) => {
     }
 };
 
-// Role-based authorization
 const authorize = (...roles) => {
     return (req, res, next) => {
         if (!roles.includes(req.user.role)) {

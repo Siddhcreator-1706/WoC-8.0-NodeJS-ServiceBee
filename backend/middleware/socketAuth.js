@@ -11,21 +11,6 @@ const socketAuth = async (socket, next) => {
     try {
         let token = null;
 
-        // 1. Check auth object (sent by socket.io-client)
-        if (socket.handshake.auth && socket.handshake.auth.token) {
-            token = socket.handshake.auth.token;
-        }
-
-        // 2. Fallback: check cookies from handshake headers
-        if (!token && socket.handshake.headers.cookie) {
-            const cookies = cookie.parse(socket.handshake.headers.cookie);
-            token = cookies.jwt;
-        }
-
-        if (!token) {
-            return next(new Error('Authentication error: No token provided'));
-        }
-
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded.id).select('-password');
 
@@ -37,7 +22,6 @@ const socketAuth = async (socket, next) => {
             return next(new Error('Authentication error: Account deactivated'));
         }
 
-        // Attach user to socket for use in event handlers
         socket.user = user;
         next();
     } catch (error) {

@@ -16,7 +16,6 @@ const setupAxios = () => {
     axios.defaults.withCredentials = true;
     axios.defaults.baseURL = API_URL;
 
-    // Request interceptor: attach CSRF token to mutation requests
     axios.interceptors.request.use(async (config) => {
         const mutationMethods = ['post', 'put', 'delete', 'patch'];
         if (mutationMethods.includes(config.method)) {
@@ -30,7 +29,6 @@ const setupAxios = () => {
         return config;
     });
 
-    // Response interceptor: retry once on CSRF error (token may have expired)
     axios.interceptors.response.use(
         (response) => response,
         async (error) => {
