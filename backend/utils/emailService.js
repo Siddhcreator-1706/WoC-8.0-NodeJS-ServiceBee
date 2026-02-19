@@ -2,6 +2,22 @@ const nodemailer = require('nodemailer');
 
 // Create transporter with env config
 const createTransporter = () => {
+    // Check for Gmail specifically to use the built-in service preset
+    // This often bypasses port blocking issues on cloud platforms like Render
+    if (process.env.SMTP_HOST === 'smtp.gmail.com' || (process.env.SMTP_USER && process.env.SMTP_USER.endsWith('@gmail.com'))) {
+        return nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+            },
+            // Add timeout settings
+            connectionTimeout: 10000, // 10 seconds
+            greetingTimeout: 10000,
+            socketTimeout: 10000
+        });
+    }
+
     const port = Number.parseInt(process.env.SMTP_PORT, 10) || 587;
 
     return nodemailer.createTransport({
@@ -11,7 +27,11 @@ const createTransporter = () => {
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS
-        }
+        },
+        // Add timeout settings
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 10000,
+        socketTimeout: 10000
     });
 };
 
