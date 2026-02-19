@@ -9,6 +9,8 @@ const cookie = require('cookie');
  */
 const socketAuth = async (socket, next) => {
     try {
+        let token = null;
+
         if (socket.handshake.auth && socket.handshake.auth.token) {
             token = socket.handshake.auth.token;
         } else if (socket.handshake.headers.cookie) {
