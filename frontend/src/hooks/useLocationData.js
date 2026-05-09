@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { fallbackLocationData } from '../data/locationData';
 
 const useLocationData = (selectedState = '') => {
@@ -12,17 +13,7 @@ const useLocationData = (selectedState = '') => {
         setLoadingStates(true);
         const fetchStates = async () => {
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-
-                const response = await fetch('https://www.india-location-hub.in/api/locations/states', {
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-
-                if (!response.ok) throw new Error('Network response was not ok');
-
-                const data = await response.json();
+                const { data } = await axios.get('/api/locations/states');
                 if (data.success && data.data && Array.isArray(data.data.states)) {
                     setStatesList(data.data.states);
                 } else {
@@ -48,18 +39,8 @@ const useLocationData = (selectedState = '') => {
         setLoadingDistricts(true);
         const fetchDistricts = async () => {
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-
                 const stateId = selectedState.toUpperCase();
-                const response = await fetch(`https://www.india-location-hub.in/api/locations/districts?state=${encodeURIComponent(stateId)}`, {
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-
-                if (!response.ok) throw new Error('Network response was not ok');
-
-                const data = await response.json();
+                const { data } = await axios.get(`/api/locations/districts?state=${encodeURIComponent(stateId)}`);
                 if (data.success && data.data && Array.isArray(data.data.districts)) {
                     setDistrictsList(data.data.districts);
                 } else {
@@ -86,3 +67,4 @@ const useLocationData = (selectedState = '') => {
 };
 
 export default useLocationData;
+

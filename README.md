@@ -45,11 +45,11 @@ The application follows a **Client-Server-Database** architecture with a real-ti
 │   └── seed/               # Data Seeding Scripts
 │
 ├── frontend/               # React Client
-│   ├── src/
-│   │   ├── components/     # UI Components
-│   │   ├── context/        # Global State (Auth, Socket)
-│   │   ├── pages/          # Application Views
-│   │   └── hooks/          # Custom Hooks
+│   └── src/
+│       ├── components/     # UI Components
+│       ├── context/        # Global State (Auth, Socket)
+│       ├── pages/          # Application Views
+│       └── hooks/          # Custom Hooks
 │
 └── render.yaml             # Deployment Configuration
 ```

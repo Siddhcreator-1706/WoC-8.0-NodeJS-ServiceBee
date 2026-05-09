@@ -122,6 +122,7 @@ app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/locations', require('./routes/locationRoutes'));
 
 app.get('/', (req, res) => {
     res.json({
