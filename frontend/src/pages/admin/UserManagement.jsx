@@ -292,11 +292,12 @@ const UserManagement = () => {
 
             {/* View Details Modal */}
             {detailsModal.isOpen && detailsModal.user && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setDetailsModal({ isOpen: false, user: null })}>
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" data-lenis-prevent onClick={() => setDetailsModal({ isOpen: false, user: null })}>
                     <motion.div
                         initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         className="bg-[#0d0d14] border border-orange-900/20 p-6 rounded-2xl w-full max-w-2xl shadow-2xl shadow-orange-900/10 max-h-[85vh] overflow-y-auto custom-scrollbar"
+                        data-lenis-prevent
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex justify-between items-center mb-5 border-b border-orange-900/15 pb-2">

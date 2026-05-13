@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 import { useGSAP } from '@gsap/react';
@@ -16,6 +16,7 @@ const Services = () => {
     const [loading, setLoading] = useState(true);
     const [searchParams] = useSearchParams();
     const containerRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchServices = async () => {
@@ -200,10 +201,15 @@ const Services = () => {
                                         <h2 className="text-2xl font-bold text-white mb-2 group-hover:text-orange-400 transition-colors">{service.name}</h2>
 
                                         {service.company && (
-                                            <Link
-                                                to={`/user/company/${service.company._id}`}
-                                                className="flex items-center gap-2 text-sm text-pumpkin hover:text-orange-400 mb-2 w-fit hover:underline group/company"
-                                                onClick={(e) => e.stopPropagation()}
+                                            <span
+                                                role="link"
+                                                tabIndex={0}
+                                                className="flex items-center gap-2 text-sm text-pumpkin hover:text-orange-400 mb-2 w-fit hover:underline cursor-pointer group/company"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    navigate(`/user/company/${service.company._id}`);
+                                                }}
                                             >
                                                 {service.company.logo ? (
                                                     <img src={service.company.logo} alt="Logo" className="w-5 h-5 rounded-full object-cover border border-white/10" />
@@ -211,7 +217,7 @@ const Services = () => {
                                                     <span className="text-lg">🏢</span>
                                                 )}
                                                 <span>By {service.company.companyName || service.company.name || 'Unknown Provider'}</span>
-                                            </Link>
+                                            </span>
                                         )}
 
                                         <div className="flex items-center gap-2 text-sm text-gray-400 mb-3">
