@@ -20,7 +20,7 @@
 | **Frontend** | React 19, Vite, Tailwind CSS, Framer Motion, GSAP, Socket.IO Client |
 | **Backend** | Node.js, Express.js, Socket.IO, JWT, Nodemailer |
 | **Database** | MongoDB (Mongoose ODM) |
-| **Services** | Cloudinary (Images), Render (Deployment) |
+| **Services** | Cloudinary (Images), [CountryStateCity API](https://countrystatecity.in/) (Locations), Render (Deployment) |
 
 ---
 
@@ -82,6 +82,7 @@ The application follows a **Client-Server-Database** architecture with a real-ti
 | `CLOUDINARY_*` | Cloudinary Credentials |
 | `EMAIL_*` | SMTP Credentials for Nodemailer |
 | `FRONTEND_URL` | Frontend URL (e.g., `http://localhost:5173`) |
+| `CSC_API_KEY` | [CountryStateCity](https://countrystatecity.in/) API key (free) |
 
 ### Seeding Data
 Populate the DB with dummy data and a **Super Admin** account:
@@ -116,6 +117,7 @@ The project is configured for **Render** using Infrastructure as Code (`render.y
 *   **Services**: `/api/services` (GET, POST, PUT, DELETE)
 *   **Bookings**: `/api/bookings`
 *   **Complaints**: `/api/complaints`
+*   **Locations**: `/api/locations/states`, `/api/locations/districts?state=...` (proxied via [CountryStateCity API](https://countrystatecity.in/))
 
 ### Socket.IO Events
 *   `connection`: User connects (joins room `userId`).
