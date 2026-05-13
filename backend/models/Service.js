@@ -47,14 +47,17 @@ const serviceSchema = mongoose.Schema({
         enum: ['fixed', 'hourly', 'starting-from', 'quote'],
         default: 'fixed'
     },
-    location: {
+    state: {
         type: String,
-        required: [true, 'Please add a location'],
+        trim: true
+    },
+    city: {
+        type: String,
         trim: true
     },
     category: {
         type: String,
-        enum: ['cleaning', 'repair', 'beauty', 'tech', 'moving', 'events', 'plumbing', 'electrical', 'painting', 'gardening', 'other'],
+        enum: ['cleaning', 'repair', 'beauty', 'tech', 'moving', 'events', 'plumbing', 'electrical', 'painting', 'gardening', 'other', 'ritual', 'cleansing', 'exorcism', 'divination', 'astrology'],
         default: 'other'
     },
     image: {
@@ -103,8 +106,8 @@ serviceSchema.virtual('totalReviews').get(function () {
 });
 
 // Indexes (company already indexed via index: true in schema)
-serviceSchema.index({ name: 'text', description: 'text', location: 'text' });
-serviceSchema.index({ category: 1, location: 1, price: 1 });
+serviceSchema.index({ name: 'text', description: 'text', city: 'text', state: 'text' });
+serviceSchema.index({ category: 1, city: 1, state: 1, price: 1 });
 serviceSchema.index({ createdBy: 1 });
 
 // Static methods
@@ -143,7 +146,6 @@ serviceSchema.statics.forceDelete = async function (serviceId, serviceName) {
     return this.findByIdAndDelete(serviceId);
 };
 
-// Pre-delete hook
 // Pre-delete hook
 serviceSchema.pre('deleteOne', { document: true, query: false }, async function () {
     const serviceId = this._id;

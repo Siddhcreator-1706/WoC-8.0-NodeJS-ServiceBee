@@ -35,23 +35,11 @@ bookmarkSchema.pre('save', async function () {
     }
 });
 
-// Populate service details on save
-bookmarkSchema.pre('save', async function () {
-    if (this.isNew || this.isModified('service')) {
-        await this.populate('service', 'name price location image company');
-    }
-});
+// Populate service details on save - REMOVED to prevent validation errors (populated object vs ObjectId)
+// bookmarkSchema.pre('save', async function () { ... });
 
-// Update service bookmarks count
-bookmarkSchema.post('save', async function () {
-    const Service = mongoose.model('Service');
-    try {
-        const count = await this.constructor.countDocuments({ service: this.service });
-        await Service.findByIdAndUpdate(this.service, { bookmarkCount: count });
-    } catch (err) {
-        console.error(err);
-    }
-});
+// Update service bookmarks count - REMOVED (Field does not exist in Service schema)
+// bookmarkSchema.post('save', async function () { ... });
 
 // Validate that user exists before saving
 bookmarkSchema.pre('save', async function () {

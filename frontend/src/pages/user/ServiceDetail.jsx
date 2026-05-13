@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
 
-import API_URL from '../config/api';
+
 
 const ServiceDetail = () => {
     const { id } = useParams();
@@ -33,14 +34,13 @@ const ServiceDetail = () => {
 
     const checkBookingStatus = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/bookings/my-bookings`, { credentials: 'include' });
-            if (res.ok) {
-                const bookings = await res.json();
-                const hasCompletedBooking = bookings.some(
-                    b => (b.service._id === id || b.service === id) && b.status === 'completed'
-                );
-                setCanRate(hasCompletedBooking);
-            }
+            const res = await axios.get('/api/bookings/my-bookings', { withCredentials: true });
+            const { data } = res;
+            const bookings = Array.isArray(data) ? data : data.bookings || [];
+            const hasCompletedBooking = bookings.some(
+                b => (b.service._id === id || b.service === id) && b.status === 'completed'
+            );
+            setCanRate(hasCompletedBooking);
         } catch (error) {
             console.error('Error checking booking status:', error);
         }
@@ -48,8 +48,8 @@ const ServiceDetail = () => {
 
     const fetchService = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/services/${id}`);
-            const data = await res.json();
+            const res = await axios.get(`/api/services/${id}`);
+            const { data } = res;
             setService(data);
             if (user && data.ratings) {
                 const userRating = data.ratings.find(r => (r.user?._id || r.user) === user._id);
@@ -67,9 +67,8 @@ const ServiceDetail = () => {
 
     const checkBookmark = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/bookmarks/check/${id}`, { credentials: 'include' });
-            const data = await res.json();
-            setIsBookmarked(data.isBookmarked);
+            const res = await axios.get(`/api/bookmarks/check/${id}`, { withCredentials: true });
+            setIsBookmarked(res.data.isBookmarked);
         } catch (error) {
             console.error('Failed to check bookmark:', error);
         }
@@ -82,16 +81,11 @@ const ServiceDetail = () => {
         }
         try {
             if (isBookmarked) {
-                await fetch(`${API_URL}/api/bookmarks/${id}`, { method: 'DELETE', credentials: 'include' });
+                await axios.delete(`/api/bookmarks/${id}`);
                 setIsBookmarked(false);
                 setMessage('Removed from favorites');
             } else {
-                await fetch(`${API_URL}/api/bookmarks`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ serviceId: id })
-                });
+                await axios.post('/api/bookmarks', { serviceId: id });
                 setIsBookmarked(true);
                 setMessage('Added to favorites!');
             }
@@ -107,35 +101,25 @@ const ServiceDetail = () => {
         }
         setSubmitting(true);
         try {
-            const res = await fetch(`${API_URL}/api/services/${id}/rate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ value, review })
+            const res = await axios.post(`/api/services/${id}/rate`, { value, review });
+            const { data } = res;
+            // Manually populate the new rating with current user details for immediate display
+            // The backend returns the service with unpopulated user IDs in ratings
+            const updatedRatings = data.ratings.map(r => {
+                if (r.user === user._id || r.user?._id === user._id) {
+                    return { ...r, user: user, date: new Date() }; // Inject current user and date
+                }
+                // For other ratings, preserve existing populated data if available in current state
+                const existing = service.ratings.find(old => old._id === r._id);
+                return existing || r;
             });
-            const data = await res.json();
-            if (res.ok) {
-                // Manually populate the new rating with current user details for immediate display
-                // The backend returns the service with unpopulated user IDs in ratings
-                const updatedRatings = data.ratings.map(r => {
-                    if (r.user === user._id || r.user?._id === user._id) {
-                        return { ...r, user: user, date: new Date() }; // Inject current user and date
-                    }
-                    // For other ratings, preserve existing populated data if available in current state
-                    const existing = service.ratings.find(old => old._id === r._id);
-                    return existing || r;
-                });
 
-                setService({ ...data, ratings: updatedRatings });
-                setService({ ...data, ratings: updatedRatings });
-                setRating(value);
-                setIsEditingReview(false);
-                setMessage('Rating submitted!');
-            } else {
-                setMessage(data.message || 'Failed to submit rating');
-            }
+            setService({ ...data, ratings: updatedRatings });
+            setRating(value);
+            setIsEditingReview(false);
+            setMessage('Rating submitted!');
         } catch (error) {
-            setMessage('Error submitting rating');
+            setMessage(error.response?.data?.message || 'Error submitting rating');
         } finally {
             setSubmitting(false);
         }
@@ -153,32 +137,22 @@ const ServiceDetail = () => {
         try {
             const formattedDate = new Date(bookingDate).toISOString();
 
-            const res = await fetch(`${API_URL}/api/bookings`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    serviceId: id,
-                    companyId: service.company._id,
-                    date: formattedDate,
-                    notes: bookingNotes,
-                    address: bookingAddress || user.city
-                })
+            await axios.post('/api/bookings', {
+                serviceId: id,
+                companyId: service.company._id,
+                date: formattedDate,
+                notes: bookingNotes,
+                address: bookingAddress || user.city
             });
 
-            const data = await res.json();
-            if (res.ok) {
-                setMessage('Booking request sent successfully!');
-                setShowBookingModal(false);
-                setBookingDate('');
-                setBookingNotes('');
-                setBookingAddress(''); // Reset address as requested
-            } else {
-                setMessage(data.message || 'Booking failed');
-            }
+            setMessage('Booking request sent successfully!');
+            setShowBookingModal(false);
+            setBookingDate('');
+            setBookingNotes('');
+            setBookingAddress(''); // Reset address as requested
         } catch (error) {
             console.error('Booking error:', error);
-            setMessage('Error processing booking');
+            setMessage(error.response?.data?.message || 'Error processing booking');
         }
     };
 
@@ -199,8 +173,7 @@ const ServiceDetail = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#0f0f13] relative overflow-hidden pt-24 pb-12">
-            <div className="noise-overlay" />
+        <div className="min-h-screen bg-[#0f0f13] relative overflow-hidden py-12">
 
             {/* Background Ambience */}
             <div className="fixed top-20 left-[10%] w-96 h-96 bg-purple-900/20 rounded-full blur-[128px] pointer-events-none" />
@@ -239,7 +212,7 @@ const ServiceDetail = () => {
                                             required
                                             value={bookingDate}
                                             onChange={(e) => setBookingDate(e.target.value)}
-                                            className="w-full p-3.5 bg-black/40 rounded-xl text-gray-200 border border-white/10 focus:border-purple-500 outline-none transition-colors"
+                                            className="w-full p-3.5 bg-black/40 rounded-xl text-gray-200 border border-white/10 focus:border-purple-500 outline-none transition-colors [color-scheme:dark]"
                                         />
                                     </div>
                                     <div>
@@ -286,7 +259,7 @@ const ServiceDetail = () => {
 
             <div className="max-w-5xl mx-auto px-6">
                 {/* Back Button */}
-                <Link to="/services" className="inline-flex items-center gap-2 text-gray-400 hover:text-orange-400 mb-8 transition-colors group">
+                <Link to="/user/services" className="inline-flex items-center gap-2 text-gray-400 hover:text-orange-400 mb-8 transition-colors group">
                     <svg className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                     Back to Services
                 </Link>
@@ -357,7 +330,7 @@ const ServiceDetail = () => {
                                     </h1>
                                     <div className="flex items-center text-gray-300 gap-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
                                         <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                        <span className="font-medium tracking-wide">{service.location}</span>
+                                        <span className="font-medium tracking-wide">{service.city}, {service.state}</span>
                                     </div>
                                 </div>
                             </div>
@@ -543,6 +516,25 @@ const ServiceDetail = () => {
                                 </div>
                             </div>
 
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className={`p-2 ${service.company.logo ? 'p-0 w-12 h-12 overflow-hidden border border-white/10' : 'bg-gray-800'} rounded-lg`}>
+                                    {service.company.logo ? (
+                                        <img src={service.company.logo} alt="Provider" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-xl">🏢</span>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-400">Provider</p>
+                                    <Link
+                                        to={`/user/company/${service.company._id}`}
+                                        className="text-white hover:text-pumpkin font-medium transition-colors hover:underline"
+                                    >
+                                        {service.company.companyName || service.company.name || 'Unknown Provider'}
+                                    </Link>
+                                </div>
+                            </div>
+
                             <div className="flex justify-between items-center py-2 px-4 bg-white/5 rounded-lg">
                                 <span className="text-gray-400">Rating</span>
                                 <span className="text-yellow-400 font-bold flex items-center gap-1">
@@ -560,12 +552,12 @@ const ServiceDetail = () => {
                             ) : (
                                 <div className="text-center p-4 bg-white/5 rounded-xl border border-white/5">
                                     <p className="text-gray-400 text-sm">
-                                        {!user ? (
+                                        {user ? (
+                                            "Providers cannot book services."
+                                        ) : (
                                             <>
                                                 <Link to="/login" className="text-orange-400 hover:underline">Login</Link> to book this service.
                                             </>
-                                        ) : (
-                                            "Providers cannot book services."
                                         )}
                                     </p>
                                 </div>

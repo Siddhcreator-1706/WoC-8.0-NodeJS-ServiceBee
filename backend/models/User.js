@@ -55,6 +55,9 @@ const userSchema = mongoose.Schema({
     },
     deactivationReason: {
         type: String
+    },
+    bannedExpiresAt: {
+        type: Date
     }
 }, {
     timestamps: true
@@ -102,13 +105,16 @@ userSchema.statics.canDelete = async function (userId) {
 };
 
 // Static method for soft delete (deactivate user)
-userSchema.statics.softDelete = async function (userId, reason = 'Account deactivated') {
+userSchema.statics.softDelete = async function (userId, reason = 'Account deactivated', expiresAt = null) {
     const user = await this.findById(userId);
     if (!user) return null;
 
     user.isActive = false;
     user.deactivatedAt = new Date();
     user.deactivationReason = reason;
+    if (expiresAt) {
+        user.bannedExpiresAt = expiresAt;
+    }
     await user.save();
 
     return user;

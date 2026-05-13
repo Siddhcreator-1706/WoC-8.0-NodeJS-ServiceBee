@@ -4,8 +4,7 @@ const complaintSchema = mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: [true, 'User is required'],
-        index: true
+        required: [true, 'User is required']
     },
     booking: {
         type: mongoose.Schema.Types.ObjectId,
@@ -41,8 +40,7 @@ const complaintSchema = mongoose.Schema({
             values: ['pending', 'in-progress', 'awaiting-confirmation', 'resolved', 'rejected', 'service-unavailable'],
             message: '{VALUE} is not a valid status'
         },
-        default: 'pending',
-        index: true
+        default: 'pending'
     },
     adminResponse: {
         type: String,
@@ -96,7 +94,6 @@ complaintSchema.pre('save', async function () {
             if (service) {
                 this.serviceSnapshot = {
                     name: service.name,
-                    location: service.location,
                     category: service.category,
                     createdBy: service.createdBy
                 };

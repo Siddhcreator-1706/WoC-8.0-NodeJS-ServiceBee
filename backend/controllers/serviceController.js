@@ -3,6 +3,8 @@ const Complaint = require('../models/Complaint');
 const Bookmark = require('../models/Bookmark');
 const { uploadServiceImage, deleteImage, getPublicIdFromUrl } = require('../config/cloudinary');
 const { escapeRegex } = require('../utils/security');
+const { getIO } = require('../socket/emitter');
+const { sendServiceActionEmail } = require('../utils/emailService');
 
 // @desc    Get all services with filters
 // @route   GET /api/services
@@ -11,12 +13,14 @@ const getServices = async (req, res) => {
     try {
         const {
             location, category, minPrice, maxPrice, minRating,
-            search, sortBy, company, page = 1, limit = 12
+            search, sortBy, company, page = 1, limit = 12,
+            state, city
         } = req.query;
 
         const filter = { isActive: true };
 
-        if (location) filter.location = { $regex: escapeRegex(location), $options: 'i' };
+        if (state) filter.state = state;
+        if (city) filter.city = city;
         if (category) filter.category = category;
         if (company) filter.company = company;
         if (minPrice || maxPrice) {
@@ -61,8 +65,6 @@ const getServices = async (req, res) => {
     }
 };
 
-
-
 // @desc    Get all locations
 // @route   GET /api/services/locations
 // @access  Public
@@ -100,7 +102,7 @@ const getServiceById = async (req, res) => {
 // @access  Private/Admin/Superuser
 const createService = async (req, res) => {
     try {
-        let { name, description, price, priceType, location, category, company, duration } = req.body;
+        let { name, description, price, priceType, state, city, category, company, duration } = req.body;
 
         // If provider, ensure they own a company and link it
         if (req.user.role === 'provider') {
@@ -120,15 +122,26 @@ const createService = async (req, res) => {
             description,
             price,
             priceType,
-            location,
+            state,
+            city,
             category,
             company,
             duration,
             createdBy: req.user._id
         });
 
+        // Emit real-time event
+        const io = getIO();
+        if (io) {
+            io.emit('service:created', { serviceId: service._id, name: service.name });
+        }
+
         res.status(201).json(service);
     } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({ message: messages.join(', ') });
+        }
         res.status(500).json({ message: error.message });
     }
 };
@@ -184,8 +197,11 @@ const updateService = async (req, res) => {
         }
 
         // Check authorization
-        if (service.createdBy.toString() !== req.user._id.toString() &&
-            req.user.role !== 'admin') {
+        // Admins are NOT allowed to edit, only delete. Only the creator can edit.
+        if (service.createdBy.toString() !== req.user._id.toString()) {
+            if (req.user.role === 'admin') {
+                return res.status(403).json({ message: 'Admins are not authorized to edit services. Only deletions are allowed.' });
+            }
             return res.status(403).json({ message: 'Not authorized' });
         }
 
@@ -196,6 +212,12 @@ const updateService = async (req, res) => {
             updateData,
             { new: true, runValidators: true }
         );
+
+        // Emit real-time event
+        const io = getIO();
+        if (io) {
+            io.emit('service:updated', { serviceId: updatedService._id, name: updatedService.name });
+        }
 
         res.json(updatedService);
     } catch (error) {
@@ -208,7 +230,7 @@ const updateService = async (req, res) => {
 // @access  Private/Superuser
 const deleteService = async (req, res) => {
     try {
-        const { force, soft } = req.query;
+        const { force, soft, reason } = req.query;
         const service = await Service.findById(req.params.id);
 
         if (!service) {
@@ -218,6 +240,24 @@ const deleteService = async (req, res) => {
         // Check authorization
         if (req.user.role !== 'admin' && service.createdBy.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        // Send email notification if Admin is performing the action on another user's service
+        if (req.user.role === 'admin' && service.createdBy.toString() !== req.user._id.toString()) {
+            await service.populate('createdBy', 'email name');
+            if (service.createdBy) {
+                const actionType = soft === 'true' ? 'suspended' : 'deleted';
+                const actionReason = reason || 'Violation of terms of service';
+
+                // Send email asynchronously (don't block response too long, or await if critical)
+                await sendServiceActionEmail(
+                    service.createdBy.email,
+                    service.name,
+                    actionType,
+                    actionReason,
+                    service.createdBy.name
+                );
+            }
         }
 
         if (soft === 'true') {
@@ -255,6 +295,14 @@ const deleteService = async (req, res) => {
         }
 
         await service.deleteOne();
+
+
+        // Emit real-time event
+        const io = getIO();
+        if (io) {
+            io.emit('service:deleted', { serviceId: req.params.id });
+        }
+
         res.json({ message: 'Service removed successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });

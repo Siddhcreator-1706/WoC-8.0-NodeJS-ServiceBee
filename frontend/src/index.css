@@ -125,39 +125,89 @@ body {
   height: 100%;
   pointer-events: none;
   z-index: 50;
-  opacity: 0.07;
+  opacity: 0.2;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar — Subtle Dark Theme */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-  display: block;
-  width: 6px;
+  display: block !important;
+  width: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.3);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.5);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* 3D Transform Utilities - Essential for Auth Page Flip */
 .perspective-1000 {
-  perspective: 1000px;
+  perspective: 1200px;
+}
+
+/* Flip Card System */
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.flip-card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-card-face {
+  width: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Front: relative so it defines the container height */
+.flip-card-front {
+  position: relative;
+  z-index: 2;
+}
+
+/* Back: absolute so it stacks exactly behind the front */
+.flip-card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  transform: rotateY(180deg);
+}
+
+/* When flipped, swap z-index and pointer-events */
+.flip-card-inner.flipped .flip-card-front {
+  pointer-events: none;
+}
+
+.flip-card-inner:not(.flipped) .flip-card-back {
+  pointer-events: none;
+}
+
+/* Legacy utility (keep for any other usage) */
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .transform-style-3d {
   transform-style: preserve-3d;
-}
-
-.backface-hidden {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }

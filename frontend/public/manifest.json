@@ -36,7 +36,7 @@
             "name": "Book Services",
             "short_name": "Book",
             "description": "Browse and book local services",
-            "url": "/services",
+            "url": "/user/services",
             "icons": [
                 {
                     "src": "logo192.png",
@@ -48,7 +48,7 @@
             "name": "My Bookings",
             "short_name": "Bookings",
             "description": "View your upcoming appointments",
-            "url": "/bookings",
+            "url": "/user/bookings",
             "icons": [
                 {
                     "src": "logo192.png",

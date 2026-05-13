@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ImageModal from '../ImageModal';
-import API_URL from '../../config/api';
+import CustomSelect from '../ui/CustomSelect';
+import ImageModal from '../common/ImageModal';
+import axios from 'axios';
+
+import { useSocket } from '../../context/SocketContext';
 
 const ComplaintList = () => {
     const [complaints, setComplaints] = useState([]);
@@ -10,10 +13,41 @@ const ComplaintList = () => {
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
+    const [responseTexts, setResponseTexts] = useState({});
+    const [submittingId, setSubmittingId] = useState(null);
+
+    const { socket } = useSocket();
 
     useEffect(() => {
         fetchComplaints();
     }, []);
+
+    // Socket listeners
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('complaint:new', (data) => {
+            const { userName } = data;
+            setMessage(`New complaint from ${userName} ⚠️`);
+            fetchComplaints();
+        });
+
+        socket.on('complaint:updated', (data) => {
+            // Merge the incoming data with existing complaint to ensure all fields (like response) are updated
+            setComplaints(prev => prev.map(c =>
+                c._id === data.complaintId || c._id === data._id
+                    ? { ...c, ...data, status: data.status || c.status } // Ensure we merge the full object if provided, or at least the specific fields
+                    : c
+            ));
+
+            if (data.status === 'resolved') setMessage('Complaint resolved! ✅');
+        });
+
+        return () => {
+            socket.off('complaint:new');
+            socket.off('complaint:updated');
+        };
+    }, [socket]);
 
     // Auto-dismiss messages
     useEffect(() => {
@@ -26,12 +60,10 @@ const ComplaintList = () => {
     const fetchComplaints = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${API_URL}/api/complaints/my-services`, { credentials: 'include' });
-            if (res.ok) {
-                const data = await res.json();
-                setComplaints(data || []);
+            const res = await axios.get('/api/complaints/my-services');
+            if (res.data) {
+                setComplaints(res.data || []);
             } else {
-                // Silently fail or minimal error if just emptiness, but here likely error
                 console.error('Failed to fetch complaints');
             }
         } catch (err) {
@@ -43,23 +75,19 @@ const ComplaintList = () => {
 
     const handleComplaintResponse = async (id, response, markResolved) => {
         try {
-            const res = await fetch(`${API_URL}/api/complaints/${id}/respond`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ response, markResolved })
-            });
+            setSubmittingId(id);
+            const res = await axios.put(`/api/complaints/${id}/respond`, { response, markResolved });
+            const updatedComplaint = res.data;
 
-            if (res.ok) {
-                const updatedComplaint = await res.json();
-                setComplaints(complaints.map(c => c._id === id ? updatedComplaint : c));
-                setMessage('Response sent successfully');
-            } else {
-                const data = await res.json();
-                setError(data.message || 'Failed to send response');
-            }
+            setComplaints(prev => prev.map(c => c._id === id ? updatedComplaint : c));
+            setMessage('Response sent successfully');
+
+            // Clear the text area for this complaint
+            setResponseTexts(prev => ({ ...prev, [id]: '' }));
         } catch (err) {
-            setError('Failed to send response');
+            setError(err.response?.data?.message || 'Failed to send response');
+        } finally {
+            setSubmittingId(null);
         }
     };
 
@@ -85,21 +113,19 @@ const ComplaintList = () => {
                 </div>
 
                 <div className="flex justify-end">
-                    <div className="relative group z-20">
-                        <select
-                            className="appearance-none bg-[#15151e] text-gray-300 text-sm py-2 px-4 pr-10 rounded-lg border border-gray-700 outline-none focus:border-orange-500 cursor-pointer shadow-lg"
+                    <div className="w-48 relative z-20">
+                        <CustomSelect
+                            options={[
+                                { value: 'All', label: 'All' },
+                                { value: 'Pending', label: 'Pending' },
+                                { value: 'In-Progress', label: 'In-Progress' },
+                                { value: 'Resolved', label: 'Resolved' },
+                                { value: 'Rejected', label: 'Rejected' },
+                            ]}
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                        >
-                            <option>All</option>
-                            <option>Pending</option>
-                            <option>In-Progress</option>
-                            <option>Resolved</option>
-                            <option>Rejected</option>
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                        </div>
+                            placeholder="Filter Status"
+                        />
                     </div>
                 </div>
             </div>
@@ -213,30 +239,59 @@ const ComplaintList = () => {
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3">
+                                                    {complaint.serviceProviderResponse && (
+                                                        <div className="bg-blue-500/10 p-3 rounded-lg border border-blue-500/20 mb-3 block">
+                                                            <span className="text-xs text-blue-400 font-bold uppercase block mb-1">Current Response:</span>
+                                                            <p className="text-gray-300 text-sm italic">"{complaint.serviceProviderResponse}"</p>
+                                                        </div>
+                                                    )}
                                                     <textarea
-                                                        className="w-full bg-[#0a0a0f] border border-gray-700 rounded-lg p-3 text-sm text-white focus:ring-1 focus:ring-orange-500 outline-none"
+                                                        className={`w-full bg-[#0a0a0f] border rounded-lg p-3 text-sm text-white focus:ring-1 outline-none ${(responseTexts[complaint._id] || '').length > 0 && (responseTexts[complaint._id] || '').trim().length < 10
+                                                                ? 'border-red-500/50 focus:ring-red-500'
+                                                                : 'border-gray-700 focus:ring-orange-500'
+                                                            }`}
                                                         rows="3"
-                                                        placeholder="Type your response to the customer..."
-                                                        id={`response-${complaint._id}`}
+                                                        placeholder="Type your response to the customer (min 10 chars)..."
+                                                        value={responseTexts[complaint._id] || ''}
+                                                        onChange={(e) => setResponseTexts(prev => ({ ...prev, [complaint._id]: e.target.value }))}
+                                                        disabled={submittingId === complaint._id}
                                                     ></textarea>
+
+                                                    {/* Validation Hint */}
+                                                    <div className="flex justify-end mb-2">
+                                                        <span className={`text-xs ${(responseTexts[complaint._id] || '').trim().length < 10 ? 'text-red-400' : 'text-green-400'}`}>
+                                                            {(responseTexts[complaint._id] || '').trim().length}/10 characters
+                                                        </span>
+                                                    </div>
+
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => {
-                                                                const response = document.getElementById(`response-${complaint._id}`).value;
-                                                                if (response.trim()) handleComplaintResponse(complaint._id, response, false);
+                                                                const response = responseTexts[complaint._id] || '';
+                                                                if (response.trim().length >= 10) handleComplaintResponse(complaint._id, response, false);
                                                             }}
-                                                            className="flex-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/30 py-2 rounded-lg text-sm font-bold transition-all"
+                                                            disabled={submittingId === complaint._id || (responseTexts[complaint._id] || '').trim().length < 10}
+                                                            className="flex-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/30 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
                                                         >
-                                                            Send Reply
+                                                            {submittingId === complaint._id ? (
+                                                                <span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                                                            ) : 'Send Reply'}
                                                         </button>
                                                         <button
                                                             onClick={() => {
-                                                                const response = document.getElementById(`response-${complaint._id}`).value;
-                                                                handleComplaintResponse(complaint._id, response || 'Issue resolved', true);
+                                                                const response = responseTexts[complaint._id] || '';
+                                                                // Allow resolving with default message if empty, or require min length if typed
+                                                                const finalResponse = response.trim() || 'Issue resolved';
+                                                                if (response.trim() && response.trim().length < 10) return; // Prevent short custom messages
+
+                                                                handleComplaintResponse(complaint._id, finalResponse, true);
                                                             }}
-                                                            className="flex-1 bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/30 py-2 rounded-lg text-sm font-bold transition-all"
+                                                            disabled={submittingId === complaint._id || (responseTexts[complaint._id]?.trim().length > 0 && responseTexts[complaint._id]?.trim().length < 10)}
+                                                            className="flex-1 bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/30 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
                                                         >
-                                                            Resolve & Close
+                                                            {submittingId === complaint._id ? (
+                                                                <span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                                                            ) : 'Resolve & Close'}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -254,7 +309,8 @@ const ComplaintList = () => {
             <AnimatePresence>
                 {selectedImage && (
                     <ImageModal
-                        imageUrl={selectedImage}
+                        isOpen={!!selectedImage}
+                        image={selectedImage}
                         onClose={() => setSelectedImage(null)}
                     />
                 )}

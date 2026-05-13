@@ -2,17 +2,21 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
-import API_URL from '../config/api';
-import ComplaintModal from '../components/ComplaintModal';
+import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
+import ComplaintModal from '../../components/user/ComplaintModal';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 const Bookings = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [filterStatus, setFilterStatus] = useState('all');
     const [showComplaintModal, setShowComplaintModal] = useState(false);
     const [selectedBookingForComplaint, setSelectedBookingForComplaint] = useState(null);
+
+    const { socket } = useSocket();
 
     useEffect(() => {
         if (!user) {
@@ -22,11 +26,27 @@ const Bookings = () => {
         fetchMyBookings();
     }, [user, navigate]);
 
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('booking:updated', (data) => {
+            const { bookingId, status } = data;
+            setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status } : b));
+            // Show toast or message? functionality not in this component yet, maybe native alert or toast if available
+        });
+
+        return () => {
+            socket.off('booking:updated');
+        };
+    }, [socket]);
+
     const fetchMyBookings = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/api/bookings/my-bookings`);
-            setBookings(res.data);
+            const res = await axios.get('/api/bookings/my-bookings');
+            // API returns { bookings: [...], page, pages, total }
+            const { data } = res;
+            setBookings(Array.isArray(data) ? data : data.bookings || []);
         } catch (error) {
             console.error('Failed to fetch bookings:', error);
         } finally {
@@ -42,7 +62,7 @@ const Bookings = () => {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-[#0f0f13] pt-24 pb-20 px-6 relative overflow-hidden font-sans text-gray-100">
+        <div className="min-h-screen bg-[#0f0f13] py-12 px-6 relative overflow-hidden font-sans text-gray-100">
             {/* Ambient Background */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/20 via-[#0f0f13] to-[#0f0f13]" />
@@ -62,23 +82,19 @@ const Bookings = () => {
                             <p className="text-gray-400">Manage your spectral appointments and history</p>
                         </div>
                         <div className="flex justify-end">
-                            <div className="relative group">
-                                <select
-                                    className="appearance-none bg-[#15151e] text-gray-300 text-sm py-2 px-4 pr-10 rounded-lg border border-gray-700 outline-none focus:border-orange-500 cursor-pointer shadow-lg"
-                                    onChange={(e) => {
-                                        const status = e.target.value;
-                                        setBookings(bookings.map(b => ({ ...b, hidden: status !== 'all' && b.status !== status })));
-                                    }}
-                                >
-                                    <option value="all">All Status</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="accepted">Accepted</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="rejected">Rejected</option>
-                                </select>
-                                <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                </div>
+                            <div className="w-48 relative z-20">
+                                <CustomSelect
+                                    options={[
+                                        { value: 'all', label: 'All Status' },
+                                        { value: 'pending', label: 'Pending' },
+                                        { value: 'accepted', label: 'Accepted' },
+                                        { value: 'completed', label: 'Completed' },
+                                        { value: 'rejected', label: 'Rejected' },
+                                    ]}
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value)}
+                                    placeholder="Filter Status"
+                                />
                             </div>
                         </div>
                     </div>
@@ -88,9 +104,9 @@ const Bookings = () => {
                             <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(255,165,0,0.5)]"></div>
                             <p className="text-gray-400 animate-pulse font-creepster tracking-wider">Summoning bookings...</p>
                         </div>
-                    ) : bookings.filter(b => !b.hidden).length > 0 ? (
+                    ) : bookings.filter(b => filterStatus === 'all' || b.status === filterStatus).length > 0 ? (
                         <div className="grid gap-6">
-                            {bookings.filter(b => !b.hidden).map((booking) => (
+                            {bookings.filter(b => filterStatus === 'all' || b.status === filterStatus).map((booking) => (
                                 <motion.div
                                     key={booking._id}
                                     initial={{ opacity: 0 }}
@@ -168,7 +184,7 @@ const Bookings = () => {
                                 You haven't summoned any services yet. Check the Necronomicon (Services page) to get started!
                             </p>
                             <button
-                                onClick={() => navigate('/services')}
+                                onClick={() => navigate('/user/services')}
                                 className="px-8 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-900/40 transform hover:scale-105"
                             >
                                 Browse Services

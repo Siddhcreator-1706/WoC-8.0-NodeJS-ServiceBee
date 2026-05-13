@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Import axios for upload
 import { useAuth } from '../context/AuthContext';
-import API_URL from '../config/api';
-import ParticleBackground from '../components/ParticleBackground';
+
+import ParticleBackground from '../components/common/ParticleBackground';
 import LoginForm from '../components/auth/LoginForm';
 import SignupForm from '../components/auth/SignupForm';
 import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
@@ -16,7 +16,7 @@ const AuthPage = () => {
     useEffect(() => {
         if (user) {
             const target = user.role === 'admin' ? '/admin' :
-                user.role === 'provider' ? '/provider' : '/services';
+                user.role === 'provider' ? '/provider' : '/user/services';
             navigate(target);
         }
     }, [user, navigate]);
@@ -33,7 +33,7 @@ const AuthPage = () => {
     const [signupData, setSignupData] = useState({
         name: '', email: '', password: '', confirmPassword: '', role: 'user',
         phone: '', city: '', state: '',
-        companyName: '', description: '',
+        companyName: '', description: '', website: '', // Added website field
         logo: '', avatar: '', // Add avatar field
         terms: false
     });
@@ -132,7 +132,7 @@ const AuthPage = () => {
                 const formData = new FormData();
                 formData.append('avatar', avatarFile);
                 try {
-                    const res = await axios.post(`${API_URL}/api/upload/avatar`, formData, {
+                    const res = await axios.post('/api/upload/avatar', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' },
                         withCredentials: true
                     });
@@ -152,7 +152,7 @@ const AuthPage = () => {
                 const formData = new FormData();
                 formData.append('logo', logoFile);
                 try {
-                    const res = await axios.post(`${API_URL}/api/upload/logo`, formData, {
+                    const res = await axios.post('/api/upload/logo', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' },
                         withCredentials: true
                     });
@@ -173,7 +173,7 @@ const AuthPage = () => {
                 logo: finalLogoUrl || signupData.logo
             };
 
-            const res = await axios.post(`${API_URL}/auth/signup`, payload);
+            const res = await axios.post('/auth/signup', payload);
 
             setSuccess('Verification code sent to your email!');
             setShowOTP(true);
@@ -188,12 +188,12 @@ const AuthPage = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await axios.post(`${API_URL}/auth/verify-otp`, {
+            const res = await axios.post('/auth/verify-otp', {
                 email: signupData.email,
                 otp
             });
 
-            const {data} = res;
+            const { data } = res;
 
             // Auto-login logic handled by backend setting cookies, but we might need to update context user
             // The backend returns user data on success
@@ -211,7 +211,7 @@ const AuthPage = () => {
             // Simple fix: reload page to trigger checkAuth, OR rely on navigate triggering re-render if we had a way to signal.
             // But since we are inside the page, we can simply:
             window.location.href = data.role === 'admin' ? '/admin' :
-                data.role === 'provider' ? '/provider' : '/services';
+                data.role === 'provider' ? '/provider' : '/user/profile';
 
         } catch (err) {
             setError(err.response?.data?.message || 'Verification failed');
@@ -223,7 +223,7 @@ const AuthPage = () => {
     const handleResendOTP = async () => {
         setLoading(true);
         try {
-            await axios.post(`${API_URL}/auth/resend-otp`, {
+            await axios.post('/auth/resend-otp', {
                 email: signupData.email
             });
             setSuccess('Verification code resent!');
@@ -235,7 +235,7 @@ const AuthPage = () => {
     };
 
     return (
-        <div className="min-h-screen w-full bg-[#0f0f13] flex items-center justify-center p-4 relative font-sans">
+        <div className="h-screen w-full bg-[#0f0f13] py-2 px-4 relative font-sans flex flex-col items-center justify-center overflow-hidden">
             <ParticleBackground />
 
             {/* Error/Success Messages */}
@@ -257,18 +257,12 @@ const AuthPage = () => {
                     {showForgotPassword ? (
                         <ForgotPasswordForm key="forgot-password" onBack={() => setShowForgotPassword(false)} />
                     ) : (
-                        <motion.div
+                        <div
                             key="auth-forms"
-                            className="relative w-full transform-style-3d"
-                            initial={false}
-                            animate={{ rotateY: isFlipped ? 180 : 0 }}
-                            transition={{ duration: 0.6, ease: "easeInOut" }}
+                            className={`flip-card-inner ${isFlipped ? 'flipped' : ''}`}
                         >
                             {/* Front Side: Login */}
-                            <div
-                                className={`w-full backface-hidden flex flex-col items-center justify-center ${isFlipped ? 'absolute inset-0 pointer-events-none' : 'relative z-20 pointer-events-auto'}`}
-                                style={{ transform: 'rotateY(0deg)', transformStyle: 'preserve-3d' }}
-                            >
+                            <div className="flip-card-face flip-card-front">
                                 <LoginForm
                                     loginData={loginData}
                                     handleLoginChange={handleLoginChange}
@@ -281,10 +275,7 @@ const AuthPage = () => {
                             </div>
 
                             {/* Back Side: Signup */}
-                            <div
-                                className={`w-full backface-hidden flex flex-col items-center justify-center ${isFlipped ? 'relative z-20 pointer-events-auto' : 'absolute inset-0 pointer-events-none'}`}
-                                style={{ transform: 'rotateY(180deg)', transformStyle: 'preserve-3d' }}
-                            >
+                            <div className="flip-card-face flip-card-back">
                                 <SignupForm
                                     signupData={signupData}
                                     handleSignupChange={handleSignupChange}
@@ -307,7 +298,7 @@ const AuthPage = () => {
                                     setSignupData={setSignupData}
                                 />
                             </div>
-                        </motion.div>
+                        </div>
                     )}
                 </AnimatePresence>
             </div>

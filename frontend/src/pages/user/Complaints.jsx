@@ -1,21 +1,27 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import ComplaintModal from '../components/ComplaintModal';
-import ImageModal from '../components/ImageModal';
-import API_URL from '../config/api';
+import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
+import ComplaintModal from '../../components/user/ComplaintModal';
+import CustomSelect from '../../components/ui/CustomSelect';
+import ImageModal from '../../components/common/ImageModal';
+
+import { useSocket } from '../../context/SocketContext';
 
 const Complaints = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [filterStatus, setFilterStatus] = useState('all');
     const [showForm, setShowForm] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
     const [showSuccess, setShowSuccess] = useState(false);
 
     const [searchParams] = useSearchParams();
+
+    const { socket } = useSocket();
 
     useEffect(() => {
         if (!user) {
@@ -39,11 +45,27 @@ const Complaints = () => {
         }
     }, [user, navigate, searchParams]);
 
+    // Socket listeners
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('complaint:updated', (data) => {
+            const { complaintId, status, serviceProviderResponse } = data;
+            setComplaints(prev => prev.map(c =>
+                c._id === complaintId ? { ...c, status, serviceProviderResponse } : c
+            ));
+            // Optional: show a toast/message
+        });
+
+        return () => {
+            socket.off('complaint:updated');
+        };
+    }, [socket]);
+
     const fetchComplaints = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/complaints/me`, { credentials: 'include' });
-            const data = await res.json();
-            setComplaints(Array.isArray(data) ? data : []);
+            const res = await axios.get('/api/complaints/me', { withCredentials: true });
+            setComplaints(res.data || []);
         } catch (error) {
             console.error('Failed to fetch complaints:', error);
             // Log detail if available
@@ -83,7 +105,7 @@ const Complaints = () => {
                 <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-[40%] bg-gradient-to-t from-orange-900/10 to-transparent blur-3xl opacity-20" />
             </div>
 
-            <div className="pt-24 max-w-5xl mx-auto px-6 py-12 relative z-10">
+            <div className="max-w-5xl mx-auto px-6 py-12 relative z-10">
                 <div className="flex flex-col md:flex-row justify-center items-center mb-12 gap-4">
                     <div>
                         <motion.h2
@@ -107,23 +129,19 @@ const Complaints = () => {
                 <div className="flex flex-col gap-8">
                     {/* Filter Bar */}
                     <div className="flex flex-col sm:flex-row justify-end">
-                        <div className="relative group min-w-[220px]">
-                            <select
-                                className="w-full appearance-none bg-[#1a1a24]/80 text-gray-200 text-sm py-3.5 pl-5 pr-10 rounded-xl border border-purple-500/30 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50 hover:bg-[#252530] transition-all cursor-pointer backdrop-blur-md shadow-lg"
-                                onChange={(e) => {
-                                    const status = e.target.value;
-                                    setComplaints(complaints.map(c => ({ ...c, hidden: status !== 'all' && c.status !== status })));
-                                }}
-                            >
-                                <option value="all">🔮 All Apparitions</option>
-                                <option value="pending">⏳ Pending Rituals</option>
-                                <option value="in-progress">🧙‍♂️ In Casting</option>
-                                <option value="awaiting-confirmation">🕯️ Awaiting Confirmation</option>
-                                <option value="resolved">✨ Vanished (Resolved)</option>
-                            </select>
-                            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-purple-400 group-hover:text-orange-400 transition-colors">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                            </div>
+                        <div className="relative z-20">
+                            <CustomSelect
+                                options={[
+                                    { value: 'all', label: '🔮 All Apparitions' },
+                                    { value: 'pending', label: '⏳ Pending Rituals' },
+                                    { value: 'in-progress', label: '🧙‍♂️ In Casting' },
+                                    { value: 'awaiting-confirmation', label: '🕯️ Awaiting Confirmation' },
+                                    { value: 'resolved', label: '✨ Vanished (Resolved)' },
+                                ]}
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                placeholder="Filter Hauntings"
+                            />
                         </div>
                     </div>
 
@@ -159,7 +177,7 @@ const Complaints = () => {
                             </div>
                             <p className="text-orange-400/80 mt-6 animate-pulse font-medium tracking-widest text-sm uppercase">Summoning Records...</p>
                         </div>
-                    ) : complaints.filter(c => !c.hidden && c.status !== 'rejected').length === 0 ? (
+                    ) : complaints.filter(c => filterStatus === 'all' || c.status === filterStatus).filter(c => c.status !== 'rejected').length === 0 ? (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -175,7 +193,7 @@ const Complaints = () => {
                         </motion.div>
                     ) : (
                         <div className="grid gap-6">
-                            {complaints.filter(c => !c.hidden && c.status !== 'rejected').map((complaint, index) => (
+                            {complaints.filter(c => filterStatus === 'all' || c.status === filterStatus).filter(c => c.status !== 'rejected').map((complaint, index) => (
                                 <motion.div
                                     key={complaint._id}
                                     initial={{ opacity: 0, y: 20 }}
@@ -234,14 +252,14 @@ const Complaints = () => {
                                                         onClick={async () => {
                                                             if (!window.confirm('Are you satisfied that the spirits are at rest? This will close the complaint.')) return;
                                                             try {
-                                                                const res = await fetch(`${API_URL}/api/complaints/${complaint._id}/resolve?confirm=true`, {
-                                                                    method: 'PUT',
-                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                    credentials: 'include'
-                                                                });
-                                                                if (res.ok) fetchComplaints();
+                                                                // Optimistic Update
+                                                                setComplaints(prev => prev.map(c => c._id === complaint._id ? { ...c, status: 'resolved' } : c));
+
+                                                                await axios.put(`/api/complaints/${complaint._id}/resolve?confirm=true`);
+                                                                fetchComplaints();
                                                             } catch (err) {
                                                                 console.error(err);
+                                                                fetchComplaints(); // Revert on error
                                                             }
                                                         }}
                                                         className={`px-6 py-3 rounded-xl text-sm font-bold shadow-lg transition-all flex items-center gap-2 whitespace-nowrap min-w-[200px] justify-center ${complaint.status === 'awaiting-confirmation'

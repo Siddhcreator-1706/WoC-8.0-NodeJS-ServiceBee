@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import API_URL from '../config/api';
-import ImageUpload from './ImageUpload';
+
+import ImageUpload from '../common/ImageUpload';
 
 const ComplaintModal = ({ isOpen, onClose, bookingId, booking, onSuccess }) => {
     const navigate = useNavigate();
@@ -33,11 +33,11 @@ const ComplaintModal = ({ isOpen, onClose, bookingId, booking, onSuccess }) => {
             images.forEach(img => formPayload.append('images', img));
 
             // Axios automatically sets Content-Type to multipart/form-data for FormData
-            const res = await axios.post(`${API_URL}/api/complaints`, formPayload);
+            const res = await axios.post('/api/complaints', formPayload);
 
             if (onSuccess) onSuccess(res.data);
             onClose();
-            navigate('/complaints?success=true');
+            navigate('/user/complaints?success=true');
         } catch (error) {
             setError(error.response?.data?.message || 'Failed to submit complaint');
         } finally {
@@ -65,6 +65,7 @@ const ComplaintModal = ({ isOpen, onClose, bookingId, booking, onSuccess }) => {
                         exit={{ scale: 0.95, opacity: 0, y: 20 }}
                         className="relative w-full max-w-2xl bg-[#15151e]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
                         style={{ boxShadow: '0 0 50px rgba(0,0,0,0.5)' }}
+                        data-lenis-prevent
                     >
                         {/* Header */}
                         <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
