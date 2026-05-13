@@ -182,11 +182,21 @@ app.use('/api', (req, res) => {
 
 if (process.env.NODE_ENV === 'production') {
     const path = require('path');
-    app.use(express.static(path.join(__dirname, '../frontend/dist')));
+    const fs = require('fs');
+    const frontendDist = path.join(__dirname, '../frontend/dist');
 
-    app.get(/.*/, (req, res) => {
-        res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
-    });
+    if (fs.existsSync(frontendDist)) {
+        app.use(express.static(frontendDist));
+
+        app.get(/.*/, (req, res) => {
+            res.sendFile(path.resolve(frontendDist, 'index.html'));
+        });
+    } else {
+        // Frontend deployed separately (e.g., Render Static Site)
+        app.use((req, res) => {
+            res.status(404).json({ message: 'API route not found' });
+        });
+    }
 } else {
     // Development 404
     app.use((req, res) => {
