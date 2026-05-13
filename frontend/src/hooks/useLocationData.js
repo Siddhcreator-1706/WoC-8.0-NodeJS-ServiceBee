@@ -8,7 +8,7 @@ const useLocationData = (selectedState = '') => {
     const [loadingStates, setLoadingStates] = useState(false);
     const [loadingDistricts, setLoadingDistricts] = useState(false);
 
-    // Fetch states on mount
+    // Fetch states on mount (via backend proxy)
     useEffect(() => {
         setLoadingStates(true);
         const fetchStates = async () => {
@@ -30,7 +30,7 @@ const useLocationData = (selectedState = '') => {
         fetchStates();
     }, []);
 
-    // Fetch districts when state changes
+    // Fetch districts when state changes (via backend proxy)
     useEffect(() => {
         if (!selectedState) {
             setDistrictsList([]);
@@ -67,4 +67,3 @@ const useLocationData = (selectedState = '') => {
 };
 
 export default useLocationData;
-
