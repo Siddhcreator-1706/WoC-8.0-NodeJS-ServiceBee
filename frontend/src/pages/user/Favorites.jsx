@@ -4,8 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import gsap from 'gsap';
 
-
-
 const Favorites = () => {
     const { user } = useAuth();
     const navigate = useNavigate();

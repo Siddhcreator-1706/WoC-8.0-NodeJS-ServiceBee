@@ -5,36 +5,27 @@ const nodemailer = require('nodemailer');
 
 // Create transporter with env config
 const createTransporter = () => {
-    // Check for Gmail specifically to use the built-in service preset
-    // This often bypasses port blocking issues on cloud platforms like Render
-    if (process.env.SMTP_HOST === 'smtp.gmail.com' || (process.env.SMTP_USER && process.env.SMTP_USER.endsWith('@gmail.com'))) {
-        return nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            },
-            // Add timeout settings
-            connectionTimeout: 10000, // 10 seconds
-            greetingTimeout: 10000,
-            socketTimeout: 10000
-        });
-    }
-
-    const port = Number.parseInt(process.env.SMTP_PORT, 10) || 587;
+    // Determine host and port based on env, fallback to Gmail on 587
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    // If it's gmail, prefer port 587 to avoid Render port 465 blocking/timeouts
+    const isGmail = host === 'smtp.gmail.com' || (process.env.SMTP_USER && process.env.SMTP_USER.endsWith('@gmail.com'));
+    
+    const port = Number.parseInt(process.env.SMTP_PORT, 10) || (isGmail ? 587 : 587);
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
 
     return nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        host,
         port,
-        secure: process.env.SMTP_SECURE === 'true' || port === 465,
+        secure, // false for port 587, true for port 465
+        requireTLS: true,
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS
         },
-        // Add timeout settings
-        connectionTimeout: 10000, // 10 seconds
-        greetingTimeout: 10000,
-        socketTimeout: 10000
+        // Increase timeout settings to 20 seconds for cloud environments
+        connectionTimeout: 20000, 
+        greetingTimeout: 20000,
+        socketTimeout: 20000
     });
 };
 
