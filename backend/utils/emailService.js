@@ -1,40 +1,41 @@
-const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');
-
-const nodemailer = require('nodemailer');
-
-// Create transporter with env config
-const createTransporter = () => {
-    // Determine host and port based on env, fallback to Gmail on 587
-    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-    // If it's gmail, prefer port 587 to avoid Render port 465 blocking/timeouts
-    const isGmail = host === 'smtp.gmail.com' || (process.env.SMTP_USER && process.env.SMTP_USER.endsWith('@gmail.com'));
-    
-    const port = Number.parseInt(process.env.SMTP_PORT, 10) || (isGmail ? 587 : 587);
-    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
-
-    return nodemailer.createTransport({
-        host,
-        port,
-        secure, // false for port 587, true for port 465
-        requireTLS: true,
-        family: 4, // Force IPv4 to prevent ENETUNREACH on IPv6 networks
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-        },
-        // Increase timeout settings to 20 seconds for cloud environments
-        connectionTimeout: 20000, 
-        greetingTimeout: 20000,
-        socketTimeout: 20000
-    });
-};
-
-// Get from address from env
-const getFromAddress = () => {
+// Helper to send email via Brevo's HTTP API (Bypasses Render's SMTP block)
+const sendEmailViaBrevo = async (toEmail, subject, htmlContent) => {
+    const apiKey = process.env.BREVO_API_KEY;
+    const fromEmail = process.env.FROM_EMAIL;
     const fromName = process.env.FROM_NAME || 'Phantom Agency';
-    const fromEmail = process.env.FROM_EMAIL || process.env.SMTP_USER;
-    return `"${fromName} 🎃" <${fromEmail}>`;
+
+    if (!apiKey) {
+        throw new Error('BREVO_API_KEY is not defined in environment variables');
+    }
+
+    if (!fromEmail) {
+        throw new Error('FROM_EMAIL is not defined in environment variables');
+    }
+
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+            'accept': 'application/json',
+            'api-key': apiKey,
+            'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+            sender: {
+                name: fromName,
+                email: fromEmail
+            },
+            to: [{ email: toEmail }],
+            subject: subject,
+            htmlContent: htmlContent
+        })
+    });
+    
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to send email via Brevo: Status ${response.status}`);
+    }
+    
+    return await response.json();
 };
 
 // Generate 6-digit OTP
@@ -93,7 +94,6 @@ const getEmailTemplate = (title, content) => `
 
 // Send OTP email
 const sendOTPEmail = async (email, otp, name = 'User') => {
-    const transporter = createTransporter();
     const cleanEmail = sanitizeEmail(email);
 
     const content = `
@@ -107,16 +107,13 @@ const sendOTPEmail = async (email, otp, name = 'User') => {
         <p style="margin: 0; color: #71717a; font-size: 13px;">This code expires in <strong>10 minutes</strong>. If you didn't request this, please ignore this email.</p>
     `;
 
-    const mailOptions = {
-        from: getFromAddress(),
-        to: cleanEmail,
-        subject: 'Verification Code - Phantom Agency',
-        html: getEmailTemplate('Verify Your Identity', content)
-    };
-
     try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log('OTP Email sent:', info.messageId);
+        const info = await sendEmailViaBrevo(
+            cleanEmail,
+            'Verification Code - Phantom Agency',
+            getEmailTemplate('Verify Your Identity', content)
+        );
+        console.log('OTP Email sent via Brevo:', info.messageId);
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error('Email send error:', error);
@@ -126,7 +123,6 @@ const sendOTPEmail = async (email, otp, name = 'User') => {
 
 // Send password reset email
 const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
-    const transporter = createTransporter();
     const cleanEmail = sanitizeEmail(email);
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
@@ -143,15 +139,12 @@ const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
         <p style="margin: 0; color: #71717a; font-size: 13px;">This link is valid for <strong>1 hour</strong>.</p>
     `;
 
-    const mailOptions = {
-        from: getFromAddress(),
-        to: cleanEmail,
-        subject: 'Password Reset Request - Phantom Agency',
-        html: getEmailTemplate('Reset Your Password', content)
-    };
-
     try {
-        const info = await transporter.sendMail(mailOptions);
+        const info = await sendEmailViaBrevo(
+            cleanEmail,
+            'Password Reset Request - Phantom Agency',
+            getEmailTemplate('Reset Your Password', content)
+        );
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error('Email send error:', error);
@@ -161,7 +154,6 @@ const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
 
 // Send complaint status update email
 const sendComplaintStatusEmail = async (email, complaint, newStatus, name = 'User') => {
-    const transporter = createTransporter();
     const cleanEmail = sanitizeEmail(email);
 
     const statusColors = {
@@ -211,15 +203,12 @@ const sendComplaintStatusEmail = async (email, complaint, newStatus, name = 'Use
         <p style="margin: 0; color: #71717a; font-size: 13px; text-align: center;">You can track this complaint in your <a href="${process.env.FRONTEND_URL}/dashboard" style="color: #a1a1aa; text-decoration: underline;">dashboard</a>.</p>
     `;
 
-    const mailOptions = {
-        from: getFromAddress(),
-        to: cleanEmail,
-        subject: `Status Update: ${statusText} - Phantom Agency`,
-        html: getEmailTemplate('Complaint Status Update', content)
-    };
-
     try {
-        await transporter.sendMail(mailOptions);
+        await sendEmailViaBrevo(
+            cleanEmail,
+            `Status Update: ${statusText} - Phantom Agency`,
+            getEmailTemplate('Complaint Status Update', content)
+        );
         return { success: true };
     } catch (error) {
         console.error('Email send error:', error);
@@ -242,7 +231,6 @@ const escapeHtml = (text) => {
 
 // Send service action email (deletion/suspension)
 const sendServiceActionEmail = async (email, serviceName, action, reason, name = 'Partner') => {
-    const transporter = createTransporter();
     const cleanEmail = sanitizeEmail(email);
 
     const actionColors = {
@@ -277,15 +265,12 @@ const sendServiceActionEmail = async (email, serviceName, action, reason, name =
         <p style="margin: 0; color: #71717a; font-size: 13px; text-align: center;">If you believe this is an error, please contact support.</p>
     `;
 
-    const mailOptions = {
-        from: getFromAddress(),
-        to: cleanEmail,
-        subject: `Service ${actionText}: ${serviceName} - Phantom Agency`,
-        html: getEmailTemplate(`Service ${actionText}`, content)
-    };
-
     try {
-        await transporter.sendMail(mailOptions);
+        await sendEmailViaBrevo(
+            cleanEmail,
+            `Service ${actionText}: ${serviceName} - Phantom Agency`,
+            getEmailTemplate(`Service ${actionText}`, content)
+        );
         return { success: true };
     } catch (error) {
         console.error('Email send error:', error);
@@ -295,7 +280,6 @@ const sendServiceActionEmail = async (email, serviceName, action, reason, name =
 
 // Send account action email (ban/unban/delete)
 const sendAccountActionEmail = async (email, action, reason, name = 'User') => {
-    const transporter = createTransporter();
     const cleanEmail = sanitizeEmail(email);
 
     const actionColors = {
@@ -327,15 +311,12 @@ const sendAccountActionEmail = async (email, action, reason, name = 'User') => {
         <p style="margin: 0; color: #71717a; font-size: 13px; text-align: center;">If you have questions, please contact our support team.</p>
     `;
 
-    const mailOptions = {
-        from: getFromAddress(),
-        to: cleanEmail,
-        subject: `Account Update: ${actionText} - Phantom Agency`,
-        html: getEmailTemplate(`Account ${actionText}`, content)
-    };
-
     try {
-        await transporter.sendMail(mailOptions);
+        await sendEmailViaBrevo(
+            cleanEmail,
+            `Account Update: ${actionText} - Phantom Agency`,
+            getEmailTemplate(`Account ${actionText}`, content)
+        );
         return { success: true };
     } catch (error) {
         console.error('Email send error:', error);
