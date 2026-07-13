@@ -45,7 +45,7 @@ const AdminLayout = () => {
                     </h1>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1.5 relative z-10 custom-scrollbar" data-lenis-prevent>
+                <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1.5 relative z-10 custom-scrollbar" data-lenis-prevent data-prevent-lenis>
                     {tabs.map((tab) => {
                         const isActive = location.pathname.includes(tab.path);
                         return (
@@ -157,7 +157,7 @@ const AdminLayout = () => {
                 </AnimatePresence>
 
                 {/* Main Content Scrollable Area */}
-                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 custom-scrollbar relative z-0" data-lenis-prevent>
+                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 custom-scrollbar relative z-0" data-lenis-prevent data-prevent-lenis>
                     <div className=" mx-auto w-full">
                         <AnimatePresence mode="wait">
                             <motion.div

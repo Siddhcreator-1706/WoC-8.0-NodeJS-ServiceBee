@@ -60,6 +60,8 @@ const Navbar = () => {
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
                             onClick={(e) => e.stopPropagation()}
                             className="absolute right-0 top-0 bottom-0 w-64 bg-night border-l border-white/10 shadow-[0_0_50px_rgba(192,57,43,0.2)] pt-24 px-6 overflow-y-auto"
+                            data-lenis-prevent
+                            data-prevent-lenis
                         >
                             <div className="flex flex-col gap-4">
                                 {user ? (

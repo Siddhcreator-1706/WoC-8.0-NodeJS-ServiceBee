@@ -97,7 +97,7 @@ const SignupForm = ({
                 </div>
             ) : (
                 <form onSubmit={handleSignup} className="flex-1 flex flex-col min-h-0 relative z-10 w-full overflow-hidden">
-                    <div className="flex-1 overflow-y-auto custom-scrollbar px-1 py-1 relative z-20" data-lenis-prevent>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar px-1 py-1 relative z-20" data-lenis-prevent data-prevent-lenis>
                         <div className="space-y-4 pb-2">
                             {/* Name & Role Row */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

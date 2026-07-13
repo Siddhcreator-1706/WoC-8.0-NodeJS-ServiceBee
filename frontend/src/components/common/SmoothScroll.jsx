@@ -12,6 +12,14 @@ export default function SmoothScroll({ children }) {
             mouseMultiplier: 1,
             smoothTouch: false,
             touchMultiplier: 2,
+            prevent: (node) => {
+                return (
+                    node.hasAttribute('data-prevent-lenis') ||
+                    node.hasAttribute('data-lenis-prevent') ||
+                    node.closest('[data-prevent-lenis]') !== null ||
+                    node.closest('[data-lenis-prevent]') !== null
+                );
+            }
         });
 
         let animationFrameId;
